@@ -1,0 +1,55 @@
+import baseApi from "./baseApi";
+
+const profileApi = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    addExecutor: builder.mutation({
+      query: (data) => ({
+        url: `/will/executors`,
+        method: "POST",  
+        body: data,
+      }),
+      invalidatesTags: ["executors"],
+    }),
+
+    addBackupExecutor: builder.mutation({
+      query: (data) => ({
+        url: `/will/executors/backup`,
+        method: "POST",  
+        body: data,
+      }),
+      invalidatesTags: ["executors"],
+    }),
+
+    removeExecutor: builder.mutation({
+      query: (id) => ({
+        url: `/will/executors/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["executors"],
+    }),
+    removeBackupExecutor: builder.mutation({
+      query: (id) => ({
+        url: `/will/executors/backup/person/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["executors"],
+    }),
+
+
+    getWill: builder.query({
+      query: () => ({
+        url: `/will`,
+        method: "GET",
+      }),
+      providesTags: ["executors"],
+    }),
+   
+
+    
+
+
+   
+  }),
+});
+
+export const { useAddExecutorMutation, useAddBackupExecutorMutation, useRemoveExecutorMutation, useRemoveBackupExecutorMutation, useGetWillQuery } = profileApi;

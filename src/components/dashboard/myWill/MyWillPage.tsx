@@ -105,7 +105,7 @@ export default function MyWillPage() {
           time="2 min"
           description="Nominate someone you trust. E.g., spouse or close friend."
           buttonLabel={hasFamilyData ? "Pick an executor" : undefined}
-          buttonHref={hasFamilyData ? "/will" : undefined}
+          buttonHref={hasFamilyData ? "/executor/get-started" : undefined}
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Complete You and your family first"}
         />
