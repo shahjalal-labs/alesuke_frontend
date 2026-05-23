@@ -3,9 +3,12 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthShell, OTPBoxes, PrimaryButton } from "./AuthUI";
-import { useAuthVerifyOtpMutation } from "@/redux/api/authApi";
+import { useAuthVerifyOtpMutation, useLazyGetMeDataQuery } from "@/redux/api/authApi";
 import { toast } from "sonner";
 import Cookies from "js-cookie";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/ReduxFunction";
+import type { AppDispatch } from "@/redux/store";
 
 function Verification() {
   const [code, setCode] = useState("");
@@ -13,6 +16,8 @@ function Verification() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
   const [userVerifyOTP, { isLoading }] = useAuthVerifyOtpMutation();
+  const [fetchMeData] = useLazyGetMeDataQuery();
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,12 +35,25 @@ function Verification() {
       }).unwrap();
 
       if (response?.success) {
-        const token = response?.data?.token ;
+        const token = response?.data?.accessToken;
         if (token) {
           Cookies.set("accessToken", token);
         }
-        toast.success("Email verified successfully. You can now log in.");
-        router.push("/will");
+
+        const meResponse = await fetchMeData(undefined).unwrap();
+        const me = meResponse?.data;
+
+        dispatch(
+          setUser({
+            role: me?.role ?? "",
+            token: token ?? "",
+            email: me?.email ?? email,
+            me,
+          })
+        );
+
+        toast.success("Email verified successfully.");
+        router.push(meResponse?.data?.isProfileCompleted ? "/will" : "/profile-setup/get-started");
       }
     } catch (error) {
       console.error("Verification failed:", error);
