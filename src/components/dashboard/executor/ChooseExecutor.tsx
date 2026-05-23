@@ -196,7 +196,7 @@ export default function ChooseExecutor() {
       return;
     }
 
-    router.push("/executor/great-work");
+    router.push("/will/executor/great-work");
   };
 
   return (
@@ -354,7 +354,7 @@ export default function ChooseExecutor() {
         ) : null}
 
         <FooterActions
-          previousHref="/executor/get-started"
+          previousHref="/will/executor/get-started"
           previousLabel="Previous Step"
           primaryLabel={isSubmitting ? "Saving..." : "Finish Section"}
           primaryHref="/will"

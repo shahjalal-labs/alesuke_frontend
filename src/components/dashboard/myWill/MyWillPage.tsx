@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { PencilLine, PawPrint, UserRound, UsersRound, CheckCircle } from "lucide-react";
+import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound } from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import WillSectionCard from "./WillSectionCard";
 import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
+import { useGetWillQuery } from "@/redux/api/executorApi";
 
 function getMemberBadge(member: any) {
   if (member.relationType === "PET") return { label: "Pet", icon: PawPrint };
@@ -14,9 +15,43 @@ function getMemberBadge(member: any) {
   return { label: "Member", icon: UserRound };
 }
 
+function getExecutorIcon(relationType?: string | null) {
+  if (relationType === "CHILD") return UserRound;
+  if (relationType === "PET") return PawPrint;
+  return Heart;
+}
+
+function ExecutorRow({
+  label,
+  member,
+}: {
+  label: string;
+  member: any;
+}) {
+  const Icon = getExecutorIcon(member?.relationType);
+  return (
+    <div className="flex min-w-0 items-start gap-3">
+      <span className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-[#F5EADD] text-[#172031]">
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[1.05rem] font-medium leading-[1.2] text-[#4b5361] sm:text-[1.15rem]">{label}</p>
+        <p className="mt-1 text-[0.94rem] leading-[1.35] text-[#767e8c] sm:text-[1rem]">
+          {member?.fullName ?? "Not selected"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function MyWillPage() {
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined);
+  const { data: willResponse, isLoading: isWillLoading } = useGetWillQuery(undefined);
   const hasFamilyData = members.length > 0;
+  const executors = willResponse?.data?.executors ?? [];
+  const primaryExecutor = executors[0]?.person ?? null;
+  const backupExecutor = executors[0]?.backupPerson ?? null;
+  const hasExecutorData = executors.length > 0;
 
   const familyProgress = hasFamilyData
     ? 15 + new Set(members.map((member: any) => member.relationType)).size * 5
@@ -100,22 +135,65 @@ export default function MyWillPage() {
           </div>
         </section>
 
-        <WillSectionCard
-          title="Choose a trusted executor"
-          time="2 min"
-          description="Nominate someone you trust. E.g., spouse or close friend."
-          buttonLabel={hasFamilyData ? "Pick an executor" : undefined}
-          buttonHref={hasFamilyData ? "/executor/get-started" : undefined}
-          withPrimaryButton={hasFamilyData}
-          secondaryLabel={hasFamilyData ? undefined : "Complete You and your family first"}
-        />
+        <section className="rounded-[3px] border border-[#eadfcf] bg-[#F6ECE2] p-4 sm:p-5">
+          <div className="mb-3 flex items-start justify-between gap-4 px-2">
+            <h2 className="text-[1.05rem] font-medium text-[#2b221a] sm:text-[1.1rem]">Your Executor</h2>
+            {hasExecutorData ? (
+              <span className="inline-flex items-center gap-2 rounded px-3 py-1 text-[0.9rem] font-medium text-[#52c41a] bg-[#eef9e8]">
+                <CheckCircle className="h-4 w-4 text-[#52c41a]" />
+                Completed
+              </span>
+            ) : (
+              <div className="text-[0.95rem] text-[#2f241c]">Complete</div>
+            )}
+          </div>
+
+          <div className="rounded-[2px] bg-white px-4 py-4 sm:px-5 sm:py-5">
+            {isWillLoading ? (
+              <div className="space-y-3">
+                <div className="h-16 animate-pulse rounded-[8px] bg-[#f2f2f2]" />
+                <div className="h-16 animate-pulse rounded-[8px] bg-[#f2f2f2]" />
+              </div>
+            ) : hasExecutorData ? (
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <ExecutorRow label="Primary Executor" member={primaryExecutor} />
+                  <ExecutorRow label="Secondary Executor" member={backupExecutor} />
+                </div>
+
+                <div className="border-t border-[#ece8e2] pt-4">
+                  <div className="flex justify-end">
+                    <Link
+                      href="/will/executor/get-started"
+                      className="inline-flex items-center justify-center rounded-[3px] bg-[#172031] px-7 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                    >
+                      Edit
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                  Nominate someone you trust to manage your will.
+                </p>
+                <Link
+                  href={hasFamilyData ? "/will/executor/get-started" : "/will/you-and-your-family/marital-status"}
+                  className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                >
+                  Pick an executor
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
 
         <WillSectionCard
           title="Estate Distribution"
           time="3 min"
           description="Distribute your estate to the people and organisations you choose"
           buttonLabel={hasFamilyData ? "Distribute your estate" : undefined}
-          buttonHref={hasFamilyData ? "/will" : undefined}
+          buttonHref={hasFamilyData ? "/will/divide-estate/intro" : undefined}
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Complete You and your family first"}
         />
@@ -125,7 +203,7 @@ export default function MyWillPage() {
           time="3 min"
           description="Give items such as jewellery, monies or something precious with a personalized note for them"
           buttonLabel={hasFamilyData ? "Add Gifts" : undefined}
-          buttonHref={hasFamilyData ? "/will" : undefined}
+          buttonHref={hasFamilyData ? "/will/gifts" : undefined}
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Complete You and your family first"}
         />
@@ -135,7 +213,7 @@ export default function MyWillPage() {
           time="4-10 minutes"
           description="Indicate your assets here"
           buttonLabel={hasFamilyData ? "Add your assets" : undefined}
-          buttonHref={hasFamilyData ? "/assets" : undefined}
+          buttonHref={hasFamilyData ? "/will/assets" : undefined}
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Add your assets"}
         />

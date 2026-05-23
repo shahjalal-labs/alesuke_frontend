@@ -45,7 +45,7 @@ export default function GetStarted() {
           </div>
         </section>
 
-        <FooterActions previousHref="/will" previousLabel="Back to dashboard" primaryLabel="Get started" primaryHref="/executor/choose-executor" />
+        <FooterActions previousHref="/will" previousLabel="Back to dashboard" primaryLabel="Get started" primaryHref="/will/executor/choose-executor" />
       </div>
     </ExecutorLayout>
   );

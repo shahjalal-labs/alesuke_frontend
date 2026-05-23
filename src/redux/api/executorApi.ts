@@ -44,7 +44,24 @@ const profileApi = baseApi.injectEndpoints({
       providesTags: ["executors"],
     }),
    
+    // -------- distribution endpoints --------
 
+     addDistribution: builder.mutation({
+      query: (data) => ({
+        url: `/will/distributions`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["executors"],
+    }),
+
+    getDistributions: builder.query({
+      query: () => ({
+        url: `/will/distributions`,
+        method: "GET",
+      }),
+      providesTags: ["executors"],
+    }),
     
 
 
@@ -52,4 +69,12 @@ const profileApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useAddExecutorMutation, useAddBackupExecutorMutation, useRemoveExecutorMutation, useRemoveBackupExecutorMutation, useGetWillQuery } = profileApi;
+export const {
+  useAddExecutorMutation,
+  useAddBackupExecutorMutation,
+  useRemoveExecutorMutation,
+  useRemoveBackupExecutorMutation,
+  useGetWillQuery,
+  useAddDistributionMutation,
+  useGetDistributionsQuery,
+} = profileApi;
