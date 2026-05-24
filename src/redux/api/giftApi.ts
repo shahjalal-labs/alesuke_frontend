@@ -1,6 +1,6 @@
 import baseApi from "./baseApi";
 
-const profileApi = baseApi.injectEndpoints({
+export const giftApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // gift add types: cash, ITEM,COLLECTION PROPERTY,VEHICLE  
     addGift: builder.mutation({
@@ -29,6 +29,15 @@ const profileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["gifts"],
     }),
+    // get all properties for a user
+    getAllProperties: builder.query({
+      query: () => ({
+        url: `/assets/properties`,
+        method: "GET",
+      }),
+      providesTags: ["gifts"],
+      
+    }),
   }),
 });
 
@@ -36,4 +45,5 @@ export const {
     useAddGiftMutation,
     useGetAllGiftsQuery,
     useAddPropertyMutation,
-} = profileApi;
+    useGetAllPropertiesQuery,
+} = giftApi;
