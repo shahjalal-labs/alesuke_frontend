@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Loader2, Heart, UserRound } from "lucide-react";
-import { toast } from "sonner";
+import { useMemo } from "react";
+import { Heart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -17,55 +16,39 @@ import {
   SuccessSummary,
 } from "./DivideEstateShell";
 
-import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
-import { useAddDistributionMutation } from "@/redux/api/executorApi";
+import { useGetDistributionsQuery } from "@/redux/api/executorApi";
 
 type MemberRecord = {
   id: string;
   fullName?: string | null;
-  relationType?: string | null;
+};
+
+type DistributionRecord = {
+  id: string;
+  percentage?: number | null;
+  order?: number | null;
+  peopleId?: string | null;
+  person?: MemberRecord | null;
 };
 
 function DistributeEstate() {
   const router = useRouter();
-  const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined);
-  const [selectedPeopleIds, setSelectedPeopleIds] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [addDistribution] = useAddDistributionMutation();
+  const { data, isLoading } = useGetDistributionsQuery(undefined);
 
-  const distributableMembers = useMemo(() => {
-    return (members as MemberRecord[]).filter(
-      (member) => member.relationType === "SPOUSE" || member.relationType === "PARTNER" || member.relationType === "CHILD"
-    );
-  }, [members]);
+  const distributions = useMemo(() => {
+    return ((data as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
+  }, [data]);
 
-  const sharePercentage = selectedPeopleIds.length ? Math.floor(100 / selectedPeopleIds.length) : 0;
+  const totalAllocated = useMemo(() => {
+    return distributions.reduce((sum, distribution) => sum + (distribution.percentage ?? 0), 0);
+  }, [distributions]);
 
-  const toggleSelection = (peopleId: string) => {
-    setSelectedPeopleIds((current) =>
-      current.includes(peopleId) ? current.filter((id) => id !== peopleId) : [...current, peopleId]
-    );
-  };
-
-  const handleSave = async () => {
-    if (!selectedPeopleIds.length) {
-      toast.error("Select at least one beneficiary before continuing.");
+  const handleContinue = () => {
+    if (!distributions.length) {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await addDistribution({
-        distributions: selectedPeopleIds.map((peopleId) => ({ peopleId })),
-      }).unwrap();
-      toast.success("Distribution saved successfully.");
-      router.push("/will/divide-estate/choose-backup-option");
-    } catch (error) {
-      console.error(error);
-      toast.error("Unable to save distribution. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    router.push("/will/divide-estate/choose-backup-option");
   };
 
   return (
@@ -80,8 +63,10 @@ function DistributeEstate() {
         </div>
 
         <SuccessSummary>
-          <p className="text-[0.95rem] font-semibold leading-[1.3] text-[#191715] md:text-[1rem]">You have allocated 100% of your estate</p>
-          <p className="text-[0.82rem] leading-[1.45] text-[#7b8594] md:text-[0.9rem]">You can proceed to the next step, or change the % distribution below.</p>
+          <p className="text-[0.95rem] font-semibold leading-[1.3] text-[#191715] md:text-[1rem]">
+            You have allocated {totalAllocated}% of your estate
+          </p>
+          <p className="text-[0.82rem] leading-[1.45] text-[#7b8594] md:text-[0.9rem]">You can proceed to the next step, or review the % distribution below.</p>
         </SuccessSummary>
 
         <Panel>
@@ -89,40 +74,31 @@ function DistributeEstate() {
             <div className="flex items-center justify-center py-12 text-[#6e7886]">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
-          ) : distributableMembers.length ? (
+          ) : distributions.length ? (
             <div className="space-y-3 md:space-y-4">
-              {distributableMembers.map((member, index) => {
-                const selected = selectedPeopleIds.includes(member.id);
-                const isSpouseOrPartner = member.relationType === "SPOUSE" || member.relationType === "PARTNER";
-                const percent = selected ? `${sharePercentage}%` : "";
+              {distributions.map((distribution, index) => {
+                const percent = `${distribution.percentage ?? 0}%`;
 
                 return (
                   <PercentageRow
-                    key={member.id}
-                    title={member.fullName ?? `Beneficiary ${index + 1}`}
+                    key={distribution.id}
+                    title={distribution.person?.fullName ?? `Beneficiary ${index + 1}`}
                     percent={percent}
-                    selected={selected}
-                    onClick={() => toggleSelection(member.id)}
-                    icon={isSpouseOrPartner ? <Heart className="h-4.5 w-4.5 fill-current" /> : <UserRound className="h-4.5 w-4.5" />}
+                    selected={false}
+                    icon={<Heart className="h-4.5 w-4.5 fill-current" />}
                   />
                 );
               })}
 
-              {selectedPeopleIds.length ? (
-                <p className="pt-1 text-[0.85rem] text-[#7b8594]">{selectedPeopleIds.length} selected</p>
-              ) : null}
             </div>
           ) : (
-            <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">No beneficiaries have been added yet.</div>
+            <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">
+              No distributions have been saved yet.
+            </div>
           )}
         </Panel>
 
-        <FooterActions
-          previousHref="/will/divide-estate/choose-beneficaries"
-          nextLabel={isSubmitting ? "Saving..." : "Save & Continue"}
-          onNext={handleSave}
-          nextDisabled={isSubmitting || !selectedPeopleIds.length}
-        />
+        <FooterActions previousHref="/will/divide-estate/choose-beneficaries" nextLabel="Save & Continue" onNext={handleContinue} nextDisabled={!distributions.length} />
       </section>
     </DivideEstateShell>
   );

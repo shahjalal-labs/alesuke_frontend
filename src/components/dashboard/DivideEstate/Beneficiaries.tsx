@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Circle, Heart, Loader2, UserRound, UsersRound } from "lucide-react";
 import AddPersonModal from "@/components/ui/AddPersonModal";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   AddPersonRow,
@@ -20,6 +22,7 @@ import {
 } from "./DivideEstateShell";
 
 import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
+import { useAddDistributionMutation, useGetDistributionsQuery } from "@/redux/api/executorApi";
 
 type MemberRecord = {
   id: string;
@@ -28,11 +31,19 @@ type MemberRecord = {
   relationType?: string | null;
 };
 
+type DistributionRecord = {
+  peopleId?: string | null;
+};
+
 function Beneficiaries() {
+  const router = useRouter();
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined);
+  const { data: distributionResponse, isLoading: isLoadingDistributions } = useGetDistributionsQuery(undefined);
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addDistribution] = useAddDistributionMutation();
 
   useEffect(() => {
     setMounted(true);
@@ -44,10 +55,43 @@ function Beneficiaries() {
     );
   }, [members]);
 
+  const savedDistributionMemberIds = useMemo(() => {
+    return (((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[])
+      .map((distribution) => distribution.peopleId)
+      .filter((peopleId): peopleId is string => Boolean(peopleId));
+  }, [distributionResponse]);
+
+  useEffect(() => {
+    if (savedDistributionMemberIds.length) {
+      setSelectedMemberIds(savedDistributionMemberIds);
+    }
+  }, [savedDistributionMemberIds]);
+
   const toggleMember = (memberId: string) => {
     setSelectedMemberIds((current) =>
       current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId]
     );
+  };
+
+  const handleSaveAndContinue = async () => {
+    if (!selectedMemberIds.length) {
+      toast.error("Select at least one beneficiary before continuing.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addDistribution({
+        distributions: selectedMemberIds.map((peopleId) => ({ peopleId })),
+      }).unwrap();
+      toast.success("Beneficiaries saved successfully.");
+      router.push("/will/divide-estate/distribute-estate");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to save beneficiaries. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -62,7 +106,7 @@ function Beneficiaries() {
         </div>
 
         <Panel>
-          {!mounted || isLoading ? (
+          {!mounted || isLoading || isLoadingDistributions ? (
             <div className="flex items-center justify-center py-12 text-[#6e7886]">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
@@ -121,7 +165,12 @@ function Beneficiaries() {
           <TipButton>View my address book</TipButton>
         </div>
 
-        <FooterActions previousHref="/will/divide-estate/partner" nextHref="/will/divide-estate/distribute-estate" />
+        <FooterActions
+          previousHref="/will/divide-estate/partner"
+          nextLabel={isSubmitting ? "Saving..." : "Save & Continue"}
+          onNext={handleSaveAndContinue}
+          nextDisabled={isSubmitting || !selectedMemberIds.length}
+        />
       </section>
 
       <AddPersonModal

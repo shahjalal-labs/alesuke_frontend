@@ -30,9 +30,11 @@ export default function Hero() {
         </p>
 
         <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Link href="/login">
           <button className="rounded-md bg-gradient-to-l from-[#1D2736] to-[#081220] px-10 py-4 text-[1rem] font-medium tracking-[0.02em] text-[#f5f0e8] shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition-colors duration-200 hover:bg-[#22342d] font-sans">
             Write a will online
           </button>
+          </Link>
           <Link href="/how-it-works" className="flex w-fit items-center gap-3 rounded-md border border-white/20 bg-white/10 px-6 py-4 text-[1rem] tracking-[0.02em] text-white backdrop-blur-sm transition-colors duration-200 hover:bg-white/20 font-sans">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>

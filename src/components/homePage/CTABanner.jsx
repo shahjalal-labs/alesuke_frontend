@@ -1,4 +1,5 @@
 import ctaBg from "@/assets/ctaBg.png";
+import Link from "next/link";
 
 export default function CTABanner() {
   return (
@@ -24,9 +25,9 @@ export default function CTABanner() {
           </p>
 
           <div className="flex items-center justify-center">
-            <button className="rounded-lg bg-white px-10 py-4 text-[1rem] font-bold tracking-[0.04em] text-[#1e1912] transition-colors duration-200 hover:bg-[#f5f0e8] shadow-lg">
+           <Link href="/login"> <button className="rounded-lg bg-white px-10 py-4 text-[1rem] font-bold tracking-[0.04em] text-[#1e1912] transition-colors duration-200 hover:bg-[#f5f0e8] shadow-lg">
               Start For Free
-            </button>
+            </button></Link>
           </div>
         </div>
       </div>
