@@ -76,8 +76,6 @@ const profileApi = baseApi.injectEndpoints({
       transformResponse: (response: { data?: unknown[] }) => response?.data ?? [],
       providesTags: ["profile"],
     }),
-
-
    
   }),
 });

@@ -1,9 +1,11 @@
 "use client"
 
 import { useMemo, useState } from 'react'
+import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import GiftAddTemplate from './GiftAddTemplate'
 import AddAccountModal, { type AccountType } from '@/components/ui/AddAccountModal'
-import { useAddAssetsMutation, useGetAllAssetsQuery } from '@/redux/api/assetsApi'
+import { useAddAssetsMutation, useDeleteAssetsMutation, useGetAllAssetsQuery } from '@/redux/api/assetsApi'
 import { useGetAllMemberListQuery } from '@/redux/api/profileApi'
 
 type AssetType =
@@ -135,8 +137,10 @@ export default function Account() {
   const { data: members = [] } = useGetAllMemberListQuery(undefined)
   const { data: assetsResponse, isLoading, isFetching } = useGetAllAssetsQuery(undefined)
   const [addAssets] = useAddAssetsMutation()
+  const [deleteAssets] = useDeleteAssetsMutation()
   const [activeType, setActiveType] = useState<AccountType | null>(null)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<Array<string | number>>([])
+  const [deletingId, setDeletingId] = useState<string | number | null>(null)
 
   const recipientRows = useMemo(() => {
     return (members as MemberRecord[]).map((member, index) => ({
@@ -154,6 +158,21 @@ export default function Account() {
   }
 
   const savedAssets = useMemo(() => normalizeAssets(assetsResponse), [assetsResponse])
+
+  const handleDeleteAsset = async (id?: string | number) => {
+    if (id == null) return
+
+    setDeletingId(id)
+
+    try {
+      await deleteAssets(String(id)).unwrap()
+      toast.success('Account deleted')
+    } catch (error) {
+      toast.error('Unable to delete account')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const openModal = (type: AccountType) => {
     setActiveType(type)
@@ -297,6 +316,16 @@ export default function Account() {
                             {getAssetValue(asset)}
                           </p>
                         </div>
+
+                        <button
+                          type="button"
+                          aria-label="Delete account"
+                          onClick={() => handleDeleteAsset(asset.id)}
+                          disabled={deletingId === asset.id}
+                          className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-[#c34141] transition-colors hover:bg-[#feecec] disabled:opacity-60"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     )
                   })}

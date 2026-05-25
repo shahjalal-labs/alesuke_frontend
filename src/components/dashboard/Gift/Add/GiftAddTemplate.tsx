@@ -35,6 +35,8 @@ type GiftAddTemplateProps = {
   previousHref?: string
   previousLabel?: string
   nextLabel?: string
+  onNext?: () => void | Promise<void>
+  nextDisabled?: boolean
   customMiddle?: React.ReactNode
 }
 
@@ -59,6 +61,8 @@ export default function GiftAddTemplate({
   previousHref = '/will/gifts',
   previousLabel = 'Previous Step',
   nextLabel = 'Save & continue',
+  onNext,
+  nextDisabled = false,
 }: GiftAddTemplateProps) {
   const selectedSet = new Set(selectedRecipientIds)
 
@@ -189,7 +193,12 @@ export default function GiftAddTemplate({
               ← {previousLabel}
             </Link>
 
-            <button className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)]">
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={nextDisabled}
+              className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
               {nextLabel}
             </button>
           </div>
