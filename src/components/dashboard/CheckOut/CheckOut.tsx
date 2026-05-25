@@ -1,10 +1,12 @@
 "use client"
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown, Circle, CircleDot, HelpCircle, ShieldCheck, BadgeCheck, CalendarDays, Package, Users, FileText, Home, LucideIcon } from 'lucide-react'
 
 import logo from '@/assets/logo.png'
+import { useCheckoutEssentialWillMutation, useCheckoutUnlimitedWillMutation } from '@/redux/api/checkoutApi'
 
 function SectionHeader({
   icon: Icon,
@@ -48,7 +50,36 @@ function DocumentRow({ title, icon: Icon, description }: { title: string; icon: 
 }
 
 function CheckOut() {
+  const router = useRouter()
   const [activePlan, setActivePlan] = useState<'direct' | 'subscription'>('direct')
+  const [checkoutEssentialWill, { isLoading: isEssentialLoading }] = useCheckoutEssentialWillMutation()
+  const [checkoutUnlimitedWill, { isLoading: isUnlimitedLoading }] = useCheckoutUnlimitedWillMutation()
+
+  const isLoading = activePlan === 'direct' ? isEssentialLoading : isUnlimitedLoading
+  const checkoutPayload = {
+    successUrl: 'http://localhost:3000/will/checkout/success',
+    cancelUrl: 'http://localhost:3000/will/checkout/cancel',
+  }
+
+  const handleCheckout = async () => {
+    try {
+      const response =
+        activePlan === 'direct'
+          ? await checkoutEssentialWill(checkoutPayload).unwrap()
+          : await checkoutUnlimitedWill(checkoutPayload).unwrap()
+
+      const checkoutUrl = response?.data?.checkoutUrl ?? response?.checkoutUrl
+
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl
+        return
+      }
+
+      router.push('/will/preview')
+    } catch {
+      router.push('/will/preview')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#fbf4ed] text-[#111827]">
@@ -155,8 +186,13 @@ function CheckOut() {
                     After purchasing, you&apos;ll be able to download your will. All transactions are secured and encrypted by Stripe.
                   </p>
 
-                  <button className="mt-5 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95">
-                    Checkout
+                  <button
+                    type="button"
+                    onClick={handleCheckout}
+                    disabled={isLoading}
+                    className="mt-5 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isLoading ? 'Redirecting...' : 'Checkout'}
                   </button>
                 </>
               ) : (
@@ -185,8 +221,13 @@ function CheckOut() {
                     <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Unlimited lifetime revisions to revise will.</p>
                   </div>
 
-                  <button className="mt-6 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95">
-                    Begin Unlimited Journey
+                  <button
+                    type="button"
+                    onClick={handleCheckout}
+                    disabled={isLoading}
+                    className="mt-6 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isLoading ? 'Redirecting...' : 'Begin Unlimited Journey'}
                   </button>
                 </div>
               )}
