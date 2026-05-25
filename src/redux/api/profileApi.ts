@@ -5,7 +5,7 @@ const profileApi = baseApi.injectEndpoints({
     updateProfile: builder.mutation({
       query: (data) => ({
         url: `/profile`,
-        method: "PUT",  
+        method: "PUT",
         body: data,
       }),
       invalidatesTags: ["profile"],
@@ -15,7 +15,7 @@ const profileApi = baseApi.injectEndpoints({
     addMember: builder.mutation({
       query: (data) => ({
         url: `/profile/people`,
-        method: "POST",  
+        method: "POST",
         body: data,
       }),
       invalidatesTags: ["profile"],
@@ -26,11 +26,12 @@ const profileApi = baseApi.injectEndpoints({
         url: `/profile/people/${relationType}`,
         method: "GET",
       }),
-      transformResponse: (response: { data?: unknown[] }) => response?.data ?? [],
+      transformResponse: (response: { data?: unknown[] }) =>
+        response?.data ?? [],
       providesTags: ["profile"],
     }),
 
-    // for all spouse/ partner/ child/ pet update and delete 
+    // for all spouse/ partner/ child/ pet update and delete
     updateMember: builder.mutation({
       query: ({ id, data }) => ({
         url: `/profile/people/${id}`,
@@ -48,7 +49,7 @@ const profileApi = baseApi.injectEndpoints({
       invalidatesTags: ["profile"],
     }),
 
-        // -------update adddress---------->>>
+    // -------update adddress---------->>>
 
     addAddress: builder.mutation({
       query: (data) => ({
@@ -60,24 +61,43 @@ const profileApi = baseApi.injectEndpoints({
     }),
 
     updateAddress: builder.mutation({
-      query: ({id, address}) => ({
+      query: ({ id, address }) => ({
         url: `/profile/address/${id}`,
         method: "PUT",
-        body: address , // Replace with actual address data
+        body: address, // Replace with actual address data
       }),
       invalidatesTags: ["profile"],
     }),
 
-     getAllMemberList: builder.query({
+    getAllMemberList: builder.query({
       query: () => ({
         url: `/profile/people`,
         method: "GET",
       }),
-      transformResponse: (response: { data?: unknown[] }) => response?.data ?? [],
+      transformResponse: (response: { data?: unknown[] }) =>
+        response?.data ?? [],
       providesTags: ["profile"],
     }),
-   
+    // will details for myWIll page
+    getWillDetails: builder.query({
+      query: () => ({
+        url: `/will/dashboard`,
+        method: "GET",  
+      }),
+
+      providesTags: ["profile"],
+    }),
   }),
 });
 
-export const { useUpdateProfileMutation, useAddMemberMutation, useGetMemberQuery,useUpdateMemberMutation,useDeleteMemberMutation,useAddAddressMutation, useUpdateAddressMutation, useGetAllMemberListQuery } = profileApi;
+export const {
+  useUpdateProfileMutation,
+  useAddMemberMutation,
+  useGetMemberQuery,
+  useUpdateMemberMutation,
+  useDeleteMemberMutation,
+  useAddAddressMutation,
+  useUpdateAddressMutation,
+  useGetAllMemberListQuery,
+  useGetWillDetailsQuery,
+} = profileApi;
