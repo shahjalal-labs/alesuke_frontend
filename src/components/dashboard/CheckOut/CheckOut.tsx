@@ -52,16 +52,19 @@ function DocumentRow({ title, icon: Icon, description }: { title: string; icon: 
 function CheckOut() {
   const router = useRouter()
   const [activePlan, setActivePlan] = useState<'direct' | 'subscription'>('direct')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [checkoutEssentialWill, { isLoading: isEssentialLoading }] = useCheckoutEssentialWillMutation()
   const [checkoutUnlimitedWill, { isLoading: isUnlimitedLoading }] = useCheckoutUnlimitedWillMutation()
 
   const isLoading = activePlan === 'direct' ? isEssentialLoading : isUnlimitedLoading
   const checkoutPayload = {
-    successUrl: 'http://localhost:3000/will/checkout/success',
-    cancelUrl: 'http://localhost:3000/will/checkout/cancel',
+    successUrl: 'http://206.162.244.144:3181/will/checkout/success',
+    cancelUrl: 'http://206.162.244.144:3181/will/checkout/cancel',
   }
 
   const handleCheckout = async () => {
+    setErrorMessage(null)
+
     try {
       const response =
         activePlan === 'direct'
@@ -75,9 +78,19 @@ function CheckOut() {
         return
       }
 
-      router.push('/will/preview')
-    } catch {
-      router.push('/will/preview')
+      setErrorMessage('Checkout session could not be created. Please try again.')
+    } catch (error) {
+      const apiError = error as {
+        data?: {
+          message?: string
+          errorMessages?: Array<{ path?: string; message?: string }>
+        }
+      }
+
+      const backendMessage =
+        apiError?.data?.message ?? apiError?.data?.errorMessages?.[0]?.message ?? 'Payment could not be processed. Please try again.'
+
+      setErrorMessage(backendMessage)
     }
   }
 
@@ -169,6 +182,12 @@ function CheckOut() {
             </div>
 
             <div className="mt-5 rounded-[12px] border border-[#e6ddd2] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(17,24,39,0.04)]">
+              {errorMessage ? (
+                <div className="mb-4 rounded-[10px] border border-[#e7b4b4] bg-[#fff3f3] px-4 py-3 text-[0.88rem] leading-[1.5] text-[#9f2f2f]">
+                  {errorMessage}
+                </div>
+              ) : null}
+
               {activePlan === 'direct' ? (
                 <>
                   <div className="flex items-center justify-between gap-3 border-b border-[#e9e1d7] pb-3">
