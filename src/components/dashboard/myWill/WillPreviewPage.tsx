@@ -1,24 +1,60 @@
 'use client'
 
+import type { ComponentType, ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { ChevronDown, CheckCircle2, Lock, PenLine, Shield, Users2, Wallet, Wrench } from 'lucide-react'
 
 import logo from '@/assets/logo.png'
 import { useGetWillDetailsQuery } from '@/redux/api/profileApi'
+
+type FamilyMember = {
+  id: string
+  fullName?: string | null
+  relationType?: string | null
+}
+
+type ExecutorRecord = {
+  person?: FamilyMember | null
+  backupPerson?: FamilyMember | null
+}
+
+type EstateDistributionRecord = {
+  id: string
+  percentage?: number | null
+  distributionType?: string | null
+  person?: FamilyMember | null
+  backupDistributors?: Array<{ person?: FamilyMember | null }>
+}
+
+type GiftRecord = {
+  id: string
+  recipientName?: string | null
+  giftType?: string | null
+  amount?: number | null
+  description?: string | null
+}
+
+type PetCaretakerRecord = {
+  id: string
+  pet?: FamilyMember | null
+  caretaker?: FamilyMember | null
+}
 
 type WillDetailsResponse = {
   user?: {
     name?: string | null
   }
-  family?: unknown[]
-  executors?: unknown[]
-  estateDistributions?: unknown[]
-  gifts?: unknown[]
-  petCaretakers?: unknown[]
+  family?: FamilyMember[]
+  executors?: ExecutorRecord[]
+  estateDistributions?: EstateDistributionRecord[]
+  gifts?: GiftRecord[]
+  petCaretakers?: PetCaretakerRecord[]
   assets?: {
-    financialAssets?: unknown[]
-    properties?: unknown[]
-    loans?: unknown[]
+    financialAssets?: Array<{ id: string }>
+    properties?: Array<{ id: string }>
+    loans?: Array<{ id: string }>
   }
   summary?: {
     totalFinancial?: number
@@ -38,9 +74,104 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
   )
 }
 
+function Highlight({ children }: { children: ReactNode }) {
+  return <span className="text-inherit">{children}</span>
+}
+
+function formatMoney(value?: number | null) {
+  if (value == null || Number.isNaN(value)) {
+    return 'S$ 0'
+  }
+
+  return `S$ ${Number(value).toLocaleString()}`
+}
+
+function formatPercent(value?: number | null) {
+  if (value == null || Number.isNaN(value)) {
+    return '0%'
+  }
+
+  return `${Number(value).toFixed(2).replace(/\.00$/, '')}%`
+}
+
+function AccordionItem({
+  icon: Icon,
+  title,
+  description,
+  open,
+  onToggle,
+}: {
+  icon: ComponentType<{ className?: string }>
+  title: string
+  description: string
+  open: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full rounded-[10px] border border-transparent px-4 py-3 text-left transition-colors hover:bg-white/60"
+    >
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#efe7de] text-[#404757]">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[0.98rem] font-medium text-[#323038]">{title}</p>
+            <ChevronDown className={`h-4 w-4 text-[#838996] transition-transform ${open ? 'rotate-180' : ''}`} />
+          </div>
+          {open ? <p className="mt-2 text-[0.92rem] leading-[1.45] text-[#6e7480]">{description}</p> : null}
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function PdfPageFrame({
+  pageNumber,
+  totalPages,
+  title,
+  directive,
+  children,
+}: {
+  pageNumber: number
+  totalPages: number
+  title: string
+  directive: string
+  children: ReactNode
+}) {
+  return (
+    <article className="mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10">
+      <div className="border-l-[4px] border-[#c35b43] pl-4">
+        <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[1.85rem]">{title}</p>
+        <div className="mt-3 h-[2px] bg-[#c35b43]" />
+      </div>
+
+      <div className="mt-5 rounded-[4px] border border-[#efe7dc] bg-[#faf8f3] px-4 py-3">
+        <p className="text-[0.82rem] leading-[1.55] text-[#4f5864]">
+          <strong>Directive:</strong> {directive}
+        </p>
+      </div>
+
+      <div className="mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">{children}</div>
+
+      <div className="mt-10 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]">
+        <div className="flex items-center justify-between gap-4">
+          <span>Testator Initials: ______  Witness 1: ______  Witness 2: ______</span>
+          <span>Page {pageNumber} of {totalPages}</span>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 export default function WillPreviewPage() {
   const { data: response, isLoading } = useGetWillDetailsQuery(undefined)
   const dashboard = (response?.data ?? {}) as WillDetailsResponse
+
+  const [activeStep, setActiveStep] = useState<string>('children')
 
   const family = dashboard.family ?? []
   const executors = dashboard.executors ?? []
@@ -50,6 +181,385 @@ export default function WillPreviewPage() {
   const financialAssets = dashboard.assets?.financialAssets ?? []
   const properties = dashboard.assets?.properties ?? []
   const loans = dashboard.assets?.loans ?? []
+
+  const userName = dashboard.user?.name ?? 'Your will'
+  const primaryExecutor = executors[0]?.person?.fullName ?? 'Not selected'
+  const backupExecutor = executors[0]?.backupPerson?.fullName ?? 'Not selected'
+  const familyNames = family.map((member) => member.fullName).filter(Boolean) as string[]
+  const firstDistributions = estateDistributions.slice(0, 2)
+  const firstPetCaretaker = petCaretakers[0]?.caretaker?.fullName ?? backupExecutor
+  const firstPetName = petCaretakers[0]?.pet?.fullName ?? familyNames[0] ?? 'Companion animal'
+  const totalPages = 9
+  const documentPages = useMemo(
+    () => [
+      {
+        pageTitle: 'The Last Will and Testament',
+        pageNumber: 1,
+        directive: 'Cover page layout with the live testator name highlighted in yellow from getWillDetails.',
+        body: (
+          <div className="flex min-h-[520px] flex-col items-center justify-center text-center">
+            <p className="text-[0.82rem] uppercase tracking-[0.28em] text-[#8d918d]">OF</p>
+            <h3 className="mt-4 max-w-[560px] text-[2.2rem] font-semibold uppercase leading-[1.06] tracking-[0.04em] text-[#23262e] lg:text-[3rem]">
+              <Highlight>{userName}</Highlight>
+            </h3>
+            <p className="mt-6 text-[0.92rem] uppercase tracking-[0.22em] text-[#b06248]">Created on 8th May 2026</p>
+            <p className="mt-4 max-w-[430px] text-[0.84rem] leading-[1.55] text-[#8b8a85]">
+              Document framework created using Will&amp;Way. This document does not constitute formal legal advice.
+            </p>
+            <div className="mt-10 grid w-full gap-3 sm:grid-cols-2">
+              <SummaryTile label="Family members" value={`${family.length}`} />
+              <SummaryTile label="Executors" value={`${executors.length}`} />
+              <SummaryTile label="Net worth" value={formatMoney(dashboard.summary?.netWorth)} />
+              <SummaryTile label="Gift entries" value={`${gifts.length}`} />
+            </div>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Step-by-Step Execution Protocol',
+        pageNumber: 2,
+        directive: 'Instruction page describing signing, witnesses, and physical binding requirements.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Action Required:</strong> Follow these precise compliance measures to guarantee the legal enforceability of this portfolio under Singapore jurisdiction.
+              </p>
+            </div>
+            <p>
+              1.1 Document Verification &amp; Physical Binding: Prior to signature, thoroughly review all clauses. Any updated highlight should match the live response from the dashboard.
+            </p>
+            <p>
+              1.2 The Attestation Ceremony: You must execute this document in the simultaneous presence of two independent adult witnesses.
+            </p>
+            <p>
+              1.3 Affixing Signatures: The testator <Highlight>{userName}</Highlight> will sign beside the witness sections when the final PDF is issued.
+            </p>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Essential Singapore Statutory Principles',
+        pageNumber: 3,
+        directive: 'Template page covering the statutory rules that govern the will structure.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Legal Parameters:</strong> Understanding the operation of non-estate assets and life events under the Wills Act (Cap. 352).
+              </p>
+            </div>
+            <p>
+              2.1 Impact of Subsequent Marriage: If your civil status changes, the highlighted testator reference remains <Highlight>{userName}</Highlight>.
+            </p>
+            <p>
+              2.2 The Principle of Joint Survivorship: Real property or bank holdings registered under a joint framework are handled separately from the yellow-marked family response.
+            </p>
+            <p>
+              2.3 Separation of Central Provident Fund (CPF): Your CPF savings are strictly isolated from estate distribution under this will.
+            </p>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Testamentary Declarations & Family Structure',
+        pageNumber: 4,
+        directive: 'This page carries the family identity fields that should remain highlighted and dynamic.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Purpose:</strong> Explicitly establishes the identity of the testator, status of immediate kin, and revokes prior legal instruments.
+              </p>
+            </div>
+            <p>
+              3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN, declare this instrument to be my definitive Last Will and Testament.
+            </p>
+            <p>
+              3.2 I formally declare that my immediate family structure comprises the following individuals:
+            </p>
+            <ul className="space-y-3 pl-5">
+              {family.length ? (
+                family.map((member, index) => (
+                  <li key={member.id ?? `${member.fullName ?? 'member'}-${index}`} className="list-disc">
+                    My family member is <Highlight>{member.fullName ?? 'Unnamed family member'}</Highlight>
+                    {member.relationType ? ` (${member.relationType})` : ''}.
+                  </li>
+                ))
+              ) : (
+                <li className="list-disc">No family members added yet.</li>
+              )}
+            </ul>
+            <p>
+              Primary executor: <Highlight>{primaryExecutor}</Highlight>. Backup executor: <Highlight>{backupExecutor}</Highlight>.
+            </p>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Administrative Appointments & Minority Guardianship',
+        pageNumber: 5,
+        directive: 'Guardian and trustee appointment page with live executor names highlighted.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Purpose:</strong> Designates fiduciary representatives to manage the estate liquidation and care for minor dependents.
+              </p>
+            </div>
+            <p>
+              4.1 Fiduciary Appointment: I nominate <Highlight>{primaryExecutor}</Highlight> to act as the sole Executor and Trustee of this my Will.
+            </p>
+            <p>
+              4.2 Minority Guardianship Mandate: In the event that my children are below the age of twenty-one, I appoint <Highlight>{backupExecutor}</Highlight> as the backup guardian.
+            </p>
+            <p>
+              4.3 Financial Indemnification of Caregivers: It is my explicit directive that estate resources may support my dependents as needed.
+            </p>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Special Bequests & Companion Animal Protection',
+        pageNumber: 6,
+        directive: 'Specific gifts, vehicle, business shares, financial portfolio, and companion animal legacy stay dynamic.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Purpose:</strong> Isolation of specific assets and entities for immediate, direct transfer prior to residue calculations.
+              </p>
+            </div>
+            <p>
+              5.1 Personal Valuables: I bequeath my physical time-piece asset to <Highlight>{gifts[0]?.recipientName ?? primaryExecutor}</Highlight>.
+            </p>
+            <p>
+              5.2 Vehicular Holdings: I bequeath my motor vehicle directly to <Highlight>{gifts[1]?.recipientName ?? backupExecutor}</Highlight>.
+            </p>
+            <p>
+              5.3 Corporate Equity: I bequeath my shareholding allocation to <Highlight>{gifts[2]?.recipientName ?? familyNames[0] ?? primaryExecutor}</Highlight>.
+            </p>
+            <p>
+              5.4 Financial Portfolios: I bequeath my complete entitlement under the financial portfolio framework directly to <Highlight>{formatMoney(dashboard.summary?.netWorth)}</Highlight>.
+            </p>
+            <p>
+              5.5 Companion Animal Legacy: I entrust my companion animal <Highlight>{firstPetName}</Highlight> to <Highlight>{firstPetCaretaker}</Highlight>.
+            </p>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Apportionment of Residuary Estate & Legal Defenses',
+        pageNumber: 7,
+        directive: 'Residuary percentages should match the distribution rows returned by the dashboard.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Purpose:</strong> Dictates the definitive split of all remaining assets and introduces structural legal protection clauses.
+              </p>
+            </div>
+            <p>
+              6.1 Residuary Allocations: All remaining capital, real estate interests, and investments not specifically named elsewhere shall be settled and distributed among the following survivors:
+            </p>
+            <ul className="space-y-3 pl-5">
+              {firstDistributions.length ? (
+                firstDistributions.map((distribution) => (
+                  <li key={distribution.id} className="list-disc">
+                    Allocation to <Highlight>{distribution.person?.fullName ?? 'Not selected'}</Highlight> with a <Highlight>{formatPercent(distribution.percentage)}</Highlight> share.
+                  </li>
+                ))
+              ) : (
+                <li className="list-disc">No residue allocation has been added yet.</li>
+              )}
+            </ul>
+            <p>
+              6.2 Severability Clause: If any clause is found invalid, the remaining instrument and highlighted beneficiary data will remain intact.
+            </p>
+            <p>
+              6.3 Final Binding Declaration: I sign this document openly in the presence of my witnesses.
+            </p>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Final Execution Interface',
+        pageNumber: 8,
+        directive: 'Signature page with witness blocks, matching the final document layout in the screenshots.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Action:</strong> To be signed only when both witnesses are physically looking at your hand affixing the mark.
+              </p>
+            </div>
+            <p>
+              In witness whereof, I have set my hand to this my Last Will on this <Highlight>________</Highlight> day of <Highlight>________</Highlight>, 2026.
+            </p>
+            <p>
+              <Highlight>{userName}</Highlight>
+            </p>
+            <p className="italic text-[#5f5b55]">
+              Acknowledged and signed by the Testator as his final wishes in our joint simultaneous presence, whereupon, we, at his request, subscribe our names as witnesses:
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-[6px] border border-[#ece6dc] bg-[#fbfaf7] px-4 py-4 text-[0.88rem] leading-[1.7] text-[#59616e]">
+                <p className="font-semibold text-[#3b4048]">WITNESS ONE:</p>
+                <p>Signature: ____________________</p>
+                <p>Full Name: ____________________</p>
+                <p>NRIC/ID: ____________________</p>
+                <p>Address: ____________________</p>
+              </div>
+              <div className="rounded-[6px] border border-[#ece6dc] bg-[#fbfaf7] px-4 py-4 text-[0.88rem] leading-[1.7] text-[#59616e]">
+                <p className="font-semibold text-[#3b4048]">WITNESS TWO:</p>
+                <p>Signature: ____________________</p>
+                <p>Full Name: ____________________</p>
+                <p>NRIC/ID: ____________________</p>
+                <p>Address: ____________________</p>
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        pageTitle: 'Personal Memos & Confidential Appendix',
+        pageNumber: 9,
+        directive: 'Confidential appendix page with memo recipients and the final portfolio audit table.',
+        body: (
+          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+              <p>
+                <strong>Directives:</strong> Instruct my executor to deliver these messages to my intended beneficiaries, either electronically or in hard copy.
+              </p>
+            </div>
+            <p>
+              Private Memorandum to <Highlight>{familyNames[0] ?? primaryExecutor}</Highlight>:
+            </p>
+            <p className="font-semibold text-[#2f2d24]">
+              "Dear recipient, please find an appropriate buyer for my business, should you be able to liquidate. My wish is to leave 20% of its nett sale proceeds to you and remaining 80% divided equally between my children."
+            </p>
+            <p>
+              Private Memorandum to <Highlight>{familyNames[1] ?? backupExecutor}</Highlight>:
+            </p>
+            <p className="font-semibold text-[#2f2d24]">
+              "This plan is able to be transferred. I hope for this plan to be transferred to you so that you can enjoy the monthly dividends forward."
+            </p>
+            <div className="pt-2">
+              <p className="font-semibold uppercase tracking-[0.08em] text-[#2d2f35]">Informal Portfolio Audit</p>
+              <div className="mt-3 overflow-hidden rounded-[2px] border border-[#e1d7cb]">
+                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] bg-[#1f2937] text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">
+                  <div className="px-4 py-3">Asset Description</div>
+                  <div className="px-4 py-3">Asset Class</div>
+                  <div className="px-4 py-3">Beneficiary ID Link</div>
+                </div>
+                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] border-t border-[#e1d7cb] bg-white text-[0.82rem] text-[#414957]">
+                  <div className="px-4 py-3">Prudential PruWealth Income</div>
+                  <div className="px-4 py-3">Insurance</div>
+                  <div className="px-4 py-3"><Highlight>{primaryExecutor}</Highlight></div>
+                </div>
+                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] border-t border-[#e1d7cb] bg-white text-[0.82rem] text-[#414957]">
+                  <div className="px-4 py-3">Alessandria Pte Ltd</div>
+                  <div className="px-4 py-3">Business Shares</div>
+                  <div className="px-4 py-3"><Highlight>{familyNames[0] ?? userName}</Highlight></div>
+                </div>
+                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] border-t border-[#e1d7cb] bg-white text-[0.82rem] text-[#414957]">
+                  <div className="px-4 py-3">Interactive Brokers (IBKR) Account</div>
+                  <div className="px-4 py-3">Investment</div>
+                  <div className="px-4 py-3">Residuary Trust Split</div>
+                </div>
+              </div>
+            </div>
+            <p className="pt-2 text-center text-[0.78rem] uppercase tracking-[0.08em] text-[#8c8072]">
+              Managed via the Will &amp; Way platform — end of portfolio draft
+            </p>
+          </div>
+        ),
+      },
+    ],
+    [
+      backupExecutor,
+      dashboard.summary?.netWorth,
+      executors.length,
+      family,
+      familyNames,
+      firstDistributions,
+      firstPetCaretaker,
+      firstPetName,
+      gifts,
+      loans.length,
+      petCaretakers,
+      primaryExecutor,
+      properties.length,
+      userName,
+    ]
+  )
+
+  const allComplete = [
+    family.length > 0,
+    executors.length > 0,
+    estateDistributions.length > 0,
+    gifts.length > 0,
+    Boolean(dashboard.petCaretakers?.length),
+    financialAssets.length > 0 || properties.length > 0 || loans.length > 0,
+  ].every(Boolean)
+
+  const nextSteps = [
+    {
+      id: 'children',
+      title: 'Name guardians for your children',
+      icon: Users2,
+      description:
+        'If you have young children, name a guardian and a backup guardian you trust to care for them and their inheritance until they reach 21 years of age.',
+    },
+    {
+      id: 'update',
+      title: 'Easily update anytime',
+      icon: PenLine,
+      description: 'You can return later to update family, executor, gifts, distribution, caretakers, and asset details whenever life changes.',
+    },
+    {
+      id: 'gifts',
+      title: 'Leave gifts to your loved ones',
+      icon: Wallet,
+      description: 'Assign specific cash, items, collections, or property gifts to the people who matter most.',
+    },
+    {
+      id: 'legal',
+      title: 'Legally valid in Singapore',
+      icon: Shield,
+      description: 'Your will can be used as part of a valid estate planning process in Singapore when properly executed.',
+    },
+    {
+      id: 'support',
+      title: 'Continued support after purchase',
+      icon: CheckCircle2,
+      description: 'Review and revise your plan as your family and assets change over time.',
+    },
+    {
+      id: 'money-back',
+      title: '30-day money-back guarantee',
+      icon: Wrench,
+      description: 'If you are not satisfied, the service provides a simple satisfaction window for your purchase.',
+    },
+    {
+      id: 'pets',
+      title: 'Caretakers for your pets',
+      icon: Users2,
+      description: 'Name a caretaker so your pets are looked after according to your wishes.',
+    },
+    {
+      id: 'finances',
+      title: 'Organised finances for loved ones',
+      icon: Wallet,
+      description: 'Keep loans, financial accounts, properties, and other assets clearly organised in one place.',
+    },
+    {
+      id: 'coverage',
+      title: 'Global coverage',
+      icon: Lock,
+      description: 'Keep your estate planning data centralised and accessible for the people who need it most.',
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-[#fbf4ed] text-[#171612]">
@@ -68,39 +578,85 @@ export default function WillPreviewPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[980px] px-4 pb-16 pt-28 md:px-8 md:pt-32">
-        <div className="max-w-[760px]">
-          <p className="text-[0.82rem] text-[#45413c] md:text-[0.9rem]">Will preview</p>
-          <h1 className="mt-3 text-[2.2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-[#101010] md:text-[3.25rem]">
-            {dashboard.user?.name ?? 'Your'} will overview
-          </h1>
-          <p className="mt-4 text-[1rem] leading-[1.55] text-[#6f7685] md:text-[1.08rem]">
-            This is the combined summary of your will sections.
-          </p>
-        </div>
-
-        <div className="mt-8 rounded-[10px] bg-[#f2e5d8] p-4 md:p-6">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <SummaryTile label="Family" value={`${family.length} people`} />
-            <SummaryTile label="Executors" value={`${executors.length} appointed`} />
-            <SummaryTile label="Estate Distribution" value={`${estateDistributions.length} entries`} />
-            <SummaryTile label="Gifts" value={`${gifts.length} gifts`} />
-            <SummaryTile label="Caretakers" value={`${petCaretakers.length} caretakers`} />
-            <SummaryTile label="Assets" value={`${financialAssets.length + properties.length + loans.length} items`} />
-          </div>
-
-          <div className="mt-6 rounded-[8px] bg-white px-5 py-5">
-            {isLoading ? (
-              <p className="text-[0.95rem] text-[#6f7685]">Loading preview...</p>
-            ) : (
-              <div className="space-y-3 text-[0.98rem] text-[#4b5361]">
-                <p>All sections are saved and ready for review.</p>
-                <p>Total net worth: {dashboard.summary?.netWorth != null ? `S$ ${dashboard.summary.netWorth.toLocaleString()}` : 'S$ 0'}</p>
-                <p>Outstanding loans: {dashboard.summary?.totalOutstanding != null ? `S$ ${dashboard.summary.totalOutstanding.toLocaleString()}` : 'S$ 0'}</p>
-                <p>Loans given: {dashboard.summary?.totalLoansGiven != null ? `S$ ${dashboard.summary.totalLoansGiven.toLocaleString()}` : 'S$ 0'}</p>
+      <main className="mx-auto w-full max-w-[1320px] px-4 pb-16 pt-28 md:px-8 md:pt-32">
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <section className="space-y-4">
+            <div className="rounded-[28px] border border-[#e4d8cb] bg-[#efe7db] p-4 shadow-[0_20px_50px_rgba(17,24,39,0.06)]">
+              <div className="flex items-center justify-between gap-4 px-2 pb-4">
+                <div>
+                  <p className="text-[0.76rem] uppercase tracking-[0.22em] text-[#8a8378]">PDF Preview</p>
+                  <h2 className="mt-2 text-[1.25rem] font-semibold text-[#241f1a]">Will pages from your live dashboard</h2>
+                </div>
               </div>
-            )}
-          </div>
+              <div className="max-h-[calc(100vh-220px)] space-y-5 overflow-auto pr-2">
+                {documentPages.map((page) => (
+                  <PdfPageFrame
+                    key={page.pageNumber}
+                    pageNumber={page.pageNumber}
+                    totalPages={totalPages}
+                    title={page.pageTitle}
+                    directive={page.directive}
+                  >
+                    {page.body}
+                  </PdfPageFrame>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="space-y-6">
+            <div>
+              <h1 className="text-[2.2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-[#101010] md:text-[3.25rem]">
+                Next Steps
+              </h1>
+              <p className="mt-4 max-w-[560px] text-[1rem] leading-[1.55] text-[#6f7685] md:text-[1.08rem]">
+                The left preview keeps the PDF wording static while the yellow-marked fields are driven by your dashboard response.
+              </p>
+              <p className="mt-4 max-w-[560px] text-[1rem] leading-[1.55] text-[#6f7685] md:text-[1.08rem]">
+                From the date of purchase, you will have 30 days to make any changes and download for free.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <SummaryTile label="Family" value={`${family.length} members`} />
+                <SummaryTile label="Executors" value={`${executors.length} selected`} />
+                <SummaryTile label="Assets" value={`${financialAssets.length + properties.length + loans.length}`} />
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/will/preview" className="inline-flex items-center rounded-[3px] border border-[#cbbdaa] bg-white px-5 py-3 text-[0.95rem] text-[#2b221a] shadow-[0_8px_18px_rgba(18,28,44,0.08)]">
+                  Make edits to your will
+                </Link>
+                <Link href="/will/checkout" className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]">
+                  Pay and download
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-[#ece2d7] bg-[#f7efe6] p-2">
+              <div className="space-y-1">
+                {nextSteps.map((step) => (
+                  <AccordionItem
+                    key={step.id}
+                    icon={step.icon}
+                    title={step.title}
+                    description={step.description}
+                    open={activeStep === step.id}
+                    onToggle={() => setActiveStep((current) => (current === step.id ? '' : step.id))}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              {allComplete ? (
+                <Link href="/will" className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-6 py-3 text-[0.98rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]">
+                  Continue
+                </Link>
+              ) : (
+                <span className="text-[0.95rem] text-[#6f7685]">Complete all sections to continue.</span>
+              )}
+            </div>
+          </aside>
         </div>
       </main>
     </div>
