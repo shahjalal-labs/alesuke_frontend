@@ -21,13 +21,15 @@ type GiftAddTemplateProps = {
   fieldLabel: string
   fieldHelp?: string
   fieldPlaceholder: string
-  recipientsTitle: string
-  recipients: Recipient[]
+  recipientsTitle?: string
+  recipients?: Recipient[]
   selectedRecipientIds?: Array<number | string>
   onRecipientToggle?: (recipientId: number | string) => void
+  showRecipients?: boolean
   messageTitle?: string
   messageHelp?: string
   messagePlaceholder?: string
+  showMessage?: boolean
   secondaryField?: {
     label: string
     placeholder: string
@@ -50,8 +52,8 @@ export default function GiftAddTemplate({
   fieldLabel,
   fieldHelp,
   fieldPlaceholder,
-  recipientsTitle,
-  recipients,
+  recipientsTitle = '',
+  recipients = [],
   selectedRecipientIds = [],
   onRecipientToggle,
   messageTitle = 'Leave a personal message (optional)',
@@ -63,6 +65,8 @@ export default function GiftAddTemplate({
   nextLabel = 'Save & continue',
   onNext,
   nextDisabled = false,
+  showRecipients = true,
+  showMessage = true,
 }: GiftAddTemplateProps) {
   const selectedSet = new Set(selectedRecipientIds)
 
@@ -141,51 +145,55 @@ export default function GiftAddTemplate({
           </>
         )}
 
-        <section className="mt-10">
-          <p className="text-[1rem] leading-[1.55] text-[#12100e] md:text-[1.08rem]">{recipientsTitle}</p>
-          <div className="mt-4 rounded-[6px] bg-[#f2e5d8] p-4 md:p-6">
-            <div className="space-y-3 md:space-y-4">
-              {recipients.map((recipient) => {
-                const isSelected = selectedSet.has(recipient.id)
+        {showRecipients ? (
+          <section className="mt-10">
+            <p className="text-[1rem] leading-[1.55] text-[#12100e] md:text-[1.08rem]">{recipientsTitle}</p>
+            <div className="mt-4 rounded-[6px] bg-[#f2e5d8] p-4 md:p-6">
+              <div className="space-y-3 md:space-y-4">
+                {recipients.map((recipient) => {
+                  const isSelected = selectedSet.has(recipient.id)
 
-                return (
-                  <button
-                    key={recipient.id}
-                    type="button"
-                    onClick={() => onRecipientToggle?.(recipient.id)}
-                    className={`flex w-full items-center justify-between rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow hover:shadow-[0_8px_24px_rgba(17,24,39,0.08)] ${
-                      recipient.helper ? 'py-3' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#e7eaee] text-[#2a3246]">
-                        {recipient.icon}
+                  return (
+                    <button
+                      key={recipient.id}
+                      type="button"
+                      onClick={() => onRecipientToggle?.(recipient.id)}
+                      className={`flex w-full items-center justify-between rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow hover:shadow-[0_8px_24px_rgba(17,24,39,0.08)] ${
+                        recipient.helper ? 'py-3' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#e7eaee] text-[#2a3246]">
+                          {recipient.icon}
+                        </div>
+                        <div>
+                          <div className="text-[1rem] font-medium text-[#191715] md:text-[1.08rem]">{recipient.name}</div>
+                          {recipient.helper ? <div className="text-[0.86rem] text-[#a0a8b6] md:text-[0.92rem]">{recipient.helper}</div> : null}
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-[1rem] font-medium text-[#191715] md:text-[1.08rem]">{recipient.name}</div>
-                        {recipient.helper ? <div className="text-[0.86rem] text-[#a0a8b6] md:text-[0.92rem]">{recipient.helper}</div> : null}
-                      </div>
-                    </div>
 
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[#a5adba]">
-                      {isSelected ? <span className="h-2.5 w-2.5 rounded-full bg-[#a5adba]" /> : null}
-                    </div>
-                  </button>
-                )
-              })}
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[#a5adba]">
+                        {isSelected ? <span className="h-2.5 w-2.5 rounded-full bg-[#a5adba]" /> : null}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
-        <section className="mt-10">
-          <h2 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">{messageTitle}</h2>
-          {messageHelp ? <p className="mt-3 text-[0.9rem] leading-[1.5] text-[#5d6778] md:text-[0.95rem]">{messageHelp}</p> : null}
+        {showMessage ? (
+          <section className="mt-10">
+            <h2 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">{messageTitle}</h2>
+            {messageHelp ? <p className="mt-3 text-[0.9rem] leading-[1.5] text-[#5d6778] md:text-[0.95rem]">{messageHelp}</p> : null}
 
-          <textarea
-            className="mt-4 min-h-[148px] w-full rounded-[4px] border border-[#e7e1d9] bg-white px-4 py-3 text-[0.95rem] text-[#12100e] outline-none placeholder:text-[#aab0bb]"
-            placeholder={messagePlaceholder}
-          />
-        </section>
+            <textarea
+              className="mt-4 min-h-[148px] w-full rounded-[4px] border border-[#e7e1d9] bg-white px-4 py-3 text-[0.95rem] text-[#12100e] outline-none placeholder:text-[#aab0bb]"
+              placeholder={messagePlaceholder}
+            />
+          </section>
+        ) : null}
 
         <footer className="mt-10 border-t border-[#e6ddd3] pt-5">
           <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">

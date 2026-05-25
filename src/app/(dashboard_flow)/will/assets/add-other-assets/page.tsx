@@ -1,9 +1,7 @@
 import React from 'react'
 
-function page() {
-  return (
-    <div>page</div>
-  )
-}
+import AddOtherAssets from '@/components/dashboard/assets/AddOtherAssets'
 
-export default page
+export default function Page() {
+  return <AddOtherAssets />
+}

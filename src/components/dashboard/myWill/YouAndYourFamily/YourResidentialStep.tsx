@@ -9,6 +9,7 @@ import FamilyFlowShell from "./FamilyFlowShell";
 import { toast } from "sonner";
 import { useAddAddressMutation } from "@/redux/api/profileApi";
 import * as z from "zod";
+import CompletionScreen from "@/components/dashboard/shared/CompletionScreen";
 
 const countryOptions = [
   { code: "AF", name: "Afghanistan" },
@@ -162,35 +163,7 @@ export default function YourResidentialStep() {
   };
 
   if (completed) {
-    return (
-      <div className="min-h-screen bg-[#f6f1eb] text-[#161616]">
-        <header className="sticky top-0 z-20 border-b border-[#ece6de] bg-[#f6f1eb]/95 px-4 py-3 backdrop-blur md:px-8">
-          <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between">
-            <Link href="/will" className="inline-flex items-center">
-              <Image src={logo} alt="Will & Way" className="h-auto w-[96px] md:w-[130px]" priority />
-            </Link>
-            <Link
-              href="/will"
-              className="rounded-[4px] border border-[#d8d1c8] px-4 py-2 text-[0.9rem] text-[#1b1b1b] transition-colors hover:bg-[#f0e8df]"
-            >
-              Back to Dashboard
-            </Link>
-          </div>
-        </header>
-
-        <main className="mx-auto flex min-h-[75vh] w-full max-w-[760px] items-center justify-center px-5 md:px-8">
-          <div className="w-full rounded-[18px] bg-[#f4f5f7] px-6 py-14 text-center md:px-10 md:py-16">
-            <div className="mx-auto mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-[#d8dce0]">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1e35] text-white">
-                <CheckCircle2 className="h-9 w-9" />
-              </div>
-            </div>
-            <h2 className="text-[2.1rem] font-semibold tracking-[-0.03em] text-[#101010] md:text-[3.2rem]">Great work!</h2>
-            <p className="mt-3 text-[0.95rem] text-[#8992a1] md:text-[1.2rem]">You have successfully completed this section!</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <CompletionScreen />;
   }
 
   return (

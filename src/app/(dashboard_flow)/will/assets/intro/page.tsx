@@ -1,9 +1,5 @@
-import React from 'react'
+import Intro from "@/components/dashboard/assets/Intro";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function Page() {
+  return <Intro />;
 }
-
-export default page

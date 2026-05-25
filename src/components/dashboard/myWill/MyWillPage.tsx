@@ -213,7 +213,7 @@ export default function MyWillPage() {
           time="1 min"
           description="Who will be caring for your pets?"
           buttonLabel={hasFamilyData ? "Add caretaker for pets" : undefined}
-          buttonHref={hasFamilyData ? "/will/you-and-your-family/your-pets" : undefined}
+          buttonHref={hasFamilyData ? "/will/caretakers-of-pets/intro" : undefined}
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Complete You and your family first"}
         />
@@ -223,7 +223,7 @@ export default function MyWillPage() {
           time="4-10 minutes"
           description="Indicate your assets here"
           buttonLabel={hasFamilyData ? "Add your assets" : undefined}
-          buttonHref={hasFamilyData ? "/will/assets" : undefined}
+          buttonHref={hasFamilyData ? "/will/assets/intro" : undefined}
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Add your assets"}
         />

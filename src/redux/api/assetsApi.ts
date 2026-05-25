@@ -30,6 +30,57 @@ export const assetsApi = baseApi.injectEndpoints({
       invalidatesTags: ["assets"],
       
     }),
+
+    // caretakers for pets endpoints
+
+    addCaretaker: builder.mutation({
+      query: (data) => ({
+        url: `/will/pet-caretakers`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["assets"],
+      
+    }),
+    getCaretaker: builder.query({
+      query: () => ({
+        url: `/will/pet-caretakers`,
+        method: "GET",
+      }),
+      providesTags: ["assets"],
+      
+    }),
+
+    deleteCaretaker: builder.mutation({
+      query: (data) => ({
+        url: `/will/pet-caretakers`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["assets"],
+      
+    }),
+
+    // asset loan
+     addAssetLoan: builder.mutation({
+      query: (data) => ({
+        url: `/assets/loans`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["assets"],
+      
+    }),
+     getAssetLoan: builder.query({
+      query: () => ({
+        url: `/assets/loans`,
+        method: "GET",
+       
+      }),
+      providesTags: ["assets"],
+      
+    }),
+
   }),
 });
 
@@ -37,4 +88,9 @@ export const {
     useAddAssetsMutation,
     useGetAllAssetsQuery,
     useDeleteAssetsMutation,
-} = assetsApi;
+    useAddCaretakerMutation,
+    useGetCaretakerQuery,
+    useDeleteCaretakerMutation,
+    useAddAssetLoanMutation,
+    useGetAssetLoanQuery,
+} = assetsApi;  

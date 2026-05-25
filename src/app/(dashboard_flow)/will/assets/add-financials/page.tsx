@@ -1,9 +1,5 @@
-import React from 'react'
+import AddFinancials from "@/components/dashboard/assets/AddFinancials";
 
-function page() {
-  return (
-    <div>page</div>
-  )
+export default function Page() {
+  return <AddFinancials />;
 }
-
-export default page
