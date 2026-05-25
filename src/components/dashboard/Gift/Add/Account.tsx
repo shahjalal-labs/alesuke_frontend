@@ -1,11 +1,12 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import GiftAddTemplate from './GiftAddTemplate'
 import AddAccountModal, { type AccountType } from '@/components/ui/AddAccountModal'
 import { useAddAssetsMutation, useDeleteAssetsMutation, useGetAllAssetsQuery } from '@/redux/api/assetsApi'
+import { useAddGiftMutation, useGetGiftsTypeQuery } from '@/redux/api/giftApi'
 import { useGetAllMemberListQuery } from '@/redux/api/profileApi'
 
 type AssetType =
@@ -37,6 +38,20 @@ type MemberRecord = {
   id: string
   fullName?: string | null
   relationType?: string | null
+}
+
+type FinancialAccountGiftRecord = {
+  id?: string
+  giftType?: 'FINANCIAL_ACCOUNT'
+  assetId?: string | null
+  asset?: AssetRecord | null
+  recipients?: Array<{
+    peopleID?: string | null
+    recipient?: {
+      id?: string
+      fullName?: string | null
+    }
+  }>
 }
 
 const addOptions: Array<{ id: AccountType; label: string }> = [
@@ -136,11 +151,15 @@ function getAssetValue(asset: AssetRecord) {
 export default function Account() {
   const { data: members = [] } = useGetAllMemberListQuery(undefined)
   const { data: assetsResponse, isLoading, isFetching } = useGetAllAssetsQuery(undefined)
+  const { data: financialAccountGiftResponse } = useGetGiftsTypeQuery('FINANCIAL_ACCOUNT')
   const [addAssets] = useAddAssetsMutation()
   const [deleteAssets] = useDeleteAssetsMutation()
+  const [addGift] = useAddGiftMutation()
   const [activeType, setActiveType] = useState<AccountType | null>(null)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<Array<string | number>>([])
+  const [selectedAssetId, setSelectedAssetId] = useState<string | number | null>(null)
   const [deletingId, setDeletingId] = useState<string | number | null>(null)
+  const [submittingGift, setSubmittingGift] = useState(false)
 
   const recipientRows = useMemo(() => {
     return (members as MemberRecord[]).map((member, index) => ({
@@ -159,6 +178,35 @@ export default function Account() {
 
   const savedAssets = useMemo(() => normalizeAssets(assetsResponse), [assetsResponse])
 
+  const selectedFinancialAccountGift = useMemo(() => {
+    const gifts = ((financialAccountGiftResponse as { data?: FinancialAccountGiftRecord[] } | undefined)?.data ?? []) as FinancialAccountGiftRecord[]
+
+    return gifts[0] ?? null
+  }, [financialAccountGiftResponse])
+
+  const selectedAsset = useMemo(() => {
+    if (selectedAssetId == null) return null
+
+    return savedAssets.find((asset) => String(asset.id) === String(selectedAssetId)) ?? null
+  }, [savedAssets, selectedAssetId])
+
+  useEffect(() => {
+    if (!selectedFinancialAccountGift) {
+      return
+    }
+
+    const savedAssetId = selectedFinancialAccountGift.assetId ?? selectedFinancialAccountGift.asset?.id ?? null
+    if (savedAssetId != null) {
+      setSelectedAssetId(savedAssetId)
+    }
+
+    const savedRecipientIds = (selectedFinancialAccountGift.recipients ?? [])
+      .map((recipient) => recipient.peopleID ?? recipient.recipient?.id ?? '')
+      .filter((recipientId): recipientId is string => Boolean(recipientId))
+
+    setSelectedRecipientIds(savedRecipientIds)
+  }, [selectedFinancialAccountGift])
+
   const handleDeleteAsset = async (id?: string | number) => {
     if (id == null) return
 
@@ -166,12 +214,19 @@ export default function Account() {
 
     try {
       await deleteAssets(String(id)).unwrap()
+      setSelectedAssetId((current) => (current === id ? null : current))
       toast.success('Account deleted')
     } catch (error) {
       toast.error('Unable to delete account')
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleSelectAsset = (assetId?: string | number) => {
+    if (assetId == null) return
+
+    setSelectedAssetId(assetId)
   }
 
   const openModal = (type: AccountType) => {
@@ -260,6 +315,34 @@ export default function Account() {
     await addAssets(payload).unwrap()
   }
 
+  const handleSaveGift = async () => {
+    if (!selectedRecipientIds.length) {
+      toast.error('Select at least one recipient.')
+      return
+    }
+
+    if (selectedAssetId == null) {
+      toast.error('Select one account to continue.')
+      return
+    }
+
+    setSubmittingGift(true)
+
+    try {
+      await addGift({
+        giftType: 'FINANCIAL_ACCOUNT',
+        recipients: selectedRecipientIds.map((peopleId) => ({ peopleId: String(peopleId) })),
+        assetId: String(selectedAssetId),
+      }).unwrap()
+
+      toast.success('Financial account gift saved')
+    } catch (error) {
+      toast.error('Unable to save financial account gift')
+    } finally {
+      setSubmittingGift(false)
+    }
+  }
+
   return (
     <>
       <GiftAddTemplate
@@ -273,8 +356,32 @@ export default function Account() {
         onRecipientToggle={toggleRecipient}
         messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."
         messagePlaceholder=""
+        nextLabel={submittingGift ? 'Saving...' : 'Save & continue'}
+        onNext={handleSaveGift}
+        nextDisabled={submittingGift || !selectedRecipientIds.length || selectedAssetId == null}
         customMiddle={
           <>
+            {selectedFinancialAccountGift ? (
+              <div className="mb-4 rounded-[6px] border border-[#d7d7d7] bg-white px-4 py-4 text-[0.92rem] text-[#52606f] shadow-[0_1px_0_rgba(17,24,39,0.02)] md:px-5">
+                <div className="font-semibold text-[#1d2430]">Selected financial account gift</div>
+                <div className="mt-1 text-[0.84rem] text-[#7b8594]">
+                  Asset ID: {selectedFinancialAccountGift.assetId ?? selectedFinancialAccountGift.asset?.id ?? 'N/A'}
+                </div>
+                <div className="mt-1 text-[0.84rem] text-[#7b8594]">
+                  Account:{' '}
+                  {selectedAsset ? getAssetTitle(selectedAsset) : selectedFinancialAccountGift.asset ? getAssetTitle(selectedFinancialAccountGift.asset) : 'N/A'}
+                </div>
+                <div className="mt-1 text-[0.84rem] text-[#7b8594]">
+                  Recipients:{' '}
+                  {selectedRecipientIds.length
+                    ? selectedRecipientIds
+                        .map((recipientId) => recipientRows.find((recipient) => recipient.id === recipientId)?.name ?? String(recipientId))
+                        .join(', ')
+                    : 'N/A'}
+                </div>
+              </div>
+            ) : null}
+
             <h3 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">Choose an account</h3>
 
             {savedAssets.length ? (
@@ -282,11 +389,23 @@ export default function Account() {
                 <div className="space-y-3 md:space-y-4">
                   {savedAssets.map((asset, index) => {
                     const isLast = index === savedAssets.length - 1
+                    const isSelected = selectedAssetId === asset.id
 
                     return (
                       <div
                         key={asset.id ?? `${asset.type}-${index}`}
-                        className={`flex items-center gap-4 rounded-[6px] bg-white px-4 py-4 shadow-[0_1px_0_rgba(17,24,39,0.02)] ${!isLast ? 'border-b border-[#ece3d6]' : ''}`}
+                        onClick={() => handleSelectAsset(asset.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            handleSelectAsset(asset.id)
+                          }
+                        }}
+                        className={`flex w-full items-center gap-4 rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow ${
+                          isSelected ? 'ring-2 ring-[#152035] shadow-[0_8px_24px_rgba(17,24,39,0.08)]' : ''
+                        } ${!isLast ? 'border-b border-[#ece3d6]' : ''}`}
                       >
                         <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-[#d8d8d8] bg-[#f9fbfc] text-[#27a5f7]">
                           <span className="text-[1.2rem] leading-none">⌂</span>
@@ -315,12 +434,20 @@ export default function Account() {
                           <p className="mt-2 text-[0.95rem] font-semibold leading-[1.2] text-[#0f3b3b] md:text-[1rem]">
                             {getAssetValue(asset)}
                           </p>
+                          {isSelected ? (
+                            <span className="mt-2 inline-flex rounded-full bg-[#152035] px-3 py-1 text-[0.75rem] font-medium text-white">
+                              Selected account
+                            </span>
+                          ) : null}
                         </div>
 
                         <button
                           type="button"
                           aria-label="Delete account"
-                          onClick={() => handleDeleteAsset(asset.id)}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleDeleteAsset(asset.id)
+                          }}
                           disabled={deletingId === asset.id}
                           className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-[#c34141] transition-colors hover:bg-[#feecec] disabled:opacity-60"
                         >

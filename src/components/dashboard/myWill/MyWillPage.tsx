@@ -209,6 +209,16 @@ export default function MyWillPage() {
         />
 
         <WillSectionCard
+          title="Caretaker for pets"
+          time="1 min"
+          description="Who will be caring for your pets?"
+          buttonLabel={hasFamilyData ? "Add caretaker for pets" : undefined}
+          buttonHref={hasFamilyData ? "/will/you-and-your-family/your-pets" : undefined}
+          withPrimaryButton={hasFamilyData}
+          secondaryLabel={hasFamilyData ? undefined : "Complete You and your family first"}
+        />
+
+        <WillSectionCard
           title="Assets"
           time="4-10 minutes"
           description="Indicate your assets here"
@@ -217,16 +227,6 @@ export default function MyWillPage() {
           withPrimaryButton={hasFamilyData}
           secondaryLabel={hasFamilyData ? undefined : "Add your assets"}
         />
-      </div>
-
-      <div className="mt-6 rounded-[3px] border border-[#e6d8c8] bg-[#F6ECE2] p-4 sm:p-5">
-        <div className="mb-2 flex items-center justify-between text-[0.9rem] text-[#2f241c]">
-          <span className="font-medium">Drafting progress</span>
-          <span>{familyProgress}%</span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-[#e7ddd2]">
-          <div className="h-full rounded-full bg-[#192233] transition-all duration-300" style={{ width: `${familyProgress}%` }} />
-        </div>
       </div>
     </div>
   );
