@@ -6,7 +6,7 @@ import { MessageCircle } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
 type Recipient = {
-  id: number
+  id: number | string
   name: string
   icon: string
   helper?: string
@@ -23,6 +23,8 @@ type GiftAddTemplateProps = {
   fieldPlaceholder: string
   recipientsTitle: string
   recipients: Recipient[]
+  selectedRecipientIds?: Array<number | string>
+  onRecipientToggle?: (recipientId: number | string) => void
   messageTitle?: string
   messageHelp?: string
   messagePlaceholder?: string
@@ -48,6 +50,8 @@ export default function GiftAddTemplate({
   fieldPlaceholder,
   recipientsTitle,
   recipients,
+  selectedRecipientIds = [],
+  onRecipientToggle,
   messageTitle = 'Leave a personal message (optional)',
   messageHelp,
   messagePlaceholder,
@@ -56,7 +60,7 @@ export default function GiftAddTemplate({
   previousLabel = 'Previous Step',
   nextLabel = 'Save & continue',
 }: GiftAddTemplateProps) {
-  const selectedRecipient = recipients[2]?.id ?? recipients[0]?.id
+  const selectedSet = new Set(selectedRecipientIds)
 
   return (
     <div className="min-h-screen bg-[#fbf4ed] text-[#171612]">
@@ -138,12 +142,13 @@ export default function GiftAddTemplate({
           <div className="mt-4 rounded-[6px] bg-[#f2e5d8] p-4 md:p-6">
             <div className="space-y-3 md:space-y-4">
               {recipients.map((recipient) => {
-                const isSelected = recipient.id === selectedRecipient
+                const isSelected = selectedSet.has(recipient.id)
 
                 return (
                   <button
                     key={recipient.id}
                     type="button"
+                    onClick={() => onRecipientToggle?.(recipient.id)}
                     className={`flex w-full items-center justify-between rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow hover:shadow-[0_8px_24px_rgba(17,24,39,0.08)] ${
                       recipient.helper ? 'py-3' : ''
                     }`}

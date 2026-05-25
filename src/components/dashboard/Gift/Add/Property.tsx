@@ -91,14 +91,14 @@ export default function Property() {
           <>
            <h3 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem] mb-4">Choose a property</h3>
             {savedProperties.length ? (
-              <div className="mb-6 overflow-hidden rounded-[4px] border border-[#d7d7d7] bg-secondary shadow-[0_1px_0_rgba(17,24,39,0.02)]">
+              <div className="mb-6 overflow-hidden rounded-[4px] border border-[#d7d7d7] bg-secondary shadow-[0_1px_0_rgba(17,24,39,0.02)] p-4 space-y-4">
                 {savedProperties.map((property, index) => {
                   const isLast = index === savedProperties.length - 1
 
                   return (
                     <div
                       key={property.id}
-                      className={`flex items-center gap-4 px-4 py-4 md:px-5 bg-white m-4 rounded-lg ${!isLast ? 'border-b border-[#e5e5e5]' : ''}`}
+                      className={`flex items-center gap-4 px-4 py-4 md:px-5 bg-white rounded-lg ${!isLast ? 'border-b border-[#e5e5e5]' : ''}`}
                     >
                       <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-[#e0e0e0] text-[#29b1df]">
                         <span className="text-[1.35rem] leading-none">⌂</span>
@@ -121,14 +121,14 @@ export default function Property() {
             ) : null}
 
             <h3 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">Add a new property</h3>
-            <div className="mt-4 overflow-hidden rounded-[4px] border border-[#d7d7d7] bg-secondary shadow-[0_1px_0_rgba(17,24,39,0.02)]">
+            <div className="mt-4 overflow-hidden rounded-[4px] border border-[#d7d7d7] bg-secondary shadow-[0_1px_0_rgba(17,24,39,0.02)] p-4 ">
               <div className="space-y-3 md:space-y-4">
                 {propertyOptions.map((option) => (
                   <button
                     key={option.id}
                     type="button"
                     onClick={() => setActivePropertyType(option.id)}
-                    className="flex w-full items-center gap-4 border-b border-[#e5e5e5] bg-white px-4 py-4 md:m-6 text-left transition-shadow last:border-b-0 hover:shadow-[0_8px_24px_rgba(17,24,39,0.08)]"
+                    className="flex w-full items-center gap-4 border-b border-[#e5e5e5] bg-white px-4 py-4 md:px-6 md:py-6 text-left transition-shadow last:border-b-0 hover:shadow-[0_8px_24px_rgba(17,24,39,0.08)] rounded-lg"
                   >
                     <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-[#e0e0e0] text-[#29b1df]">
                       <span className="text-[1.35rem] leading-none">⌂</span>

@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, CircleAlert, X } from 'lucide-react'
 import { toast } from 'sonner'
 
-type AccountType = 'bank' | 'investment' | 'business' | 'retirement' | 'insurance' | 'safe' | 'crypto'
+export type AccountType = 'bank' | 'investment' | 'business' | 'retirement' | 'insurance' | 'safe' | 'crypto'
 
-type CoverType = 'TERM_LIFE' | 'WHOLE_LIFE' | 'ENDOWMENT' | 'UNIVERSAL_LIFE' | 'INVESTMENT' | 'OTHER'
+export type CoverType = 'TERM_LIFE' | 'WHOLE_LIFE' | 'ENDOWMENT' | 'UNIVERSAL_LIFE' | 'INVESTMENT' | 'OTHER'
 
 const coverOptions: Array<{ label: string; value: CoverType }> = [
   { label: 'Term Life', value: 'TERM_LIFE' },
@@ -19,16 +19,18 @@ const coverOptions: Array<{ label: string; value: CoverType }> = [
 ]
 
 type FieldConfig = {
+  key: string
   label: string
   placeholder?: string
   helper?: string
+  kind?: 'text' | 'number' | 'date' | 'select'
+  options?: Array<{ label: string; value: string }>
 }
 
 type AccountModalConfig = {
   title: string
   intro: string
-  primaryField: FieldConfig
-  secondaryField?: FieldConfig
+  fields: FieldConfig[]
   showJoint?: boolean
   showNominated?: boolean
   jointDefault?: boolean
@@ -43,8 +45,11 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
   bank: {
     title: 'Add bank account',
     intro: 'Bank accounts include all bank accounts, such as current and savings accounts.',
-    primaryField: { label: 'Bank name', placeholder: 'Enter your bank name' },
-    secondaryField: { label: 'Name of account type & number', placeholder: 'I.e. DBS Savings 023-6-353610' },
+    fields: [
+      { key: 'institutionName', label: 'Bank name', placeholder: 'Enter your bank name' },
+      { key: 'accountNumber', label: 'Account number', placeholder: 'I.e. DBS Savings 023-6-353610' },
+      { key: 'approximateValue', label: 'Approximate balance', placeholder: '1000', kind: 'number' },
+    ],
     showJoint: true,
     showNominated: true,
     jointDefault: false,
@@ -59,7 +64,11 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
   investment: {
     title: 'Add investment account',
     intro: 'This is for Bonds, Stocks, UTs etc.',
-    primaryField: { label: 'Institution/company name', placeholder: 'NVIDIA stocks in SCB 1234-4567-1234' },
+    fields: [
+      { key: 'companyName', label: 'Company name', placeholder: 'NVIDIA stocks' },
+      { key: 'institutionName', label: 'Institution name', placeholder: 'SCB' },
+      { key: 'approximateValue', label: 'Approximate market value', placeholder: '1000', kind: 'number' },
+    ],
     showJoint: true,
     showNominated: true,
     jointDefault: false,
@@ -75,7 +84,10 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
     title: 'Add business interest',
     intro:
       'This is for Corporate, Partnership, Limited Liability Company or Sole Proprietorship',
-    primaryField: { label: 'Company name', placeholder: 'i.e. 50% of Acme Innovation Pte. Ltd.' },
+    fields: [
+      { key: 'companyName', label: 'Company name', placeholder: 'i.e. Acme Innovation Pte. Ltd.' },
+      { key: 'approximateValue', label: 'Approximate market value', placeholder: '1000', kind: 'number' },
+    ],
     showNominated: true,
     nominatedDefault: true,
     infoNominated:
@@ -87,7 +99,11 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
     title: 'Add retirement account',
     intro:
       'Your retirement account might be distributed directly through a beneficiary nomination process. It\'s still good practice to list it here so the executor can be aware of the account and ensure it is distributed properly.',
-    primaryField: { label: 'Institution name and account number', placeholder: 'i.e. SRS 1234-567' },
+    fields: [
+      { key: 'institutionName', label: 'Institution name', placeholder: 'i.e. SRS' },
+      { key: 'accountNumber', label: 'Account number', placeholder: 'i.e. 1234-567' },
+      { key: 'approximateValue', label: 'Approximate value', placeholder: '1000', kind: 'number' },
+    ],
     showJoint: true,
     showNominated: true,
     jointDefault: true,
@@ -102,12 +118,20 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
   insurance: {
     title: 'Add insurance plan',
     intro: '',
-    primaryField: { label: 'Institution name and policy number', placeholder: '' },
-    secondaryField: {
-      label: 'Type of cover',
-      placeholder: 'Term Life',
-      helper: 'What kind of cover do you have? (i.e. Whole life, Term life, Endowment policy, Investment-linked)',
-    },
+    fields: [
+      { key: 'institutionName', label: 'Institution name', placeholder: 'Enter institution name' },
+      { key: 'policyNumber', label: 'Policy number', placeholder: 'Enter policy number' },
+      {
+        key: 'coverType',
+        label: 'Type of cover',
+        placeholder: 'Term Life',
+        helper: 'What kind of cover do you have? (i.e. Whole life, Term life, Endowment policy, Investment-linked)',
+        kind: 'select',
+        options: coverOptions,
+      },
+      { key: 'maturityDate', label: 'Maturity date', placeholder: '2030-12-31', kind: 'date' },
+      { key: 'faceValue', label: 'Face value', placeholder: '11', kind: 'number' },
+    ],
     showNominated: true,
     nominatedDefault: true,
     infoNominated:
@@ -118,7 +142,10 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
   safe: {
     title: 'Add safe deposit box',
     intro: '',
-    primaryField: { label: 'Description', placeholder: 'i.e. 100g gold bullion in SBI Safe Deposit Box' },
+    fields: [
+      { key: 'description', label: 'Description', placeholder: 'i.e. 100g gold bullion in SBI Safe Deposit Box' },
+      { key: 'approximateValue', label: 'Approximate value', placeholder: '1000', kind: 'number' },
+    ],
     showJoint: true,
     showNominated: true,
     jointDefault: true,
@@ -133,7 +160,11 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
   crypto: {
     title: 'Add crypto',
     intro: '',
-    primaryField: { label: 'Description of Exchange/Wallet/Institution', placeholder: 'i.e. Luno Crypto Wallet' },
+    fields: [
+      { key: 'description', label: 'Description of exchange/wallet', placeholder: 'i.e. Luno Crypto Wallet' },
+      { key: 'institutionName', label: 'Institution name', placeholder: 'Enter exchange or institution name' },
+      { key: 'approximateValue', label: 'Approximate balance', placeholder: '1000', kind: 'number' },
+    ],
     showJoint: true,
     showNominated: true,
     jointDefault: true,
@@ -151,20 +182,23 @@ interface AddAccountModalProps {
   open: boolean
   type: AccountType | null
   onClose: () => void
-  onSave?: (data: Record<string, unknown>) => void
+  onSave?: (data: {
+    type: AccountType
+    fields: Record<string, string>
+    joint: boolean
+    nominated: boolean
+  }) => void
 }
 
 export default function AddAccountModal({ open, type, onClose, onSave }: AddAccountModalProps) {
   const [mounted, setMounted] = useState(false)
-  const [primaryValue, setPrimaryValue] = useState('')
-  const [secondaryValue, setSecondaryValue] = useState('')
-  const [value, setValue] = useState('')
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({})
   const [joint, setJoint] = useState(false)
   const [nominated, setNominated] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [coverOpen, setCoverOpen] = useState(false)
+  const [openSelectKey, setOpenSelectKey] = useState<string | null>(null)
 
-  const coverMenuRef = useRef<HTMLDivElement | null>(null)
+  const selectMenuRef = useRef<HTMLDivElement | null>(null)
 
   const config = useMemo(() => (type ? accountConfigs[type] : null), [type])
 
@@ -175,30 +209,38 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
   useEffect(() => {
     if (!open || !config) return
 
-    setPrimaryValue('')
-    setSecondaryValue('')
-    setValue('')
-    setCoverOpen(false)
+    const nextValues: Record<string, string> = {}
+
+    config.fields.forEach((field) => {
+      if (field.kind === 'select' && field.options?.length) {
+        nextValues[field.key] = field.options[0].value
+      } else {
+        nextValues[field.key] = ''
+      }
+    })
+
+    setFieldValues(nextValues)
+    setOpenSelectKey(null)
     setJoint(Boolean(config.jointDefault))
     setNominated(Boolean(config.nominatedDefault))
   }, [open, config])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!coverMenuRef.current) return
-      if (!coverMenuRef.current.contains(event.target as Node)) {
-        setCoverOpen(false)
+      if (!selectMenuRef.current) return
+      if (!selectMenuRef.current.contains(event.target as Node)) {
+        setOpenSelectKey(null)
       }
     }
 
-    if (coverOpen) {
+    if (openSelectKey) {
       document.addEventListener('mousedown', handleClickOutside)
     }
 
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [coverOpen])
+  }, [openSelectKey])
 
-  if (!open || !mounted || !config) return null
+  if (!open || !mounted || !config || !type) return null
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 p-3 pt-6 sm:p-5 sm:pt-10" onClick={onClose}>
@@ -220,65 +262,64 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
             {config.intro ? <p className="mt-5 max-w-[52rem] text-[1rem] leading-[1.45] text-[#5d6475] sm:text-[1.1rem]">{config.intro}</p> : null}
 
             <div className="mt-8 space-y-6 sm:space-y-7">
-              <div>
-                <label className="mb-3 block text-[0.9rem] uppercase tracking-[0.14em] text-[#404452]">
-                  {config.primaryField.label}
-                </label>
-                <input
-                  value={primaryValue}
-                  onChange={(event) => setPrimaryValue(event.target.value)}
-                  placeholder={config.primaryField.placeholder}
-                  className="h-[58px] w-full rounded-[3px] border border-[#dfd4c6] bg-white px-4 text-[1rem] text-[#5d6475] outline-none placeholder:text-[#a0a6b3] sm:h-[64px] sm:px-5 sm:text-[1.05rem]"
-                />
-              </div>
+              {config.fields.map((field) => {
+                const commonLabelClass = 'mb-3 block text-[0.9rem] uppercase tracking-[0.14em] text-[#404452]'
+                const commonInputClass = 'h-[58px] w-full rounded-[3px] border border-[#dfd4c6] bg-white px-4 text-[1rem] text-[#5d6475] outline-none placeholder:text-[#a0a6b3] sm:h-[64px] sm:px-5 sm:text-[1.05rem]'
+                const value = fieldValues[field.key] ?? ''
 
-              {config.secondaryField ? (
-                <div>
-                  <label className="mb-3 block text-[0.9rem] uppercase tracking-[0.14em] text-[#404452]">
-                    {config.secondaryField.label}
-                  </label>
-                  {config.secondaryField.helper ? (
-                    <p className="mb-3 text-[0.95rem] leading-[1.45] text-[#7b8290] sm:text-[1rem]">{config.secondaryField.helper}</p>
-                  ) : null}
-                  {config.secondaryField.label === 'Type of cover' ? (
-                    <div ref={coverMenuRef} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setCoverOpen((current) => !current)}
-                        className="flex h-[58px] w-full items-center justify-between rounded-[3px] border border-[#dfd4c6] bg-white px-4 text-left text-[1rem] text-[#5d6475] outline-none sm:h-[64px] sm:px-5 sm:text-[1.05rem]"
-                      >
-                        <span>{secondaryValue || config.secondaryField.placeholder}</span>
-                        <ChevronDown className={`h-4 w-4 text-[#b0b7c3] transition-transform ${coverOpen ? 'rotate-180' : ''}`} />
-                      </button>
+                return (
+                  <div key={field.key}>
+                    <label className={commonLabelClass}>{field.label}</label>
+                    {field.helper ? (
+                      <p className="mb-3 text-[0.95rem] leading-[1.45] text-[#7b8290] sm:text-[1rem]">{field.helper}</p>
+                    ) : null}
+                    {field.kind === 'select' && field.options?.length ? (
+                      (() => {
+                        const options = field.options ?? []
 
-                      {coverOpen ? (
-                        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 overflow-hidden rounded-[8px] border border-[#dfd4c6] bg-white shadow-[0_18px_40px_rgba(17,24,39,0.16)]">
-                          {coverOptions.map((option, index) => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              onClick={() => {
-                                setSecondaryValue(option.value)
-                                setCoverOpen(false)
-                              }}
-                              className={`block w-full px-4 py-3 text-left text-[0.96rem] text-[#4d5362] transition-colors hover:bg-[#f6f1ea] ${index !== coverOptions.length - 1 ? 'border-b border-[#f1e7da]' : ''}`}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <input
-                      value={secondaryValue}
-                      onChange={(event) => setSecondaryValue(event.target.value)}
-                      placeholder={config.secondaryField.placeholder}
-                      className="h-[58px] w-full rounded-[3px] border border-[#dfd4c6] bg-white px-4 text-[1rem] text-[#5d6475] outline-none placeholder:text-[#a0a6b3] sm:h-[64px] sm:px-5 sm:text-[1.05rem]"
-                    />
-                  )}
-                </div>
-              ) : null}
+                        return (
+                      <div ref={openSelectKey === field.key ? selectMenuRef : null} className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setOpenSelectKey((current) => (current === field.key ? null : field.key))}
+                          className="flex h-[58px] w-full items-center justify-between rounded-[3px] border border-[#dfd4c6] bg-white px-4 text-left text-[1rem] text-[#5d6475] outline-none sm:h-[64px] sm:px-5 sm:text-[1.05rem]"
+                        >
+                          <span>{options.find((option) => option.value === value)?.label ?? field.placeholder}</span>
+                          <ChevronDown className={`h-4 w-4 text-[#b0b7c3] transition-transform ${openSelectKey === field.key ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {openSelectKey === field.key ? (
+                          <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 overflow-hidden rounded-[8px] border border-[#dfd4c6] bg-white shadow-[0_18px_40px_rgba(17,24,39,0.16)]">
+                            {options.map((option, index) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setFieldValues((current) => ({ ...current, [field.key]: option.value }))
+                                  setOpenSelectKey(null)
+                                }}
+                                className={`block w-full px-4 py-3 text-left text-[0.96rem] text-[#4d5362] transition-colors hover:bg-[#f6f1ea] ${index !== options.length - 1 ? 'border-b border-[#f1e7da]' : ''}`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                        )
+                      })()
+                    ) : (
+                      <input
+                        type={field.kind === 'number' ? 'number' : field.kind === 'date' ? 'date' : 'text'}
+                        value={value}
+                        onChange={(event) => setFieldValues((current) => ({ ...current, [field.key]: event.target.value }))}
+                        placeholder={field.placeholder}
+                        className={commonInputClass}
+                      />
+                    )}
+                  </div>
+                )
+              })}
 
               {config.showJoint ? (
                 <div className="space-y-3">
@@ -324,18 +365,6 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
                 </div>
               ) : null}
 
-              <div className="pt-2 sm:pt-4">
-                <h3 className="text-[1.35rem] font-medium tracking-[-0.03em] text-[#111827] sm:text-[1.55rem]">{config.valueLabel}</h3>
-                <p className="mt-3 text-[0.95rem] leading-[1.45] text-[#7f8695] sm:text-[1rem]">{config.valueHelper}</p>
-                <div className="mt-4">
-                  <input
-                    value={value}
-                    onChange={(event) => setValue(event.target.value)}
-                    placeholder="$"
-                    className="h-[58px] w-full max-w-[420px] rounded-[3px] border border-[#dfd4c6] bg-white px-4 text-[1rem] text-[#5d6475] outline-none placeholder:text-[#5d6475] sm:h-[64px] sm:px-5 sm:text-[1.05rem]"
-                  />
-                </div>
-              </div>
             </div>
 
             <div className="mt-8 flex justify-end gap-3 border-t border-[#ece0d2] pt-5 sm:mt-10">
@@ -349,10 +378,10 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => {
+                onClick={async () => {
                   setSaving(true)
                   try {
-                    onSave?.({ type, primaryValue, secondaryValue, value, joint, nominated })
+                    await Promise.resolve(onSave?.({ type, fields: fieldValues, joint, nominated }))
                     toast.success('Account saved')
                     onClose()
                   } catch (error) {

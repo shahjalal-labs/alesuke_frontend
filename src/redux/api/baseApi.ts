@@ -20,7 +20,7 @@ export const baseApi = createApi({
     },
   }),
   endpoints: () => ({}),
-  tagTypes: ["auth", "profile", "executors", "gifts"],
+  tagTypes: ["auth", "profile", "executors", "gifts", "assets"],
 });
 
 export default baseApi;
