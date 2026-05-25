@@ -134,16 +134,19 @@ function PdfPageFrame({
   totalPages,
   title,
   directive,
+  blurred,
   children,
 }: {
   pageNumber: number
   totalPages: number
   title: string
   directive: string
+  blurred?: boolean
   children: ReactNode
 }) {
   return (
-    <article className="mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10">
+    <article className={`relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10 ${blurred ? 'overflow-hidden' : ''}`}>
+      {blurred ? <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-[6px]" aria-hidden="true" /> : null}
       <div className="border-l-[4px] border-[#c35b43] pl-4">
         <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[1.85rem]">{title}</p>
         <div className="mt-3 h-[2px] bg-[#c35b43]" />
@@ -155,7 +158,7 @@ function PdfPageFrame({
         </p>
       </div>
 
-      <div className="mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">{children}</div>
+      <div className={`mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550] ${blurred ? 'blur-sm' : ''}`}>{children}</div>
 
       <div className="mt-10 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]">
         <div className="flex items-center justify-between gap-4">
@@ -596,6 +599,7 @@ export default function WillPreviewPage() {
                     totalPages={totalPages}
                     title={page.pageTitle}
                     directive={page.directive}
+                    blurred={page.pageNumber > 2}
                   >
                     {page.body}
                   </PdfPageFrame>
