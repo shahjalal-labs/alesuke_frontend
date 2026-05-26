@@ -1,8 +1,21 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type AgeChoice = "over" | "under" | null;
-export type ReligionChoice = "CHRISTIAN" | "BUDDHIST" | "MUSLIM" | "HINDU" | "JEWISH" | "SIKH" | "OTHER" | null;
-export type MaritalStatusChoice = "SINGLE" | "MARRIED" | "LONG_TERM_PARTNER" | null;
+export type ReligionChoice =
+  | "CHRISTIAN"
+  | "BUDDHIST"
+  | "MUSLIM"
+  | "HINDU"
+  | "JUDAISM"
+  | "TAOISM"
+  | "SIKH"
+  | "OTHER"
+  | null;
+export type MaritalStatusChoice =
+  | "SINGLE"
+  | "MARRIED"
+  | "LONG_TERM_PARTNER"
+  | null;
 
 export interface ProfileSetupState {
   country: string;
@@ -41,7 +54,10 @@ const profileSetupSlice = createSlice({
     setNickname(state, action: PayloadAction<string>) {
       state.nickname = action.payload;
     },
-    setMaritalStatus(state, action: PayloadAction<Exclude<MaritalStatusChoice, null>>) {
+    setMaritalStatus(
+      state,
+      action: PayloadAction<Exclude<MaritalStatusChoice, null>>,
+    ) {
       state.maritalStatus = action.payload;
     },
     resetProfileSetup() {

@@ -1,22 +1,34 @@
 "use client";
 
+import { Circle, CircleDot } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { CircleDot, Circle } from "lucide-react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { ProfileSetupShell } from "./ProfileSetupShell";
-import type { AppDispatch } from "@/redux/store";
 import { setReligion } from "@/redux/profileSetupSlice";
-import type { RootState } from "@/redux/store";
+import type { AppDispatch, RootState } from "@/redux/store";
+import { ProfileSetupShell } from "./ProfileSetupShell";
 
 type ReligionCategory = "muslim" | "non-muslim";
-type NonMuslimReligion = "CHRISTIAN" | "BUDDHIST" | "HINDU" | "JEWISH" | "SIKH" | "OTHER";
+type NonMuslimReligion =
+  | "CHRISTIAN"
+  | "BUDDHIST"
+  | "HINDU"
+  | "JUDAISM"
+  | "TAOISM"
+  | "SIKH"
+  | "OTHER";
 
 export default function Religion() {
-  const storedReligion = useSelector((state: RootState) => state.profileSetup.religion);
-  const [category, setCategory] = useState<ReligionCategory>(storedReligion && storedReligion !== "MUSLIM" ? "non-muslim" : "muslim");
-  const [selectedReligion, setSelectedReligion] = useState<NonMuslimReligion | "MUSLIM" | null>(storedReligion ?? "MUSLIM");
+  const storedReligion = useSelector(
+    (state: RootState) => state.profileSetup.religion,
+  );
+  const [category, setCategory] = useState<ReligionCategory>(
+    storedReligion && storedReligion !== "MUSLIM" ? "non-muslim" : "muslim",
+  );
+  const [selectedReligion, setSelectedReligion] = useState<
+    NonMuslimReligion | "MUSLIM" | null
+  >(storedReligion ?? "MUSLIM");
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -24,7 +36,8 @@ export default function Religion() {
     { value: "CHRISTIAN", label: "Christian" },
     { value: "BUDDHIST", label: "Buddhist" },
     { value: "HINDU", label: "Hindu" },
-    { value: "JEWISH", label: "Jewish" },
+    { value: "JUDAISM", label: "Judaism" },
+    { value: "TAOISM", label: "Taoism" },
     { value: "SIKH", label: "Sikh" },
     { value: "OTHER", label: "Other" },
   ];
@@ -42,7 +55,9 @@ export default function Religion() {
 
   const selectNonMuslim = () => {
     setCategory("non-muslim");
-    setSelectedReligion(storedReligion && storedReligion !== "MUSLIM" ? storedReligion : null);
+    setSelectedReligion(
+      storedReligion && storedReligion !== "MUSLIM" ? storedReligion : null,
+    );
   };
 
   const selectNonMuslimReligion = (value: NonMuslimReligion) => {
@@ -56,11 +71,13 @@ export default function Religion() {
       stepLabel="A few questions to get us started"
       title={<>State your religion</>}
       description={
-        <span>Succession laws are based on religious affiliation in Singapore.</span>
+        <span>
+          Succession laws are based on religious affiliation in Singapore.
+        </span>
       }
       backHref="/profile-setup/age"
       nextHref="/profile-setup/name"
-      nextDisabled={!selectedReligion || selectedReligion === "MUSLIM"}
+      nextDisabled={!selectedReligion}
       onNext={handleNext}
     >
       <div className="space-y-4">
@@ -71,10 +88,12 @@ export default function Religion() {
               onClick={selectMuslim}
               className="flex w-full items-center justify-between rounded-[6px] bg-white px-5 py-4 text-left transition-shadow hover:shadow-[0_0_0_1px_rgba(34,41,56,0.08)]"
             >
-              <span className={`text-[1rem] font-medium ${category === 'muslim' ? 'text-[#2f3646]' : 'text-[#9aa1af]'}`}>
+              <span
+                className={`text-[1rem] font-medium ${category === "muslim" ? "text-[#2f3646]" : "text-[#9aa1af]"}`}
+              >
                 Muslim
               </span>
-              {category === 'muslim' ? (
+              {category === "muslim" ? (
                 <CircleDot className="h-5 w-5 text-[#1f2534]" />
               ) : (
                 <Circle className="h-5 w-5 text-[#b1b8c4]" />
@@ -86,10 +105,12 @@ export default function Religion() {
               onClick={selectNonMuslim}
               className="flex w-full items-center justify-between rounded-[6px] bg-white px-5 py-4 text-left transition-shadow hover:shadow-[0_0_0_1px_rgba(34,41,56,0.08)]"
             >
-              <span className={`text-[1rem] font-medium ${category === 'non-muslim' ? 'text-[#2f3646]' : 'text-[#9aa1af]'}`}>
+              <span
+                className={`text-[1rem] font-medium ${category === "non-muslim" ? "text-[#2f3646]" : "text-[#9aa1af]"}`}
+              >
                 Non-Muslim
               </span>
-              {category === 'non-muslim' ? (
+              {category === "non-muslim" ? (
                 <CircleDot className="h-5 w-5 text-[#1f2534]" />
               ) : (
                 <Circle className="h-5 w-5 text-[#b1b8c4]" />
@@ -114,7 +135,9 @@ export default function Religion() {
                     onClick={() => selectNonMuslimReligion(option.value)}
                     className="flex w-full items-center justify-between rounded-[6px] bg-white px-5 py-4 text-left transition-shadow hover:shadow-[0_0_0_1px_rgba(34,41,56,0.08)]"
                   >
-                    <span className={`text-[1rem] font-medium ${isSelected ? 'text-[#2f3646]' : 'text-[#9aa1af]'}`}>
+                    <span
+                      className={`text-[1rem] font-medium ${isSelected ? "text-[#2f3646]" : "text-[#9aa1af]"}`}
+                    >
                       {option.label}
                     </span>
                     {isSelected ? (
@@ -132,9 +155,9 @@ export default function Religion() {
 
       {selectedReligion === "MUSLIM" ? (
         <p className="mt-6 max-w-[620px] text-[0.95rem] leading-[1.45] text-[#7b8190] sm:text-[1rem]">
-          If you are a Muslim, you are governed by the Administration of Muslim Law Act (AMLA)
-          and Syariah law (Faraid). please do not proceed with our service as we do not cater to
-          these laws
+          If you are a Muslim, you are governed by the Administration of Muslim
+          Law Act (AMLA) and Syariah law (Faraid). please do not proceed with
+          our service as we do not cater to these laws
         </p>
       ) : null}
     </ProfileSetupShell>

@@ -1,14 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CheckCircle2, MapPin, House, Building2, FileText, ChevronDown, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import logo from "@/assets/logo.png";
+import { useAddAddressMutation } from "@/redux/api/profileApi";
+import {
+  Building2,
+  CheckCircle2,
+  ChevronDown,
+  FileText,
+  House,
+  MapPin,
+  Search,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import logo from "@/assets/logo.png";
-import FamilyFlowShell from "./FamilyFlowShell";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useAddAddressMutation } from "@/redux/api/profileApi";
 import * as z from "zod";
+import FamilyFlowShell from "./FamilyFlowShell";
 
 const countryOptions = [
   { code: "AF", name: "Afghanistan" },
@@ -67,10 +76,10 @@ const countryOptions = [
 ].sort((left, right) => left.name.localeCompare(right.name));
 
 const residentialAddressSchema = z.object({
-  country: z.string().min(2, 'Country is required'),
-  streetAddress: z.string().min(2, 'Street address is required'),
+  country: z.string().min(2, "Country is required"),
+  streetAddress: z.string().min(2, "Street address is required"),
   unitNumber: z.string().optional(),
-  postCode: z.string().min(2, 'Post code is required'),
+  postCode: z.string().min(2, "Post code is required"),
 });
 
 function InputRow({
@@ -88,7 +97,9 @@ function InputRow({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-[0.68rem] font-medium uppercase tracking-[0.12em] text-[#6a707c]">{label}</label>
+      <label className="mb-2 block text-[0.68rem] font-medium uppercase tracking-[0.12em] text-[#6a707c]">
+        {label}
+      </label>
       <div className="flex h-[46px] items-center rounded-[6px] bg-[#f4f5f7] px-3 text-[#223048] md:h-[56px] md:px-4">
         <div className="flex items-center gap-3">
           <span>{icon}</span>
@@ -107,20 +118,28 @@ function InputRow({
 export default function YourResidentialStep() {
   const [completed, setCompleted] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
-  const [countryQuery, setCountryQuery] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState(countryOptions.find((country) => country.code === 'SG') ?? countryOptions[0]);
-  const [streetAddress, setStreetAddress] = useState('');
-  const [unitNumber, setUnitNumber] = useState('');
-  const [postCode, setPostCode] = useState('');
+  const [countryQuery, setCountryQuery] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState(
+    countryOptions.find((country) => country.code === "SG") ??
+      countryOptions[0],
+  );
+  const [streetAddress, setStreetAddress] = useState("");
+  const [unitNumber, setUnitNumber] = useState("");
+  const [postCode, setPostCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ streetAddress?: string; postCode?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    streetAddress?: string;
+    postCode?: string;
+  }>({});
 
   const [addAddress] = useAddAddressMutation();
 
   const filteredCountries = useMemo(() => {
     const query = countryQuery.trim().toLowerCase();
     if (!query) return countryOptions;
-    return countryOptions.filter((country) => `${country.code} ${country.name}`.toLowerCase().includes(query));
+    return countryOptions.filter((country) =>
+      `${country.code} ${country.name}`.toLowerCase().includes(query),
+    );
   }, [countryQuery]);
 
   const handleSave = async () => {
@@ -138,7 +157,7 @@ export default function YourResidentialStep() {
         postCode: nextErrors.postCode?.[0],
       });
 
-      toast.error('Please fill in the required address fields.');
+      toast.error("Please fill in the required address fields.");
       return;
     }
 
@@ -151,11 +170,11 @@ export default function YourResidentialStep() {
         unitNumber,
         postCode,
       }).unwrap();
-      toast.success('Address saved successfully.');
+      toast.success("Address saved successfully.");
       setCompleted(true);
     } catch (error) {
       console.error(error);
-      toast.error('Unable to save address. Please try again.');
+      toast.error("Unable to save address. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -167,7 +186,12 @@ export default function YourResidentialStep() {
         <header className="sticky top-0 z-20 border-b border-[#ece6de] bg-[#f6f1eb]/95 px-4 py-3 backdrop-blur md:px-8">
           <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between">
             <Link href="/will" className="inline-flex items-center">
-              <Image src={logo} alt="Will & Way" className="h-auto w-[96px] md:w-[130px]" priority />
+              <Image
+                src={logo}
+                alt="Will & Way"
+                className="h-auto w-[96px] md:w-[130px]"
+                priority
+              />
             </Link>
             <Link
               href="/will"
@@ -185,8 +209,12 @@ export default function YourResidentialStep() {
                 <CheckCircle2 className="h-9 w-9" />
               </div>
             </div>
-            <h2 className="text-[2.1rem] font-semibold tracking-[-0.03em] text-[#101010] md:text-[3.2rem]">Great work!</h2>
-            <p className="mt-3 text-[0.95rem] text-[#8992a1] md:text-[1.2rem]">You have successfully completed this section!</p>
+            <h2 className="text-[2.1rem] font-semibold tracking-[-0.03em] text-[#101010] md:text-[3.2rem]">
+              Great work!
+            </h2>
+            <p className="mt-3 text-[0.95rem] text-[#8992a1] md:text-[1.2rem]">
+              You have successfully completed this section!
+            </p>
           </div>
         </main>
       </div>
@@ -209,12 +237,14 @@ export default function YourResidentialStep() {
         title="Your residential address"
         subtitle="Your current address"
         nextHref={undefined}
-        nextLabel={submitting ? 'Saving...' : 'Save & Continue'}
+        nextLabel={submitting ? "Saving..." : "Save & Continue"}
         onNext={handleSave}
         optionsBlock={
           <div className="space-y-4 rounded-[8px] bg-[#eee7de] p-4 md:space-y-5 md:p-6">
             <div className="relative">
-              <label className="mb-2 block text-[0.68rem] font-medium uppercase tracking-[0.12em] text-[#6a707c]">Country</label>
+              <label className="mb-2 block text-[0.68rem] font-medium uppercase tracking-[0.12em] text-[#6a707c]">
+                Country
+              </label>
               <button
                 type="button"
                 onClick={() => setCountryOpen((current) => !current)}
@@ -222,9 +252,13 @@ export default function YourResidentialStep() {
               >
                 <span className="flex items-center gap-2 text-[0.95rem] text-[#8993a3]">
                   <MapPin className="h-4 w-4 text-[#8993a3]" />
-                  <span>{selectedCountry.code} {selectedCountry.name}</span>
+                  <span>
+                    {selectedCountry.code} {selectedCountry.name}
+                  </span>
                 </span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${countryOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${countryOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {countryOpen ? (
@@ -238,7 +272,11 @@ export default function YourResidentialStep() {
                       className="w-full bg-transparent text-[0.92rem] outline-none placeholder:text-[#9aa3b2]"
                     />
                     {countryQuery ? (
-                      <button type="button" onClick={() => setCountryQuery('')} className="text-[#8a93a3]">
+                      <button
+                        type="button"
+                        onClick={() => setCountryQuery("")}
+                        className="text-[#8a93a3]"
+                      >
                         <X className="h-4 w-4" />
                       </button>
                     ) : null}
@@ -253,11 +291,13 @@ export default function YourResidentialStep() {
                           onClick={() => {
                             setSelectedCountry(country);
                             setCountryOpen(false);
-                            setCountryQuery('');
+                            setCountryQuery("");
                           }}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[0.95rem] transition-colors ${active ? 'bg-[#eefdfd] font-semibold text-[#223048]' : 'text-[#223048] hover:bg-[#f6f7f9]'}`}
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[0.95rem] transition-colors ${active ? "bg-[#eefdfd] font-semibold text-[#223048]" : "text-[#223048] hover:bg-[#f6f7f9]"}`}
                         >
-                          <span className="w-8 text-[0.78rem] uppercase tracking-[0.08em] text-[#7b8593]">{country.code}</span>
+                          <span className="w-8 text-[0.78rem] uppercase tracking-[0.08em] text-[#7b8593]">
+                            {country.code}
+                          </span>
                           <span>{country.name}</span>
                         </button>
                       );
@@ -269,27 +309,35 @@ export default function YourResidentialStep() {
 
             <InputRow
               label="Street Address"
-              placeholder="222"
+              placeholder="Street Address"
               icon={<House className="h-4 w-4" />}
               value={streetAddress}
               onChange={setStreetAddress}
             />
-            {fieldErrors.streetAddress ? <p className="-mt-2 text-[0.78rem] text-[#d0454c]">{fieldErrors.streetAddress}</p> : null}
+            {fieldErrors.streetAddress ? (
+              <p className="-mt-2 text-[0.78rem] text-[#d0454c]">
+                {fieldErrors.streetAddress}
+              </p>
+            ) : null}
             <InputRow
               label="Unit Number"
-              placeholder="222333"
+              placeholder="Unit Number"
               icon={<Building2 className="h-4 w-4" />}
               value={unitNumber}
               onChange={setUnitNumber}
             />
             <InputRow
               label="Postal Code"
-              placeholder="44"
+              placeholder="Postal Code"
               icon={<FileText className="h-4 w-4" />}
               value={postCode}
               onChange={setPostCode}
             />
-            {fieldErrors.postCode ? <p className="-mt-2 text-[0.78rem] text-[#d0454c]">{fieldErrors.postCode}</p> : null}
+            {fieldErrors.postCode ? (
+              <p className="-mt-2 text-[0.78rem] text-[#d0454c]">
+                {fieldErrors.postCode}
+              </p>
+            ) : null}
           </div>
         }
         prevHref="/will/you-and-your-family/your-pets"
