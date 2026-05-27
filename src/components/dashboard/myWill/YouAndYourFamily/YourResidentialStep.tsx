@@ -242,7 +242,7 @@ export default function YourResidentialStep() {
 
             <InputRow
               label="Street Address"
-              placeholder="222"
+              placeholder=""
               icon={<House className="h-4 w-4" />}
               value={streetAddress}
               onChange={setStreetAddress}
@@ -250,14 +250,14 @@ export default function YourResidentialStep() {
             {fieldErrors.streetAddress ? <p className="-mt-2 text-[0.78rem] text-[#d0454c]">{fieldErrors.streetAddress}</p> : null}
             <InputRow
               label="Unit Number"
-              placeholder="222333"
+              placeholder=""
               icon={<Building2 className="h-4 w-4" />}
               value={unitNumber}
               onChange={setUnitNumber}
             />
             <InputRow
               label="Postal Code"
-              placeholder="44"
+              placeholder=""
               icon={<FileText className="h-4 w-4" />}
               value={postCode}
               onChange={setPostCode}

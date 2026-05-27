@@ -501,40 +501,46 @@ export default function MyWillPage() {
               }
             >
               {canAccessOtherSections ? (
-                <div className="space-y-1">
-                  <SummaryRow
-                    label={`${financialAssets.length} Financial Assets`}
-                    icons={
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                        <Banknote className="h-4 w-4" />
-                      </span>
-                    }
-                  />
-                  <SummaryRow
-                    label={`${properties.length} property`}
-                    icons={
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                        <House className="h-4 w-4" />
-                      </span>
-                    }
-                  />
-                  <SummaryRow
-                    label={`${gifts.length + petCaretakers.length + loans.length} Other Assets`}
-                    icons={
-                      <>
+                hasAssetsData ? (
+                  <div className="space-y-1">
+                    <SummaryRow
+                      label={`${financialAssets.length} Financial Assets`}
+                      icons={
                         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <UserRound className="h-4 w-4" />
+                          <Banknote className="h-4 w-4" />
                         </span>
+                      }
+                    />
+                    <SummaryRow
+                      label={`${properties.length} property`}
+                      icons={
                         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <PawPrint className="h-4 w-4" />
+                          <House className="h-4 w-4" />
                         </span>
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <BriefcaseBusiness className="h-4 w-4" />
-                        </span>
-                      </>
-                    }
-                  />
-                </div>
+                      }
+                    />
+                    <SummaryRow
+                      label={`${gifts.length + petCaretakers.length + loans.length} Other Assets`}
+                      icons={
+                        <>
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                            <UserRound className="h-4 w-4" />
+                          </span>
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                            <PawPrint className="h-4 w-4" />
+                          </span>
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                            <BriefcaseBusiness className="h-4 w-4" />
+                          </span>
+                        </>
+                      }
+                    />
+                  </div>
+                ) : (
+                  <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                    Add your assets here to help your family locate them
+                  </p>
+                )
               ) : (
                 <PrerequisiteMessage />
               )}
