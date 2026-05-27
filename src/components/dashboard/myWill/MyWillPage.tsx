@@ -82,7 +82,31 @@ function formatMoney(value?: number | null) {
   return `S$ ${value.toLocaleString()}`;
 }
 
-function SectionShell({ title, completed, children, footer }: { title: string; completed: boolean; children: ReactNode; footer?: ReactNode }) {
+function PrerequisiteMessage() {
+  return (
+    <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+      Complete{" "}
+      <Link href="/will/you-and-your-family/marital-status" className="text-sky-500 underline-offset-2 hover:underline">
+        You and your family
+      </Link>{" "}
+      first
+    </p>
+  );
+}
+
+function SectionShell({
+  title,
+  completed,
+  time,
+  children,
+  footer,
+}: {
+  title: string;
+  completed: boolean;
+  time: string;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
   return (
     <section className="rounded-[3px] border border-dashed border-[#dfcfbf] bg-[#F6ECE2] p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4 px-2">
@@ -93,7 +117,7 @@ function SectionShell({ title, completed, children, footer }: { title: string; c
             Completed
           </span>
         ) : (
-          <div className="text-[0.95rem] text-[#2f241c]">Complete</div>
+          <div className="text-[0.95rem] text-[#2f241c]">Takes about {time}</div>
         )}
       </div>
 
@@ -152,7 +176,9 @@ function PersonBubble({
 
 export default function MyWillPage() {
   const { data: willResponse, isLoading } = useGetWillDetailsQuery(undefined);
-  const dashboard = (willResponse?.data ?? {}) as WillDetailsResponse;
+  const dashboardResponse = willResponse as { data?: WillDetailsResponse } | undefined;
+  const dashboard = (dashboardResponse?.data ?? {}) as WillDetailsResponse;
+  const isHydrating = isLoading && !dashboardResponse?.data;
 
   const userName = dashboard.user?.name ?? "User";
   const family = dashboard.family ?? [];
@@ -183,6 +209,7 @@ export default function MyWillPage() {
   const completedSections = sectionStates.filter(Boolean).length;
   const completionPercent = Math.round((completedSections / sectionStates.length) * 100);
   const allComplete = sectionStates.every(Boolean);
+  const canAccessOtherSections = hasFamilyData;
 
   const familySummary = family.filter((member) => ["SPOUSE", "PARTNER", "CHILD", "PET"].includes(member.relationType ?? ""));
   const primaryExecutor = executors[0]?.person ?? null;
@@ -204,104 +231,115 @@ export default function MyWillPage() {
       </div>
 
       <div className="space-y-6">
-            <SectionShell
-              title="You and your family"
-              completed={hasFamilyData}
-              footer={
-                <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
-                  {hasFamilyData ? (
-                    <Link
-                      href="/will/you-and-your-family/marital-status"
-                      className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                    >
-                      <PencilLine className="h-4 w-4" />
-                      Edit
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/will/you-and-your-family/marital-status"
-                      className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                    >
-                      Add you and your family
-                    </Link>
-                  )}
-                </div>
-              }
-            >
-              {isLoading ? (
-                <div className="space-y-3">
-                  <div className="h-11 animate-pulse rounded-[4px] bg-[#f2f2f2]" />
-                  <div className="h-11 animate-pulse rounded-[4px] bg-[#f2f2f2]" />
-                </div>
-              ) : hasFamilyData ? (
-                <div className="space-y-4">
-                  <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">About You and Your Loved Ones</p>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {family.map((member) => {
-                      const badge = getMemberBadge(member);
-                      const BadgeIcon = badge.icon;
-
-                      return (
-                        <div key={member.id} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4e8da] text-[#223048]">
-                            <BadgeIcon className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{member.fullName}</p>
-                            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </SectionShell>
-
-            {hasFamilyData ? (
-              <>
-                <SectionShell
-                  title="Your Executor"
-                  completed={hasExecutorData}
-                  footer={
-                    <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
-                      {hasExecutorData ? (
-                        <Link
-                          href="/will/executor/get-started"
-                          className="inline-flex items-center justify-center rounded-[3px] bg-[#172031] px-7 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        >
-                          Edit
-                        </Link>
-                      ) : (
-                        <Link
-                          href="/will/executor/get-started"
-                          className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        >
-                          Pick an executor
-                        </Link>
-                      )}
-                    </div>
-                  }
+        <SectionShell
+          title="You and your family"
+          completed={hasFamilyData}
+          time="3 min"
+          footer={
+            <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+              {hasFamilyData ? (
+                <Link
+                  href="/will/you-and-your-family/marital-status"
+                  className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
                 >
-                  {hasExecutorData ? (
-                    <div className="space-y-4">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <PersonBubble member={primaryExecutor} fallback="Not selected" />
-                        <PersonBubble member={backupExecutor} fallback="Not selected" />
+                  <PencilLine className="h-4 w-4" />
+                  Edit
+                </Link>
+              ) : (
+                <Link
+                  href="/will/you-and-your-family/marital-status"
+                  className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                >
+                  Add you and your family
+                </Link>
+              )}
+            </div>
+          }
+        >
+          {isHydrating ? (
+            <div className="space-y-3">
+              <div className="h-11 animate-pulse rounded-[4px] bg-[#f2f2f2]" />
+              <div className="h-11 animate-pulse rounded-[4px] bg-[#f2f2f2]" />
+            </div>
+          ) : hasFamilyData ? (
+            <div className="space-y-4">
+              <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">About You and Your Loved Ones</p>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {family.map((member) => {
+                  const badge = getMemberBadge(member);
+                  const BadgeIcon = badge.icon;
+
+                  return (
+                    <div key={member.id} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4e8da] text-[#223048]">
+                        <BadgeIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{member.fullName}</p>
+                        <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
                       </div>
                     </div>
-                  ) : (
-                    <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
-                      Nominate someone you trust to manage your will.
-                    </p>
-                  )}
-                </SectionShell>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </SectionShell>
 
-                <SectionShell
-                  title="Estate Distribution"
-                  completed={hasEstateDistributionData}
-                  footer={
-                    <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+        {!isHydrating ? (
+          <>
+            <SectionShell
+              title="Your Executor"
+              completed={hasExecutorData}
+              time="2 min"
+              footer={
+                canAccessOtherSections ? (
+                  <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+                    {hasExecutorData ? (
+                      <Link
+                        href="/will/executor/get-started"
+                        className="inline-flex items-center justify-center rounded-[3px] bg-[#172031] px-7 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                      >
+                        Edit
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/will/executor/get-started"
+                        className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                      >
+                        Pick an executor
+                      </Link>
+                    )}
+                  </div>
+                ) : null
+              }
+            >
+              {canAccessOtherSections ? (
+                hasExecutorData ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <PersonBubble member={primaryExecutor} fallback="Not selected" />
+                      <PersonBubble member={backupExecutor} fallback="Not selected" />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                    Nominate someone you trust to manage your will.
+                  </p>
+                )
+              ) : (
+                <PrerequisiteMessage />
+              )}
+            </SectionShell>
+
+            <SectionShell
+              title="Estate Distribution"
+              completed={hasEstateDistributionData}
+              time="3 min"
+              footer={
+                canAccessOtherSections ? (
+                  <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+                    {hasEstateDistributionData ? (
                       <Link
                         href="/will/divide-estate/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
@@ -309,30 +347,46 @@ export default function MyWillPage() {
                         <PencilLine className="h-4 w-4" />
                         Edit
                       </Link>
-                    </div>
-                  }
-                >
-                  <div className="space-y-1">
-                    {estateDistributions.map((distribution) => (
-                      <SummaryRow
-                        key={distribution.id}
-                        label={distribution.person?.fullName ?? "Not selected"}
-                        value={`${Number(distribution.percentage ?? 0).toFixed(2).replace(/\.00$/, "")} %`}
-                        icons={
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <UserRound className="h-4 w-4" />
-                          </span>
-                        }
-                      />
-                    ))}
+                    ) : (
+                      <Link
+                        href="/will/divide-estate/intro"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                      >
+                        Distribute your estate
+                      </Link>
+                    )}
                   </div>
-                </SectionShell>
+                ) : null
+              }
+            >
+              {canAccessOtherSections ? (
+                <div className="space-y-1">
+                  {estateDistributions.map((distribution) => (
+                    <SummaryRow
+                      key={distribution.id}
+                      label={distribution.person?.fullName ?? "Not selected"}
+                      value={`${Number(distribution.percentage ?? 0).toFixed(2).replace(/\.00$/, "")} %`}
+                      icons={
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                          <UserRound className="h-4 w-4" />
+                        </span>
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <PrerequisiteMessage />
+              )}
+            </SectionShell>
 
-                <SectionShell
-                  title="Gifts"
-                  completed={hasGiftsData}
-                  footer={
-                    <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+            <SectionShell
+              title="Gifts"
+              completed={hasGiftsData}
+              time="3 min"
+              footer={
+                canAccessOtherSections ? (
+                  <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+                    {hasGiftsData ? (
                       <Link
                         href="/will/gifts"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
@@ -340,30 +394,46 @@ export default function MyWillPage() {
                         <PencilLine className="h-4 w-4" />
                         Edit
                       </Link>
-                    </div>
-                  }
-                >
-                  <div className="space-y-1">
-                    {gifts.map((gift) => (
-                      <SummaryRow
-                        key={gift.id}
-                        label={gift.recipientName ?? "Recipient"}
-                        value={gift.giftType === "CASH" && typeof gift.amount === "number" ? formatMoney(gift.amount) : gift.description ?? "Gift"}
-                        icons={
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <Heart className="h-4 w-4" />
-                          </span>
-                        }
-                      />
-                    ))}
+                    ) : (
+                      <Link
+                        href="/will/gifts"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                      >
+                        Add Gifts
+                      </Link>
+                    )}
                   </div>
-                </SectionShell>
+                ) : null
+              }
+            >
+              {canAccessOtherSections ? (
+                <div className="space-y-1">
+                  {gifts.map((gift) => (
+                    <SummaryRow
+                      key={gift.id}
+                      label={gift.recipientName ?? "Recipient"}
+                      value={gift.giftType === "CASH" && typeof gift.amount === "number" ? formatMoney(gift.amount) : gift.description ?? "Gift"}
+                      icons={
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                          <Heart className="h-4 w-4" />
+                        </span>
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <PrerequisiteMessage />
+              )}
+            </SectionShell>
 
-                <SectionShell
-                  title="Caretaker for pets"
-                  completed={hasPetCaretakerData}
-                  footer={
-                    <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+            <SectionShell
+              title="Caretaker for pets"
+              completed={hasPetCaretakerData}
+              time="1 min"
+              footer={
+                canAccessOtherSections ? (
+                  <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+                    {hasPetCaretakerData ? (
                       <Link
                         href="/will/caretakers-of-pets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
@@ -371,30 +441,46 @@ export default function MyWillPage() {
                         <PencilLine className="h-4 w-4" />
                         Edit
                       </Link>
-                    </div>
-                  }
-                >
-                  <div className="space-y-1">
-                    {petCaretakers.map((record) => (
-                      <SummaryRow
-                        key={record.id}
-                        label={record.pet?.fullName ?? "Pet"}
-                        value={record.caretaker?.fullName ?? "Not selected"}
-                        icons={
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <PawPrint className="h-4 w-4" />
-                          </span>
-                        }
-                      />
-                    ))}
+                    ) : (
+                      <Link
+                        href="/will/caretakers-of-pets/intro"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                      >
+                        Add caretaker for pets
+                      </Link>
+                    )}
                   </div>
-                </SectionShell>
+                ) : null
+              }
+            >
+              {canAccessOtherSections ? (
+                <div className="space-y-1">
+                  {petCaretakers.map((record) => (
+                    <SummaryRow
+                      key={record.id}
+                      label={record.pet?.fullName ?? "Pet"}
+                      value={record.caretaker?.fullName ?? "Not selected"}
+                      icons={
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                          <PawPrint className="h-4 w-4" />
+                        </span>
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <PrerequisiteMessage />
+              )}
+            </SectionShell>
 
-                <SectionShell
-                  title="Assets"
-                  completed={hasAssetsData}
-                  footer={
-                    <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+            <SectionShell
+              title="Assets"
+              completed={hasAssetsData}
+              time="4-10 min"
+              footer={
+                canAccessOtherSections ? (
+                  <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+                    {hasAssetsData ? (
                       <Link
                         href="/will/assets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
@@ -402,58 +488,71 @@ export default function MyWillPage() {
                         <PencilLine className="h-4 w-4" />
                         Edit
                       </Link>
-                    </div>
-                  }
-                >
-                  <div className="space-y-1">
-                    <SummaryRow
-                      label={`${financialAssets.length} Financial Assets`}
-                      icons={
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <Banknote className="h-4 w-4" />
-                        </span>
-                      }
-                    />
-                    <SummaryRow
-                      label={`${properties.length} property`}
-                      icons={
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <House className="h-4 w-4" />
-                        </span>
-                      }
-                    />
-                    <SummaryRow
-                      label={`${gifts.length + petCaretakers.length + loans.length} Other Assets`}
-                      icons={
-                        <>
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <UserRound className="h-4 w-4" />
-                          </span>
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <PawPrint className="h-4 w-4" />
-                          </span>
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <BriefcaseBusiness className="h-4 w-4" />
-                          </span>
-                        </>
-                      }
-                    />
+                    ) : (
+                      <Link
+                        href="/will/assets/intro"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                      >
+                        Add your assets
+                      </Link>
+                    )}
                   </div>
-                </SectionShell>
+                ) : null
+              }
+            >
+              {canAccessOtherSections ? (
+                <div className="space-y-1">
+                  <SummaryRow
+                    label={`${financialAssets.length} Financial Assets`}
+                    icons={
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                        <Banknote className="h-4 w-4" />
+                      </span>
+                    }
+                  />
+                  <SummaryRow
+                    label={`${properties.length} property`}
+                    icons={
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                        <House className="h-4 w-4" />
+                      </span>
+                    }
+                  />
+                  <SummaryRow
+                    label={`${gifts.length + petCaretakers.length + loans.length} Other Assets`}
+                    icons={
+                      <>
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                          <UserRound className="h-4 w-4" />
+                        </span>
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                          <PawPrint className="h-4 w-4" />
+                        </span>
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                          <BriefcaseBusiness className="h-4 w-4" />
+                        </span>
+                      </>
+                    }
+                  />
+                </div>
+              ) : (
+                <PrerequisiteMessage />
+              )}
+            </SectionShell>
 
-                {allComplete ? (
-                  <div className="flex justify-end pb-2">
-                    <Link
-                      href={previewHref}
-                      className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-6 py-3 text-[0.98rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                    >
-                      Will Preview
-                    </Link>
-                  </div>
-                ) : null}
-              </>
+            {allComplete ? (
+              <div className="flex justify-end pb-2">
+                <Link
+                  href={previewHref}
+                  className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-6 py-3 text-[0.98rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                >
+                  Will Preview
+                </Link>
+              </div>
             ) : null}
-          </div>
+          </>
+        ) : null}
+      </div>
       </div>
   );
 }

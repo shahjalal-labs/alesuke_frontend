@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type AgeChoice = "over" | "under" | null;
-export type ReligionChoice = "CHRISTIAN" | "BUDDHIST" | "MUSLIM" | "HINDU" | "JEWISH" | "SIKH" | "OTHER" | null;
+export type ReligionChoice = "CHRISTIAN" | "BUDDHIST" | "MUSLIM" | "HINDU" | "JUDAISM" | "SIKH" | "TAOISM" | "OTHER" | null;
 export type MaritalStatusChoice = "SINGLE" | "MARRIED" | "LONG_TERM_PARTNER" | null;
 
 export interface ProfileSetupState {

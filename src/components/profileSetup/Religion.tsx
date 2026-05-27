@@ -11,7 +11,7 @@ import { setReligion } from "@/redux/profileSetupSlice";
 import type { RootState } from "@/redux/store";
 
 type ReligionCategory = "muslim" | "non-muslim";
-type NonMuslimReligion = "CHRISTIAN" | "BUDDHIST" | "HINDU" | "JEWISH" | "SIKH" | "OTHER";
+type NonMuslimReligion = "CHRISTIAN" | "BUDDHIST" | "HINDU" | "JUDAISM" | "SIKH"| "TAOISM" | "OTHER";
 
 export default function Religion() {
   const storedReligion = useSelector((state: RootState) => state.profileSetup.religion);
@@ -24,8 +24,9 @@ export default function Religion() {
     { value: "CHRISTIAN", label: "Christian" },
     { value: "BUDDHIST", label: "Buddhist" },
     { value: "HINDU", label: "Hindu" },
-    { value: "JEWISH", label: "Jewish" },
+    { value: "JUDAISM", label: "Judaism" },
     { value: "SIKH", label: "Sikh" },
+    { value: "TAOISM", label: "Taoism" },
     { value: "OTHER", label: "Other" },
   ];
 
