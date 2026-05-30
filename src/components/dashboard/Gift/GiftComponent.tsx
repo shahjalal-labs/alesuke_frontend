@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import logo from '@/assets/logo.png'
 import { useGetAllGiftsQuery } from '@/redux/api/giftApi'
@@ -62,6 +63,7 @@ function formatGiftTypeLabel(giftType: GiftRecord['giftType']) {
 
 export default function GiftComponent() {
   const [hasGifts, setHasGifts] = useState(true)
+  const router = useRouter()
   const { data: giftsResponse, isLoading } = useGetAllGiftsQuery(undefined)
 
   const allocated = useMemo(() => {
@@ -77,6 +79,10 @@ export default function GiftComponent() {
     { id: 'property', label: 'Leave a property', href: '/will/gifts/add/property' },
     { id: 'account', label: 'Leave a financial account', href: '/will/gifts/add/account' },
   ]
+
+  const handleContinue = () => {
+    router.push('/will')
+  }
 
   return (
     <div className="min-h-screen bg-[#fbf4ed] text-[#171612]">
@@ -226,7 +232,11 @@ export default function GiftComponent() {
             <Link href="/will" className="inline-flex items-center gap-2 text-[0.95rem] text-[#5d6778] hover:text-[#1c2535]">
               ← Back to dashboard
             </Link>
-            <button className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)]">
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)]"
+            >
               Save & continue
             </button>
           </div>

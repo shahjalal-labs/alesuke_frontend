@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,6 +46,7 @@ type PetCaretakersResponse = {
 };
 
 export default function ChooseCareTakers() {
+  const router = useRouter();
   const { data: members = [], isLoading, isFetching } = useGetAllMemberListQuery(undefined);
   const { data: caretakerResponse, isLoading: isCaretakerLoading } = useGetCaretakerQuery(undefined);
   const [addCaretaker] = useAddCaretakerMutation();
@@ -93,6 +95,7 @@ export default function ChooseCareTakers() {
     try {
       await addCaretaker({ caretakerId: selectedCaretakerId }).unwrap();
       toast.success("Caretaker saved.");
+      router.push("/will/caretakers-of-pets/complete");
     } catch (error) {
       toast.error("Unable to save caretaker.");
     } finally {

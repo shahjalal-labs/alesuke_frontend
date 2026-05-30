@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -66,6 +67,7 @@ const propertyOptions: Array<{ id: PropertyType; label: string }> = [
 ]
 
 export default function Property() {
+  const router = useRouter()
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined)
   const { data: propertyGiftResponse } = useGetGiftsTypeQuery('PROPERTY')
   const [addProperty] = useAddPropertyMutation()
@@ -173,6 +175,7 @@ export default function Property() {
       await addGift(payload).unwrap()
       setHydratedFromGift(false)
       toast.success('Property gift saved')
+      router.push('/will/gifts')
     } catch (error) {
       toast.error('Unable to save property gift')
     } finally {

@@ -56,17 +56,27 @@ function getHourInTZ(date: Date, timeZone?: string) {
 }
 
 export default function DashboardHeader({ timeZone }: Props) {
-  const [now, setNow] = useState(() => new Date());
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState<Date | null>(null);
 
   const { data: meData } = useGetMeDataQuery({});
   const userName = meData?.data?.fullName ?? "User";
   const tz = timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const tzShort = getTimezoneShortName(now, tz);
+  const tzShort = now ? getTimezoneShortName(now, tz) : "";
 
-  const hourInTz = getHourInTZ(now, tz);
-  const greeting = hourInTz < 12 ? "Good Morning," : hourInTz < 18 ? "Good Afternoon," : "Good Evening,";
+  const hourInTz = now ? getHourInTZ(now, tz) : 0;
+  const greeting = !mounted
+    ? "Good Morning,"
+    : hourInTz < 12
+      ? "Good Morning,"
+      : hourInTz < 18
+        ? "Good Afternoon,"
+        : "Good Evening,";
 
   useEffect(() => {
+    setMounted(true);
+    setNow(new Date());
+
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
     return () => window.clearInterval(timer);
   }, []);
@@ -83,8 +93,12 @@ export default function DashboardHeader({ timeZone }: Props) {
         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#8a93a6]">
           <Clock3 className="h-5 w-5" />
         </div>
-        <div className="text-[1rem] leading-none">{formatTime(now, tz)}</div>
-        <div className="text-[1rem] leading-none">{formatDate(now, tz)}</div>
+        <div className="text-[1rem] leading-none" suppressHydrationWarning>
+          {now ? formatTime(now, tz) : "-- : --"}
+        </div>
+        <div className="text-[1rem] leading-none" suppressHydrationWarning>
+          {now ? formatDate(now, tz) : ""}
+        </div>
         {tzShort ? <div className="text-[0.85rem] text-[#9aa0ab]">{tzShort}</div> : null}
       </div>
     </div>

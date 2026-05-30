@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -57,6 +58,7 @@ export default function GiftFormPage({
   nextLabel,
   payloadBuilder,
 }: GiftFormPageProps) {
+  const router = useRouter()
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined)
   const [addGift] = useAddGiftMutation()
   const [values, setValues] = useState<Record<string, string>>(() =>
@@ -99,6 +101,7 @@ export default function GiftFormPage({
 
       await addGift(payload).unwrap()
       toast.success(`${giftType} gift saved.`)
+      router.push('/will/gifts')
     } catch (error) {
       console.error(error)
       toast.error('Unable to save gift. Please try again.')

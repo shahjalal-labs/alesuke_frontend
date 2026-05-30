@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, CircleAlert, X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export type AccountType = 'bank' | 'investment' | 'business' | 'retirement' | 'insurance' | 'safe' | 'crypto'
@@ -31,12 +31,6 @@ type AccountModalConfig = {
   title: string
   intro: string
   fields: FieldConfig[]
-  showJoint?: boolean
-  showNominated?: boolean
-  jointDefault?: boolean
-  nominatedDefault?: boolean
-  infoJoint?: string
-  infoNominated?: string
   valueLabel: string
   valueHelper: string
 }
@@ -50,14 +44,6 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'accountNumber', label: 'Account number', placeholder: 'I.e. DBS Savings 023-6-353610' },
       { key: 'approximateValue', label: 'Approximate balance', placeholder: '1000', kind: 'number' },
     ],
-    showJoint: true,
-    showNominated: true,
-    jointDefault: false,
-    nominatedDefault: false,
-    infoJoint:
-      'Be aware that jointly owned accounts will only be distributed to your beneficiaries if the co-owner of the account passes away before you do.',
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Approximate Balance',
     valueHelper: 'It is not reflected in the Will itself, but only in the Schedule of Assets.',
   },
@@ -69,14 +55,6 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'institutionName', label: 'Institution name', placeholder: 'SCB' },
       { key: 'approximateValue', label: 'Approximate market value', placeholder: '1000', kind: 'number' },
     ],
-    showJoint: true,
-    showNominated: true,
-    jointDefault: false,
-    nominatedDefault: false,
-    infoJoint:
-      'Be aware that jointly owned accounts will only be distributed to your beneficiaries if the co-owner of the account passes away before you do.',
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Approximate Current Market Value',
     valueHelper: 'It is not reflected in the Will itself, but only in the Schedule of Assets.',
   },
@@ -88,15 +66,11 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'companyName', label: 'Company name', placeholder: 'i.e. Acme Innovation Pte. Ltd.' },
       { key: 'approximateValue', label: 'Approximate market value', placeholder: '1000', kind: 'number' },
     ],
-    showNominated: true,
-    nominatedDefault: true,
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Approximate Current Market Value',
     valueHelper: 'Balances help you understand the size of your current estate, and helps with distribution of assets.',
   },
   retirement: {
-    title: 'Add retirement account',
+    title: 'Add Supplememtary Retirement Scheme (SRS)',
     intro:
       'Your retirement account might be distributed directly through a beneficiary nomination process. It\'s still good practice to list it here so the executor can be aware of the account and ensure it is distributed properly.',
     fields: [
@@ -104,14 +78,6 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'accountNumber', label: 'Account number', placeholder: 'i.e. 1234-567' },
       { key: 'approximateValue', label: 'Approximate value', placeholder: '1000', kind: 'number' },
     ],
-    showJoint: true,
-    showNominated: true,
-    jointDefault: true,
-    nominatedDefault: true,
-    infoJoint:
-      'Be aware that jointly owned accounts will only be distributed to your beneficiaries if the co-owner of the account passes away before you do.',
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Approximate Value',
     valueHelper: 'Balances help you understand the size of your current estate, and helps with distribution of assets.',
   },
@@ -132,10 +98,6 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'maturityDate', label: 'Maturity date', placeholder: '2030-12-31', kind: 'date' },
       { key: 'faceValue', label: 'Face value', placeholder: '11', kind: 'number' },
     ],
-    showNominated: true,
-    nominatedDefault: true,
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Face value',
     valueHelper: 'Balances help you understand the size of your current estate, and helps with distribution of assets.',
   },
@@ -146,14 +108,6 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'description', label: 'Description', placeholder: 'i.e. 100g gold bullion in SBI Safe Deposit Box' },
       { key: 'approximateValue', label: 'Approximate value', placeholder: '1000', kind: 'number' },
     ],
-    showJoint: true,
-    showNominated: true,
-    jointDefault: true,
-    nominatedDefault: true,
-    infoJoint:
-      'Be aware that jointly owned accounts will only be distributed to your beneficiaries if the co-owner of the account passes away before you do.',
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Approximate Value',
     valueHelper: 'Balances help you understand the size of your current estate, and helps with distribution of assets.',
   },
@@ -165,14 +119,6 @@ const accountConfigs: Record<AccountType, AccountModalConfig> = {
       { key: 'institutionName', label: 'Institution name', placeholder: 'Enter exchange or institution name' },
       { key: 'approximateValue', label: 'Approximate balance', placeholder: '1000', kind: 'number' },
     ],
-    showJoint: true,
-    showNominated: true,
-    jointDefault: true,
-    nominatedDefault: true,
-    infoJoint:
-      'Be aware that jointly owned accounts will only be distributed to your beneficiaries if the co-owner of the account passes away before you do.',
-    infoNominated:
-      'Check this box if you have already made a nomination for this asset. It will go to those you have nominated with the institution by default.',
     valueLabel: 'Approximate Balance',
     valueHelper: 'Balances help you understand the size of your current estate, and helps with distribution of assets.',
   },
@@ -193,8 +139,6 @@ interface AddAccountModalProps {
 export default function AddAccountModal({ open, type, onClose, onSave }: AddAccountModalProps) {
   const [mounted, setMounted] = useState(false)
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({})
-  const [joint, setJoint] = useState(false)
-  const [nominated, setNominated] = useState(false)
   const [saving, setSaving] = useState(false)
   const [openSelectKey, setOpenSelectKey] = useState<string | null>(null)
 
@@ -221,8 +165,6 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
 
     setFieldValues(nextValues)
     setOpenSelectKey(null)
-    setJoint(Boolean(config.jointDefault))
-    setNominated(Boolean(config.nominatedDefault))
   }, [open, config])
 
   useEffect(() => {
@@ -321,50 +263,6 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
                 )
               })}
 
-              {config.showJoint ? (
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 text-[1rem] text-[#4d5362]">
-                    <input
-                      type="checkbox"
-                      checked={joint}
-                      onChange={(event) => setJoint(event.target.checked)}
-                      className="h-6 w-6 rounded-[4px] border border-[#738095] accent-[#6f7482]"
-                    />
-                    <span>Is it jointly owned?</span>
-                  </label>
-                  {joint && config.infoJoint ? (
-                    <div className="rounded-[10px] border border-[#62b6f2] bg-[#f0f3f5] px-4 py-4 text-[0.95rem] leading-[1.45] text-[#656f80] sm:px-5 sm:py-5 sm:text-[1rem]">
-                      <div className="flex gap-3">
-                        <CircleAlert className="mt-0.5 h-5 w-5 flex-none text-[#6e7b8d]" />
-                        <p>{config.infoJoint}</p>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {config.showNominated ? (
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 text-[1rem] text-[#4d5362]">
-                    <input
-                      type="checkbox"
-                      checked={nominated}
-                      onChange={(event) => setNominated(event.target.checked)}
-                      className="h-6 w-6 rounded-[4px] border border-[#738095] accent-[#6f7482]"
-                    />
-                    <span>Is it nominated?</span>
-                  </label>
-                  {nominated && config.infoNominated ? (
-                    <div className="rounded-[10px] border border-[#62b6f2] bg-[#f0f3f5] px-4 py-4 text-[0.95rem] leading-[1.45] text-[#656f80] sm:px-5 sm:py-5 sm:text-[1rem]">
-                      <div className="flex gap-3">
-                        <CircleAlert className="mt-0.5 h-5 w-5 flex-none text-[#6e7b8d]" />
-                        <p>{config.infoNominated}</p>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
             </div>
 
             <div className="mt-8 flex justify-end gap-3 border-t border-[#ece0d2] pt-5 sm:mt-10">
@@ -381,7 +279,7 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
                 onClick={async () => {
                   setSaving(true)
                   try {
-                    await Promise.resolve(onSave?.({ type, fields: fieldValues, joint, nominated }))
+                    await Promise.resolve(onSave?.({ type, fields: fieldValues, joint: false, nominated: false }))
                     toast.success('Account saved')
                     onClose()
                   } catch (error) {

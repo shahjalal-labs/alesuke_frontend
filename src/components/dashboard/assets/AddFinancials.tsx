@@ -60,7 +60,7 @@ const addOptions: Array<{ id: AccountType; label: string }> = [
   { id: "bank", label: "Add Bank Account" },
   { id: "investment", label: "Add Investment Account" },
   { id: "business", label: "Add Business Interest" },
-  { id: "retirement", label: "Add Retirement Account" },
+  { id: "retirement", label: "Add Supplememtary Retirement Scheme (SRS)" },
   { id: "insurance", label: "Add Insurance Plan" },
   { id: "safe", label: "Add Safe deposit box" },
   { id: "crypto", label: "Add Crypto" },
@@ -192,8 +192,6 @@ export default function AddFinancials() {
     return savedAssets.find((asset) => String(asset.id) === String(selectedAssetId)) ?? null;
   }, [savedAssets, selectedAssetId]);
 
-  const selectedSet = useMemo(() => new Set(selectedRecipientIds), [selectedRecipientIds]);
-
   useEffect(() => {
     if (!selectedFinancialAccountGift) {
       return;
@@ -321,6 +319,11 @@ export default function AddFinancials() {
   const router = useRouter();
 
   const handleSaveGift = async () => {
+    if (selectedAssetId == null) {
+      toast.error("Select one account to continue.");
+      return;
+    }
+
     router.push("/will/assets/add-property");
   };
 
@@ -464,7 +467,7 @@ export default function AddFinancials() {
               <button
                 type="button"
                 onClick={handleSaveGift}
-                disabled={submittingGift || !selectedRecipientIds.length || selectedAssetId == null}
+                disabled={submittingGift || selectedAssetId == null}
                 className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submittingGift ? "Saving..." : "Save & continue"}

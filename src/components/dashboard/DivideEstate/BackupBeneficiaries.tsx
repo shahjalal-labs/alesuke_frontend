@@ -36,6 +36,14 @@ type DistributionRecord = {
   person?: { id?: string; fullName?: string | null };
 };
 
+function formatSharePercent(value?: number | null) {
+  if (value == null || Number.isNaN(value)) {
+    return '0%';
+  }
+
+  return `${Math.round(Number(value) / 5) * 5}%`;
+}
+
 function BackupBeneficiaries() {
   const router = useRouter();
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined);
@@ -193,7 +201,7 @@ function BackupBeneficiaries() {
                   >
                     <div className="font-medium text-[#1d2430]">{distribution.name}</div>
                     <div className="mt-1 text-[0.84rem] text-[#7b8594]">People ID: {distribution.peopleId || 'N/A'}</div>
-                    {distribution.percentage != null ? <div className="mt-1 text-[0.84rem] text-[#7b8594]">Share: {distribution.percentage}%</div> : null}
+                    {distribution.percentage != null ? <div className="mt-1 text-[0.84rem] text-[#7b8594]">Share: {formatSharePercent(distribution.percentage)}</div> : null}
                     {isSelectedDistributor ? <div className="mt-2 inline-flex rounded-full bg-[#152035] px-3 py-1 text-[0.75rem] font-medium text-white">Selected distributor</div> : null}
                   </button>
                 );

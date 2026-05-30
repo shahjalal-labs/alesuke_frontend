@@ -114,8 +114,14 @@ export default function AddPropertyModal({ open, propertyType, onClose, onSave }
 
               <label className="inline-flex items-center gap-3 text-[1rem] text-[#4d5362]">
                 <input type="checkbox" checked={joint} onChange={(e) => setJoint(e.target.checked)} className="h-6 w-6 rounded-[4px] border border-[#738095] accent-[#6f7482]" />
-                <span>Is this a joint property?</span>
+                <span>Joint tenancy</span>
               </label>
+
+              {joint ? (
+                <p className="text-[0.92rem] leading-[1.45] text-[#7f8695] sm:text-[0.98rem]">
+                  Property held under joint tenancy carries a right of survivorship, therefore you cannot will it.
+                </p>
+              ) : null}
 
               <div>
                 <p className="text-[1.35rem] font-medium tracking-[-0.03em] text-[#111827] sm:text-[1.55rem]">Estimated value</p>
@@ -137,8 +143,13 @@ export default function AddPropertyModal({ open, propertyType, onClose, onSave }
               </button>
               <button
                 type="button"
-                disabled={saving}
+                disabled={saving || joint}
                 onClick={async () => {
+                  if (joint) {
+                    toast.error('Joint tenancy property cannot be added to the will.');
+                    return
+                  }
+
                   setSaving(true)
                   try {
                     const payload = {
@@ -161,7 +172,7 @@ export default function AddPropertyModal({ open, propertyType, onClose, onSave }
                 }}
                 className="h-[46px] rounded-[4px] bg-[#111827] px-5 text-[1rem] text-white transition-opacity hover:opacity-95 disabled:opacity-60"
               >
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? 'Saving…' : joint ? 'Cannot save' : 'Save'}
               </button>
             </div>
           </div>

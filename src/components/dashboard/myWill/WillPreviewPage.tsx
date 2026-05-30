@@ -91,7 +91,7 @@ function formatPercent(value?: number | null) {
     return '0%'
   }
 
-  return `${Number(value).toFixed(2).replace(/\.00$/, '')}%`
+  return `${Math.round(Number(value) / 5) * 5}%`
 }
 
 function AccordionItem({

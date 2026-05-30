@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import GiftAddTemplate from './GiftAddTemplate'
@@ -58,7 +59,7 @@ const addOptions: Array<{ id: AccountType; label: string }> = [
   { id: 'bank', label: 'Add Bank Account' },
   { id: 'investment', label: 'Add Investment Account' },
   { id: 'business', label: 'Add Business Interest' },
-  { id: 'retirement', label: 'Add Retirement Account' },
+  { id: 'retirement', label: 'Add Supplememtary Retirement Scheme (SRS)' },
   { id: 'insurance', label: 'Add Insurance Plan' },
   { id: 'safe', label: 'Add Safe deposit box' },
   { id: 'crypto', label: 'Add Crypto' },
@@ -149,6 +150,7 @@ function getAssetValue(asset: AssetRecord) {
 }
 
 export default function Account() {
+  const router = useRouter()
   const { data: members = [] } = useGetAllMemberListQuery(undefined)
   const { data: assetsResponse, isLoading, isFetching } = useGetAllAssetsQuery(undefined)
   const { data: financialAccountGiftResponse } = useGetGiftsTypeQuery('FINANCIAL_ACCOUNT')
@@ -336,6 +338,7 @@ export default function Account() {
       }).unwrap()
 
       toast.success('Financial account gift saved')
+      router.push('/will/gifts')
     } catch (error) {
       toast.error('Unable to save financial account gift')
     } finally {

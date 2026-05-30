@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +22,7 @@ import {
   StepHeader,
   TipCallout,
 } from "@/components/dashboard/executor/executor-flow";
+import AddPersonModal from "@/components/ui/AddPersonModal";
 import {
   useAddBackupExecutorMutation,
   useAddExecutorMutation,
@@ -57,7 +58,12 @@ function getMemberLabel(relationType?: string | null) {
   if (relationType === "SPOUSE") return "Spouse";
   if (relationType === "PARTNER") return "Partner";
   if (relationType === "CHILD") return "Child";
-  return "Family member";
+  if (!relationType) return "Family member";
+
+  return relationType
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function getMemberIcon(relationType?: string | null) {
@@ -84,6 +90,7 @@ export default function ChooseExecutor() {
   const [backupExecutorId, setBackupExecutorId] = useState<string | null>(null);
   const [activeExecutorId, setActiveExecutorId] = useState<string | null>(savedExecutorId);
   const [isBackupListOpen, setIsBackupListOpen] = useState(false);
+  const [isAddExecutorOpen, setIsAddExecutorOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addExecutor] = useAddExecutorMutation();
   const [addBackupExecutor] = useAddBackupExecutorMutation();
@@ -199,6 +206,29 @@ export default function ChooseExecutor() {
     router.push("/will/executor/great-work");
   };
 
+  const handleExecutorAdded = async (result: any) => {
+    const peopleId = result?.data?.id ?? result?.id ?? null;
+
+    if (!peopleId) {
+      toast.error("Unable to create an executor. Please try again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const executorResult = await addExecutor({ peopleId }).unwrap();
+      const executorId = getExecutorId(executorResult);
+      setPrimaryExecutorId(peopleId);
+      setActiveExecutorId(executorId);
+      setIsAddExecutorOpen(false);
+      toast.success("Executor added successfully.");
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <ExecutorLayout>
       <div className="space-y-10">
@@ -280,18 +310,59 @@ export default function ChooseExecutor() {
               />
             </div>
           ) : members.length ? (
-            members.map((member) => (
-              <ExecutorPersonRow
-                key={member.id}
-                icon={getMemberIcon(member.relationType)}
-                name={member.fullName ?? "Unnamed"}
-                badge={getMemberLabel(member.relationType)}
-                selected={primaryId === member.id}
-                onClick={() => handlePrimarySelect(member)}
-              />
-            ))
+            <div className="space-y-3">
+              {members.map((member) => (
+                <ExecutorPersonRow
+                  key={member.id}
+                  icon={getMemberIcon(member.relationType)}
+                  name={member.fullName ?? "Unnamed"}
+                  badge={getMemberLabel(member.relationType)}
+                  selected={primaryId === member.id}
+                  onClick={() => handlePrimarySelect(member)}
+                />
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setIsAddExecutorOpen(true)}
+                disabled={isSubmitting}
+                className="flex w-full items-center justify-between gap-4 rounded-[10px] border border-dashed border-[#d5cabd] bg-white/80 px-4 py-4 text-left text-[#5c6677] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 md:px-5"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#e9ecef] text-[#2b3448]">
+                    <Plus className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[1rem] font-medium leading-[1.2] md:text-[1.08rem]">Add Executor</span>
+                    <span className="mt-0.5 block text-[0.82rem] leading-[1.25] text-[#8a92a0] md:text-[0.88rem]">
+                      Create someone new if the right person is not in your list yet.
+                    </span>
+                  </span>
+                </span>
+              </button>
+            </div>
           ) : (
-            <BodyCopy>No family members found yet.</BodyCopy>
+            <div className="space-y-3">
+              <BodyCopy>No family members found yet.</BodyCopy>
+              <button
+                type="button"
+                onClick={() => setIsAddExecutorOpen(true)}
+                disabled={isSubmitting}
+                className="flex w-full items-center justify-between gap-4 rounded-[10px] border border-dashed border-[#d5cabd] bg-white/80 px-4 py-4 text-left text-[#5c6677] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 md:px-5"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#e9ecef] text-[#2b3448]">
+                    <Plus className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[1rem] font-medium leading-[1.2] md:text-[1.08rem]">Add Executor</span>
+                    <span className="mt-0.5 block text-[0.82rem] leading-[1.25] text-[#8a92a0] md:text-[0.88rem]">
+                      Create someone new if the right person is not in your list yet.
+                    </span>
+                  </span>
+                </span>
+              </button>
+            </div>
           )}
         </FlowPanel>
 
@@ -360,6 +431,15 @@ export default function ChooseExecutor() {
           primaryHref="/will"
           primaryOnClick={handleFinish}
           primaryDisabled={isSubmitting}
+        />
+
+        <AddPersonModal
+          open={isAddExecutorOpen}
+          onClose={() => setIsAddExecutorOpen(false)}
+          title="Add an executor"
+          actionLabel="Create Executor"
+          allowGenericPerson
+          onSuccess={handleExecutorAdded}
         />
       </div>
     </ExecutorLayout>

@@ -365,7 +365,7 @@ export default function MyWillPage() {
                     <SummaryRow
                       key={distribution.id}
                       label={distribution.person?.fullName ?? "Not selected"}
-                      value={`${Number(distribution.percentage ?? 0).toFixed(2).replace(/\.00$/, "")} %`}
+                      value={`${Math.round(Number(distribution.percentage ?? 0) / 5) * 5} %`}
                       icons={
                         <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
                           <UserRound className="h-4 w-4" />
@@ -409,16 +409,27 @@ export default function MyWillPage() {
               {canAccessOtherSections ? (
                 <div className="space-y-1">
                   {gifts.map((gift) => (
-                    <SummaryRow
-                      key={gift.id}
-                      label={gift.recipientName ?? "Recipient"}
-                      value={gift.giftType === "CASH" && typeof gift.amount === "number" ? formatMoney(gift.amount) : gift.description ?? "Gift"}
-                      icons={
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                    <div key={gift.id} className="flex flex-col gap-3 rounded-[2px] py-3 sm:flex-row sm:items-center sm:gap-4">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
                           <Heart className="h-4 w-4" />
                         </span>
-                      }
-                    />
+                        <div className="min-w-0">
+                          <p className="break-words text-[0.98rem] text-[#4b5361] sm:text-[1.05rem]">
+                            {gift.recipientName ?? "Recipient"}
+                          </p>
+                          <p className="mt-1 break-words text-[0.9rem] leading-[1.45] text-[#6f7685] sm:text-[0.98rem]">
+                            {gift.giftType === "CASH" && typeof gift.amount === "number"
+                              ? formatMoney(gift.amount)
+                              : gift.description ?? "Gift"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="self-start text-[0.82rem] uppercase tracking-[0.12em] text-[#8c8072] sm:self-center sm:pl-3 sm:text-right">
+                        Gift
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (

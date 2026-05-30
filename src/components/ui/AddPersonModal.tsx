@@ -9,11 +9,20 @@ import { cn } from '@/lib/utils';
 import { useAddMemberMutation, useUpdateMemberMutation } from '@/redux/api/profileApi';
 
 type IdentifierOption = 'NRIC / FIN' | 'Passport' | 'Foreign ID';
+type GenericRelationshipOption = 'FRIEND' | 'SIBLING' | 'COUSIN' | 'OTHER_FAMILY' | 'OTHER';
 
 const identifierOptions: IdentifierOption[] = [
   'NRIC / FIN',
   'Passport',
   'Foreign ID',
+];
+
+const genericRelationshipOptions: Array<{ label: string; value: GenericRelationshipOption }> = [
+  { label: 'Friend', value: 'FRIEND' },
+  { label: 'Sibling', value: 'SIBLING' },
+  { label: 'Cousin', value: 'COUSIN' },
+  { label: 'Other family member', value: 'OTHER_FAMILY' },
+  { label: 'Other', value: 'OTHER' },
 ];
 
 function toIdNumberLabel(value: IdentifierOption) {
@@ -43,6 +52,8 @@ interface AddPersonModalProps {
   actionLabel?: string;
   mode?: 'person' | 'child' | 'pet';
   relationType?: 'SPOUSE' | 'PARTNER' | 'CHILD' | 'PET';
+  allowGenericPerson?: boolean;
+  genericRelationshipType?: GenericRelationshipOption;
   memberId?: string;
   initialValues?: {
     fullName?: string;
@@ -52,7 +63,7 @@ interface AddPersonModalProps {
     identifierValue?: string | null;
     governmentIssuedId?: boolean | null;
   };
-  onSuccess?: () => void;
+  onSuccess?: (result?: any) => void | Promise<void>;
 }
 
 export default function AddPersonModal({
@@ -62,6 +73,8 @@ export default function AddPersonModal({
   actionLabel = 'Create a person',
   mode = 'person',
   relationType,
+  allowGenericPerson = false,
+  genericRelationshipType = 'FRIEND',
   memberId,
   initialValues,
   onSuccess,
@@ -79,6 +92,7 @@ export default function AddPersonModal({
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
+  const [genericRelationType, setGenericRelationType] = useState<GenericRelationshipOption>(genericRelationshipType);
   const [submitting, setSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -102,6 +116,7 @@ export default function AddPersonModal({
     setDobDay('');
     setDobMonth('');
     setDobYear('');
+    setGenericRelationType(genericRelationshipType);
     setIsEditing(false);
   };
 
@@ -260,6 +275,25 @@ export default function AddPersonModal({
 
           {!isPetMode && withAdditionalId ? (
             <div className="space-y-6">
+              {allowGenericPerson ? (
+                <div>
+                  <label className="mb-3 block text-[0.78rem] uppercase tracking-[0.12em] text-[#4c525c]">
+                    Relationship to you
+                  </label>
+                  <select
+                    value={genericRelationType}
+                    onChange={(event) => setGenericRelationType(event.target.value as GenericRelationshipOption)}
+                    className="h-[58px] w-full rounded-[12px] bg-[#f8f8f8] px-4 text-base text-[#5a616d] outline-none sm:h-[70px]"
+                  >
+                    {genericRelationshipOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
               {isChildMode ? (
                 <>
                   <div>
@@ -497,13 +531,38 @@ export default function AddPersonModal({
                         payload.identifierValue = identifierNumber;
                         payload.governmentIssuedId = true;
                       }
-                    } else {
+                    } else if (!allowGenericPerson) {
                       payload.relationType = relationType || 'SPOUSE';
                       if (hasIdentifierDetails) {
                         payload.typeOfIdentifier = toApiIdentifierType(identifierType);
                         payload.identifierValue = identifierNumber;
                         payload.governmentIssuedId = true;
                       }
+                    } else {
+                      payload.relationType = genericRelationType;
+                      if (hasIdentifierDetails) {
+                        payload.typeOfIdentifier = toApiIdentifierType(identifierType);
+                        payload.identifierValue = identifierNumber;
+                        payload.governmentIssuedId = true;
+                      }
+                    }
+
+                    if (allowGenericPerson && !payload.relationType) {
+                      payload.relationType = genericRelationType;
+                    }
+
+                    if (allowGenericPerson && genericRelationType === 'OTHER' && !payload.relationType) {
+                      payload.relationType = 'OTHER';
+                    }
+
+                    if (allowGenericPerson && genericRelationType === 'OTHER_FAMILY' && !payload.relationType) {
+                      payload.relationType = 'OTHER_FAMILY';
+                    }
+
+                    if (allowGenericPerson && genericRelationType === 'OTHER' && hasIdentifierDetails) {
+                      payload.typeOfIdentifier = toApiIdentifierType(identifierType);
+                      payload.identifierValue = identifierNumber;
+                      payload.governmentIssuedId = true;
                     }
                   }
 
@@ -511,11 +570,14 @@ export default function AddPersonModal({
                     await updateMember({ id: memberId, data: payload }).unwrap();
                     toast.success('Member updated successfully.');
                   } else {
-                    await addMember(payload).unwrap();
+                    const result = await addMember(payload).unwrap();
                     toast.success('Member added successfully.');
+                    await onSuccess?.(result);
+                    onClose();
+                    return;
                   }
                   onClose();
-                  onSuccess?.();
+                  await onSuccess?.();
                 } catch (err) {
                   toast.error(isEditing ? 'Unable to update member. Please try again.' : 'Unable to add member. Please try again.');
                   console.error('Add member failed', err);
