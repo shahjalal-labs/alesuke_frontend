@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useLazyGetMeDataQuery } from "@/redux/api/authApi";
-import { useUpdateProfileMutation } from "@/redux/api/profileApi";
+import { useDeleteMemberMutation, useGetAllMemberListQuery, useUpdateProfileMutation } from "@/redux/api/profileApi";
 import { setUser } from "@/redux/ReduxFunction";
 import { resetProfileSetup, setMaritalStatus } from "@/redux/profileSetupSlice";
 import type { AppDispatch, RootState } from "@/redux/store";
@@ -34,10 +34,18 @@ export default function MaritalStatus() {
   const [status, setStatus] = useState<MaritalStatusValue>(
     profileSetup.maritalStatus ? fromApiMaritalStatus(profileSetup.maritalStatus) : "single"
   );
+  const [saving, setSaving] = useState(false);
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const [fetchMeData] = useLazyGetMeDataQuery();
+  const { data: allMembers = [] } = useGetAllMemberListQuery(undefined);
+  const [deleteMember] = useDeleteMemberMutation();
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+
+  const relatedMemberIds = (allMembers as Array<{ id?: string; relationType?: string }>).
+    filter((member) => ["SPOUSE", "PARTNER", "CHILD"].includes(member.relationType ?? ""))
+    .map((member) => member.id)
+    .filter((id): id is string => Boolean(id));
 
   useEffect(() => {
     if (profileSetup.maritalStatus) {
@@ -48,6 +56,7 @@ export default function MaritalStatus() {
   const handleNext = async () => {
     const apiMaritalStatus = toApiMaritalStatus(status);
     dispatch(setMaritalStatus(apiMaritalStatus));
+    setSaving(true);
 
     const finalProfileData = {
       ...profileSetup,
@@ -67,6 +76,11 @@ export default function MaritalStatus() {
 
     try {
       await updateProfile(formData).unwrap();
+
+      if (status !== "married" && relatedMemberIds.length) {
+        await Promise.all(relatedMemberIds.map((id) => deleteMember(id).unwrap()));
+      }
+
       const meResponse = await fetchMeData(undefined).unwrap();
 
       dispatch(
@@ -84,6 +98,8 @@ export default function MaritalStatus() {
     } catch (error) {
       console.error("Profile completion failed:", error);
       toast.error("Unable to complete profile. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -95,7 +111,7 @@ export default function MaritalStatus() {
       description={<span>You must update your will if there is a change in your marital status.</span>}
       backHref="/profile-setup/nickname"
       nextHref="/will"
-      nextDisabled={isLoading}
+      nextDisabled={isLoading || saving}
       onNext={handleNext}
     >
       <div className="space-y-5">

@@ -40,17 +40,30 @@ export default function AddLovedOnesSection({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('Add a new person');
   const [actionLabel, setActionLabel] = useState('Create a person');
+  const [modalMode, setModalMode] = useState<'person' | 'child' | 'pet'>('person');
+  const [modalRelationType, setModalRelationType] = useState<'SPOUSE' | 'PARTNER' | 'CHILD' | 'PET' | undefined>(undefined);
 
-  const handleOpen = (title: string) => {
-    if (title.includes('Partner')) {
+  const handleOpen = (title: string, id: string) => {
+    if (id === 'partner') {
       setModalTitle('Add a new partner');
       setActionLabel('Create a Partner');
-    } else if (title.includes('Child')) {
+      setModalMode('person');
+      setModalRelationType('PARTNER');
+    } else if (id === 'child') {
       setModalTitle('Add a new person');
       setActionLabel('Create a Child');
+      setModalMode('child');
+      setModalRelationType('CHILD');
+    } else if (id === 'pet') {
+      setModalTitle('Add a new pet');
+      setActionLabel('Create a Pet');
+      setModalMode('pet');
+      setModalRelationType('PET');
     } else {
       setModalTitle('Add a new person');
       setActionLabel('Create a person');
+      setModalMode('person');
+      setModalRelationType(undefined);
     }
 
     setIsModalOpen(true);
@@ -75,7 +88,7 @@ export default function AddLovedOnesSection({
             <button
               key={option.id}
               type="button"
-              onClick={() => handleOpen(option.title)}
+              onClick={() => handleOpen(option.title, option.id)}
               className="flex w-full items-center gap-4 rounded-[3px] bg-white px-5 py-4 text-left transition-all hover:shadow-sm"
             >
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#e8dfd3] text-lg">
@@ -99,6 +112,8 @@ export default function AddLovedOnesSection({
         onClose={() => setIsModalOpen(false)}
         title={modalTitle}
         actionLabel={actionLabel}
+        mode={modalMode}
+        relationType={modalRelationType}
       />
     </section>
   );
