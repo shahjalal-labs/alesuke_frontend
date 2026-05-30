@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useGetAllAssetsQuery } from '@/redux/api/assetsApi';
 
 function AssetCard({ title, subtitle, amount }: { title: string; subtitle?: string; amount?: string }) {
   return (
@@ -34,6 +35,30 @@ function AssetCard({ title, subtitle, amount }: { title: string; subtitle?: stri
 }
 
 export default function AssetVault() {
+  const { data, isLoading, isFetching, error } = useGetAllAssetsQuery(undefined);
+  const assets = data?.data ?? [];
+
+  const getTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'BANK_ACCOUNT':
+        return 'Bank Account';
+      case 'RETIREMENT_ACCOUNT':
+        return 'Retirement Account';
+      case 'INVESTMENT_ACCOUNT':
+        return 'Investment Account';
+      case 'INSURANCE_PLAN':
+        return 'Insurance Plan';
+      case 'SAFE_DEPOSIT_BOX':
+        return 'Safe Deposit Box';
+      case 'CRYPTO':
+        return 'Crypto';
+      case 'BUSINESS_INTEREST':
+        return 'Business Interest';
+      default:
+        return type ?? 'Asset';
+    }
+  };
+
   return (
     <section className="space-y-6">
       <div>
@@ -47,7 +72,24 @@ export default function AssetVault() {
           <p className="mb-6 text-sm text-[#8b7d73]">These are your cash accounts, savings and investments. You can also add in your Insurance Plans and Retirement accounts in here as well</p>
 
           <div className="mb-4">
-            <AssetCard title="Bank Account 1245 4578 9125 4578..." subtitle="Bank Account" amount="SGD 500" />
+            {isLoading || isFetching ? (
+              <div className="rounded-[6px] bg-white p-5">Loading assets…</div>
+            ) : assets.length ? (
+              assets.map((a: any) => (
+                <div key={a.id} className="mb-4">
+                  <AssetCard
+                    title={a.accountNumber || a.institutionName || getTypeLabel(a.type)}
+                    subtitle={getTypeLabel(a.type)}
+                    amount={a.approximateValue ? `SGD ${a.approximateValue.toLocaleString()}` : undefined}
+                  />
+                  <div className="mt-2 text-right">
+                    <Link href={`/user-dashboard/add-asset?id=${a.id}`} className="inline-block rounded-[6px] bg-[#192233] px-4 py-2 text-sm text-white">Edit</Link>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[6px] bg-white p-5">No assets added yet.</div>
+            )}
           </div>
 
           <div className="mt-4 border-t border-[#ece8e2] pt-4 text-right">
@@ -62,7 +104,20 @@ export default function AssetVault() {
           <p className="mb-6 text-sm text-[#8b7d73]">These are your cash accounts, savings and investments- You can also add in your Insurance Plans and Retirement accounts in here as well</p>
 
           <div className="mb-4">
-            <AssetCard title="Bank Account 1245 4578 9125 4578..." subtitle="Bank Account" amount="SGD 500" />
+            {/* For now reuse finances list if present; otherwise show placeholder */}
+            {assets.length ? (
+              assets.filter((a: any) => a.type === 'PROPERTY' || a.type === 'REAL_ESTATE').map((a: any) => (
+                <div key={a.id} className="mb-4">
+                  <AssetCard
+                    title={a.institutionName || a.accountNumber || getTypeLabel(a.type)}
+                    subtitle={getTypeLabel(a.type)}
+                    amount={a.approximateValue ? `SGD ${a.approximateValue.toLocaleString()}` : undefined}
+                  />
+                </div>
+              ))
+            ) : (
+              <AssetCard title="No properties yet" subtitle="Properties" />
+            )}
           </div>
 
           <div className="mt-4 border-t border-[#ece8e2] pt-4 text-right">
