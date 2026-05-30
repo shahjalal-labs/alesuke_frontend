@@ -89,6 +89,9 @@ export default function AddPersonModal({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [identifierType, setIdentifierType] = useState<IdentifierOption>('NRIC / FIN');
   const [identifierNumber, setIdentifierNumber] = useState('');
+  const [petType, setPetType] = useState<string>('Dog');
+  const [customPetType, setCustomPetType] = useState<string>('');
+  const [petDescription, setPetDescription] = useState<string>('');
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
@@ -117,6 +120,9 @@ export default function AddPersonModal({
     setDobMonth('');
     setDobYear('');
     setGenericRelationType(genericRelationshipType);
+    setPetType('Dog');
+    setCustomPetType('');
+    setPetDescription('');
     setIsEditing(false);
   };
 
@@ -134,7 +140,18 @@ export default function AddPersonModal({
     resetForm();
 
     if (initialValues) {
-      setName(initialValues.fullName ?? '');
+      // If the fullName includes " the ", try to split into name and pet type for pets
+      if (initialValues.fullName && mode === 'pet' && !(initialValues as any).petType) {
+        const parts = initialValues.fullName.split(' the ');
+        if (parts.length > 1) {
+          setName(parts[0]);
+          setPetType(parts.slice(1).join(' the '));
+        } else {
+          setName(initialValues.fullName ?? '');
+        }
+      } else {
+        setName(initialValues.fullName ?? '');
+      }
       setEmail(initialValues.email ?? '');
       setWithAdditionalId(Boolean(initialValues.governmentIssuedId || initialValues.typeOfIdentifier || initialValues.identifierValue));
       setIsEditing(Boolean(memberId));
@@ -153,6 +170,15 @@ export default function AddPersonModal({
         setIdentifierNumber(initialValues.identifierValue ?? '');
       }
     }
+
+      // populate pet-specific fields if present
+      if (initialValues && (initialValues as any).petType) {
+        setPetType((initialValues as any).petType);
+      }
+
+      if (initialValues && (initialValues as any).petDescription) {
+        setPetDescription((initialValues as any).petDescription);
+      }
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -245,6 +271,53 @@ export default function AddPersonModal({
                     className="h-[84px] w-full rounded-[12px] bg-[#f8f8f8] px-4 text-[1.15rem] text-[#5a616d] outline-none sm:h-[70px] sm:text-[1.7rem]"
                   />
                 </div>
+              </div>
+            </div>
+          ) : null}
+
+          {isPetMode ? (
+            <div className="space-y-4">
+              <div>
+                <label className="mb-3 block text-[0.78rem] uppercase tracking-[0.12em] text-[#4c525c]">
+                  What kind of pet?
+                </label>
+                <select
+                  value={petType}
+                  onChange={(e) => setPetType(e.target.value)}
+                  className="h-[58px] w-full rounded-[12px] bg-[#f8f8f8] px-4 text-base text-[#5a616d] outline-none sm:h-[70px]"
+                >
+                  <option value="Dog">Dog</option>
+                  <option value="Cat">Cat</option>
+                  <option value="Hamster">Hamster</option>
+                  <option value="Fish">Fish</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {petType === 'Other' ? (
+                <div>
+                  <label className="mb-3 block text-[0.78rem] uppercase tracking-[0.12em] text-[#4c525c]">
+                    Please specify
+                  </label>
+                  <input
+                    value={customPetType}
+                    onChange={(e) => setCustomPetType(e.target.value)}
+                    placeholder="e.g. Iguana"
+                    className="h-[58px] w-full rounded-[12px] bg-[#f8f8f8] px-4 text-base text-[#5a616d] outline-none sm:h-[70px]"
+                  />
+                </div>
+              ) : null}
+
+              <div>
+                <label className="mb-3 block text-[0.78rem] uppercase tracking-[0.12em] text-[#4c525c]">
+                  Pet description (optional)
+                </label>
+                <textarea
+                  value={petDescription}
+                  onChange={(e) => setPetDescription(e.target.value)}
+                  placeholder="E.g. Gigi loves walks and carrots"
+                  className="w-full rounded-[12px] bg-[#f8f8f8] px-4 py-3 text-base text-[#5a616d] outline-none"
+                />
               </div>
             </div>
           ) : null}
@@ -514,8 +587,12 @@ export default function AddPersonModal({
                   const shouldSendDateOfBirth = isChildMode || !hasPersonId;
 
                   if (isPetMode) {
-                    payload.fullName = name || 'Pet';
+                    const petTypeLabel = petType === 'Other' ? customPetType.trim() : petType;
+                    const displayName = name ? `${name}${petTypeLabel ? ` the ${petTypeLabel}` : ''}` : (petTypeLabel ? `Unnamed the ${petTypeLabel}` : 'Pet');
+                    payload.fullName = displayName;
                     payload.relationType = 'PET';
+                    if (petTypeLabel) payload.petType = petTypeLabel;
+                    if (petDescription) payload.petDescription = petDescription;
                   } else {
                     payload.fullName = name;
                     if (email) payload.email = email;
