@@ -56,6 +56,18 @@ function Login() {
     }
   };
 
+  //  const handleGoogleLogin = () => {
+  //   setGoogleLoading(true);
+  //   localStorage.setItem("googleSignIn", "true");
+
+  //   signIn("google").catch((err) => {
+  //     console.error("Google login error:", err);
+  //     toast.error("Google login failed. Please try again.");
+  //     setGoogleLoading(false);
+  //   });
+  // };
+
+
   return (
     <AuthShell
       tabs={

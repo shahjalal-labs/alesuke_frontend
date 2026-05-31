@@ -5,6 +5,8 @@ import "./globals.css";
 
 import ReduxProvider from "@/redux/ReduxProvider";
 import { Toaster } from "sonner";
+import { Providers } from "./providers/providers";
+import { AuthSync } from "@/components/auth/AuthSync";
 // import logo from "@/assets/home/kkk-logo.png";
 
 export const metadata: Metadata = {
@@ -24,7 +26,11 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         {/* <NavBar /> */}
-        <ReduxProvider>{children}</ReduxProvider>
+        <Providers>
+          {" "}
+          <AuthSync /> 
+          {children}
+        </Providers>
         <Toaster />
 
         {/* <Footer /> */}

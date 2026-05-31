@@ -4,6 +4,9 @@ import appleIcon from '@/assets/apple.png';
 import React, { useMemo, useRef, useState } from "react";
 import { Eye, EyeOff, Lock, Mail, User, CheckCircle2 } from "lucide-react";
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { toast } from 'sonner';
 
 type AuthShellProps = {
   children: React.ReactNode;
@@ -134,11 +137,24 @@ export function Divider({ label }: { label: string }) {
 }
 
 export function SocialRow() {
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const router = useRouter();
+   const handleGoogleLogin = () => {
+    setGoogleLoading(true);
+    localStorage.setItem("googleSignIn", "true");
+
+    signIn("google").catch((err) => {
+      console.error("Google login error:", err);
+      toast.error("Google login failed. Please try again.");
+      setGoogleLoading(false);
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <button
         type="button"
-        onClick={() => console.log("continue with google")}
+        onClick={handleGoogleLogin}
         className="flex h-12 items-center justify-center gap-3 rounded-xl border border-[#ccd4e1] bg-white text-sm font-medium text-[#111827] transition hover:bg-[#fbfcfe] col-span-full"
       >
         <Image src={googleIcon} alt="Google"  className="h-6 w-6" />
