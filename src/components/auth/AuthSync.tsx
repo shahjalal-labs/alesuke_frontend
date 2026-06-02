@@ -1,17 +1,24 @@
 "use client";
 
-import { useUserSignUpMutation } from "@/redux/api/authApi";
+import {
+  useLazyGetMeDataQuery,
+  useUserSocialLoginMutation,
+} from "@/redux/api/authApi";
+import { setUser } from "@/redux/ReduxFunction";
 // import { useUserStoreMutation } from "@/redux/api/registerApi";
 import Cookies from "js-cookie";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { toast } from "sonner";
 
 export const AuthSync = () => {
   const { data: session, status } = useSession();
-  const [storeUser] = useUserSignUpMutation();
+  const [storeUser] = useUserSocialLoginMutation();
+  const [fetchMeData] = useLazyGetMeDataQuery();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [isStoringUser, setIsStoringUser] = useState(false);
 
@@ -20,8 +27,8 @@ export const AuthSync = () => {
       const isGoogleSignIn = localStorage.getItem("googleSignIn");
 
       const name = session?.user?.name ?? "";
-      const [firstName, ...lastNameParts] = name.split(" ");
-      const lastName = lastNameParts.join(" ");
+      // const [firstName, ...lastNameParts] = name.split(" ");
+      // const lastName = lastNameParts.join(" ");
 
       // Only sync if user clicked Google login
       if (status === "authenticated" && session?.user && isGoogleSignIn) {
@@ -31,7 +38,7 @@ export const AuthSync = () => {
           setIsStoringUser(true);
           try {
             const response = await storeUser({
-              fullName: session.user.name,  
+              fullName: session.user.name,
               email: session.user.email,
               logInProcess: "GOOGLE",
             }).unwrap();
@@ -39,8 +46,18 @@ export const AuthSync = () => {
             if (response?.data?.accessToken) {
               Cookies.set("accessToken", response.data.accessToken);
               toast.success("Google login synced successfully!");
-              router.push("/");
             }
+            const meResponse = await fetchMeData(undefined).unwrap();
+            const me = meResponse?.data;
+            dispatch(
+              setUser({
+                role: me?.role ?? "",
+                token: response?.data?.accessToken ?? "",
+                email: me?.email ?? "",
+                me,
+              }),
+            );
+            router.push(meResponse?.data?.isProfileCompleted ? "/will" : "/profile-setup/get-started");
           } catch (error) {
             console.error("❌ Failed to sync token:", error);
             toast.error("Failed to sync Google account!");

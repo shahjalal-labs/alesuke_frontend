@@ -10,6 +10,14 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["auth"],
     }),
+    userSocialLogin: builder.mutation({
+      query: (data) => ({
+        url: `/auth/social-login`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["auth"],
+    }),
     authVerifyOtp: builder.mutation({
       query: (data) => ({
         url: `/auth/verify-otp`,
@@ -60,4 +68,14 @@ const authApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useUserSignUpMutation, useAuthVerifyOtpMutation, useResendVerifyOtpMutation, useLoginUserMutation, useForgetPasswordMutation, useResetPasswordMutation, useGetMeDataQuery, useLazyGetMeDataQuery } = authApi;
+export const {
+  useUserSignUpMutation,
+  useUserSocialLoginMutation,
+  useAuthVerifyOtpMutation,
+  useResendVerifyOtpMutation,
+  useLoginUserMutation,
+  useForgetPasswordMutation,
+  useResetPasswordMutation,
+  useGetMeDataQuery,
+  useLazyGetMeDataQuery,
+} = authApi;

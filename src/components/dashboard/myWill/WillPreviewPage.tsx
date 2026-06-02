@@ -599,7 +599,7 @@ export default function WillPreviewPage() {
                     totalPages={totalPages}
                     title={page.pageTitle}
                     directive={page.directive}
-                    blurred={page.pageNumber > 2}
+                    // blurred={page.pageNumber > 2}
                   >
                     {page.body}
                   </PdfPageFrame>
