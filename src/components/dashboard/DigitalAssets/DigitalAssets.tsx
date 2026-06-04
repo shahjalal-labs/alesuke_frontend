@@ -1,10 +1,14 @@
 "use client"
-import React, { useState } from 'react'
+import { useDigitalAssetsMutation, useGetDigitalAssetsQuery } from '@/redux/api/assetsApi'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface ServiceItem {
   id: string
   name: string
   checked: boolean
+  apiKey?: string
 }
 
 interface ServiceCategory {
@@ -13,51 +17,70 @@ interface ServiceCategory {
   items: ServiceItem[]
 }
 
+const apiFieldMapping: Record<string, string> = {
+  netflix: 'hasNetflix',
+  disney: 'hasDisneyPlus',
+  prime: 'hasPrimeVideo',
+  'viu-video': 'hasViu',
+  appletv: 'hasAppleTVPlus',
+  spotify: 'hasSpotify',
+  youtube: 'hasYouTubePremium',
+  audible: 'hasAudible',
+  'viu-music': 'hasViu',
+  icloud: 'hasICloud', // Changed from hasiCloud to hasICloud
+  gdrive: 'hasGoogleDrive',
+  onedrive: 'hasOneDrive',
+  'viu-cloud': 'hasViu',
+  grab: 'hasGrab',
+  foodpanda: 'hasFoodpanda',
+  brokerage: 'hasBrokerageETF',
+}
+
 const initialCategories: ServiceCategory[] = [
   {
     id: 'video-streaming',
     title: 'Video Streaming',
     items: [
-      { id: 'netflix', name: 'Netflix', checked: true },
-      { id: 'disney', name: 'Disney+', checked: false },
-      { id: 'prime', name: 'Prime Video', checked: true },
-      { id: 'viu-video', name: 'Viu', checked: false },
-      { id: 'appletv', name: 'Apple TV+', checked: false },
+      { id: 'netflix', name: 'Netflix', checked: false, apiKey: 'hasNetflix' },
+      { id: 'disney', name: 'Disney+', checked: false, apiKey: 'hasDisneyPlus' },
+      { id: 'prime', name: 'Prime Video', checked: false, apiKey: 'hasPrimeVideo' },
+      { id: 'viu-video', name: 'Viu', checked: false, apiKey: 'hasViu' },
+      { id: 'appletv', name: 'Apple TV+', checked: false, apiKey: 'hasAppleTVPlus' },
     ],
   },
   {
     id: 'music-video',
     title: 'Music & Video',
     items: [
-      { id: 'spotify', name: 'Spotify', checked: true },
-      { id: 'youtube', name: 'YouTube Premium', checked: false },
-      { id: 'audible', name: 'Audible', checked: false },
-      { id: 'viu-music', name: 'Viu', checked: false },
+      { id: 'spotify', name: 'Spotify', checked: false, apiKey: 'hasSpotify' },
+      { id: 'youtube', name: 'YouTube Premium', checked: false, apiKey: 'hasYouTubePremium' },
+      { id: 'audible', name: 'Audible', checked: false, apiKey: 'hasAudible' },
+      { id: 'viu-music', name: 'Viu', checked: false, apiKey: 'hasViu' },
     ],
   },
   {
     id: 'cloud-drive',
     title: 'Cloud/Drive',
     items: [
-      { id: 'icloud', name: 'iCloud', checked: false },
-      { id: 'gdrive', name: 'Google Drive', checked: false },
-      { id: 'onedrive', name: 'One Drive', checked: false },
-      { id: 'viu-cloud', name: 'Viu', checked: false },
+      { id: 'icloud', name: 'iCloud', checked: false, apiKey: 'hasICloud' }, // Changed
+      { id: 'gdrive', name: 'Google Drive', checked: false, apiKey: 'hasGoogleDrive' },
+      { id: 'onedrive', name: 'One Drive', checked: false, apiKey: 'hasOneDrive' },
+      { id: 'viu-cloud', name: 'Viu', checked: false, apiKey: 'hasViu' },
     ],
   },
   {
     id: 'logistics-food',
     title: 'Logistics/Food',
     items: [
-      { id: 'grab', name: 'Grab', checked: false },
-      { id: 'foodpanda', name: 'Foodpanda', checked: false },
+      { id: 'grab', name: 'Grab', checked: false, apiKey: 'hasGrab' },
+      { id: 'foodpanda', name: 'Foodpanda', checked: false, apiKey: 'hasFoodpanda' },
     ],
   },
   {
     id: 'investment-trade',
     title: 'Investment/Trade',
     items: [
-      { id: 'brokerage', name: 'Brokerage/ETF Platforms', checked: false },
+      { id: 'brokerage', name: 'Brokerage/ETF Platforms', checked: false, apiKey: 'hasBrokerageETF' },
     ],
   },
 ]
@@ -134,12 +157,10 @@ function ServiceRow({ item, iconIndex, onToggle }: ServiceRowProps) {
       onClick={onToggle}
       className="flex items-center w-full px-5 py-[18px] bg-white border border-transparent rounded-2xl cursor-pointer text-left shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-150 gap-3.5 mb-2.5 last:mb-0"
     >
-      {/* Icon circle */}
       <span className="w-10 h-10 rounded-full bg-[#F1EDEA] flex items-center justify-center text-[#5C5756] shrink-0">
         {getIcon(iconIndex)}
       </span>
 
-      {/* Label */}
       <span
         className="flex-1 text-[15px] font-medium text-[#3D3533] tracking-[0.01em]"
         style={{ fontFamily: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" }}
@@ -147,7 +168,6 @@ function ServiceRow({ item, iconIndex, onToggle }: ServiceRowProps) {
         {item.name}
       </span>
 
-      {/* Checkbox */}
       <span className="shrink-0">
         {item.checked ? <CheckCircle /> : <EmptyCircle />}
       </span>
@@ -185,9 +205,54 @@ function CategorySection({ category, onToggle }: CategorySectionProps) {
 }
 
 function DigitalAssets() {
+  const router = useRouter()
   const [categories, setCategories] = useState<ServiceCategory[]>(initialCategories)
+  const [isLoading, setIsLoading] = useState(false)
+  const [brokerageDetails, setBrokerageDetails] = useState('')
+  const [showBrokerageModal, setShowBrokerageModal] = useState(false)
+  const [pendingBrokerageItem, setPendingBrokerageItem] = useState<{ categoryId: string; itemId: string } | null>(null)
+  
+  const { data: digitalAssets, refetch } = useGetDigitalAssetsQuery({})
+  const [digitalAssetsFn] = useDigitalAssetsMutation()
+
+  // Load existing digital assets data
+  useEffect(() => {
+    if (digitalAssets?.data) {
+      const assetsData = digitalAssets.data
+      
+      setCategories(prev =>
+        prev.map(category => ({
+          ...category,
+          items: category.items.map(item => ({
+            ...item,
+            checked: assetsData[apiFieldMapping[item.id]] === true,
+          })),
+        }))
+      )
+      
+      // Load existing brokerage details if available
+      if (assetsData.brokerageDetails) {
+        setBrokerageDetails(assetsData.brokerageDetails)
+      }
+    }
+  }, [digitalAssets])
 
   const handleToggle = (categoryId: string, itemId: string) => {
+    // Check if this is a brokerage item and we're trying to check it
+    if (itemId === 'brokerage') {
+      const currentItem = categories
+        .find(cat => cat.id === categoryId)
+        ?.items.find(item => item.id === itemId)
+      
+      // If trying to check (enable) brokerage, show modal first
+      if (!currentItem?.checked) {
+        setPendingBrokerageItem({ categoryId, itemId })
+        setShowBrokerageModal(true)
+        return
+      }
+    }
+    
+    // Normal toggle for unchecked or non-brokerage items
     setCategories(prev =>
       prev.map(cat =>
         cat.id === categoryId
@@ -201,23 +266,150 @@ function DigitalAssets() {
       )
     )
   }
-
-  const handleCancel = () => {
-    setCategories(initialCategories)
+  
+  const handleBrokerageConfirm = () => {
+    if (pendingBrokerageItem) {
+      setCategories(prev =>
+        prev.map(cat =>
+          cat.id === pendingBrokerageItem.categoryId
+            ? {
+                ...cat,
+                items: cat.items.map(item =>
+                  item.id === pendingBrokerageItem.itemId 
+                    ? { ...item, checked: true } 
+                    : item
+                ),
+              }
+            : cat
+        )
+      )
+      setShowBrokerageModal(false)
+      setPendingBrokerageItem(null)
+    }
   }
 
-  const handleSave = () => {
-    // Save logic here
-    alert('Saved!')
+  const handleCancel = () => {
+    // Reset to the saved state from API
+    if (digitalAssets?.data) {
+      const assetsData = digitalAssets.data
+      setCategories(prev =>
+        prev.map(category => ({
+          ...category,
+          items: category.items.map(item => ({
+            ...item,
+            checked: assetsData[apiFieldMapping[item.id]] === true,
+          })),
+        }))
+      )
+      if (assetsData.brokerageDetails) {
+        setBrokerageDetails(assetsData.brokerageDetails)
+      } else {
+        setBrokerageDetails('')
+      }
+    } else {
+      // If no saved data, reset to all unchecked
+      setCategories(prev =>
+        prev.map(category => ({
+          ...category,
+          items: category.items.map(item => ({
+            ...item,
+            checked: false,
+          })),
+        }))
+      )
+      setBrokerageDetails('')
+    }
+    toast.info('Changes cancelled')
+  }
+
+  const handleSave = async () => {
+    setIsLoading(true)
+    
+    try {
+      // Build the payload based on the exact format from the image
+      const payload: Record<string, any> = {}
+      
+      // Map all checkbox states to the API format
+      categories.forEach(category => {
+        category.items.forEach(item => {
+          const apiKey = apiFieldMapping[item.id]
+          if (apiKey) {
+            payload[apiKey] = item.checked
+          }
+        })
+      })
+      
+      // Add brokerage details if brokerage is selected
+      const brokerageItem = categories
+        .find(cat => cat.id === 'investment-trade')
+        ?.items.find(item => item.id === 'brokerage')
+      
+      if (brokerageItem?.checked && brokerageDetails.trim()) {
+        payload.brokerageDetails = brokerageDetails.trim()
+      }
+      
+      // Log the payload for debugging
+      console.log('Saving payload:', JSON.stringify(payload, null, 2))
+      
+      // Try different payload structures based on the error
+      let result
+      
+      // Attempt 1: Original structure
+      try {
+        result = await digitalAssetsFn(payload).unwrap()
+      } catch (err1: any) {
+        console.log('Attempt 1 failed:', err1?.data)
+        
+        // Attempt 2: Wrap in 'data' property
+        try {
+          result = await digitalAssetsFn({ data: payload }).unwrap()
+        } catch (err2: any) {
+          console.log('Attempt 2 failed:', err2?.data)
+          
+          // Attempt 3: Wrap in 'digitalAssets' property
+          try {
+            result = await digitalAssetsFn({ digitalAssets: payload }).unwrap()
+          } catch (err3: any) {
+            console.log('Attempt 3 failed:', err3?.data)
+            
+            // Attempt 4: Convert to array format (as suggested by error)
+            const arrayPayload = Object.entries(payload).map(([key, value]) => ({
+              field: key,
+              value: value
+            }))
+            result = await digitalAssetsFn(arrayPayload).unwrap()
+          }
+        }
+      }
+      
+      toast.success('Digital assets saved successfully!')
+      
+      // Refetch to get updated data
+      await refetch()
+      
+    } catch (error: any) {
+      console.error('Save error:', error)
+      
+      // Check if error has response data
+      if (error?.data) {
+        console.error('Error response:', error.data)
+        toast.error(error.data.message || 'Failed to save digital assets')
+      } else if (error?.message) {
+        toast.error(error.message)
+      } else {
+        toast.error('Failed to save digital assets. Please try again.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div
-      className="min-h-screen "
+      className="min-h-screen"
       style={{ fontFamily: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" }}
     >
-      <div className=" container mx-auto px-4 py-6">
-
+      <div className="container mx-auto px-4 py-6">
         {categories.map(category => (
           <CategorySection
             key={category.id}
@@ -230,20 +422,60 @@ function DigitalAssets() {
         <div className="flex justify-end gap-3 pt-2 pb-10">
           <button
             onClick={handleCancel}
-            className="px-7 py-[11px] border border-[#D1CBC7] rounded-xl bg-white text-[#3D3533] text-[15px] font-medium cursor-pointer transition-colors duration-150 hover:bg-[#F5EDE6] hover:border-[#B9B0AA] tracking-[0.01em]"
+            disabled={isLoading}
+            className="px-7 py-[11px] border border-[#D1CBC7] rounded-xl bg-white text-[#3D3533] text-[15px] font-medium cursor-pointer transition-colors duration-150 hover:bg-[#F5EDE6] hover:border-[#B9B0AA] disabled:cursor-not-allowed disabled:opacity-50 tracking-[0.01em]"
             style={{ fontFamily: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-7 py-[11px] rounded-xl bg-[#1C1917] text-white text-[15px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#3D3533] tracking-[0.01em]"
+            disabled={isLoading}
+            className="px-7 py-[11px] rounded-xl bg-[#1C1917] text-white text-[15px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-[#3D3533] disabled:cursor-not-allowed disabled:opacity-50 tracking-[0.01em]"
             style={{ fontFamily: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" }}
           >
-            Save
+            {isLoading ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
+
+      {/* Brokerage Details Modal */}
+      {showBrokerageModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4 text-[#1C1917]">Brokerage Details</h3>
+            <p className="text-gray-600 mb-4">
+              Please provide details about your brokerage or ETF platforms:
+            </p>
+            <textarea
+              value={brokerageDetails}
+              onChange={(e) => setBrokerageDetails(e.target.value)}
+              placeholder="e.g., Interactive Brokers, Vanguard, Charles Schwab, etc."
+              className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-[#1C1917] focus:border-transparent"
+              rows={4}
+              autoFocus
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowBrokerageModal(false)
+                  setPendingBrokerageItem(null)
+                  setBrokerageDetails('')
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBrokerageConfirm}
+                className="px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#3D3533] transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

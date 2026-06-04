@@ -90,6 +90,24 @@ export const assetsApi = baseApi.injectEndpoints({
       
     }),
 
+     digitalAssets: builder.mutation({
+      query: (data) => ({
+        url: `/digital-assets`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["assets"],
+      
+    }),
+     getDigitalAssets: builder.query({
+      query: () => ({
+        url: `/digital-assets`,
+        method: "GET",
+      }),
+      providesTags: ["assets"],
+      
+    }),
+
   }),
 });
 
@@ -103,4 +121,6 @@ export const {
     useDeleteCaretakerMutation,
     useAddAssetLoanMutation,
     useGetAssetLoanQuery,
+    useDigitalAssetsMutation,
+    useGetDigitalAssetsQuery,
 } = assetsApi;  
