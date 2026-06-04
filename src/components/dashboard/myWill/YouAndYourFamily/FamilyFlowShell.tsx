@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useSelector } from "react-redux";
+import { useUpdateProfileMutation } from "@/redux/api/profileApi";
+import { toast } from "sonner";
 
 type FamilyFlowShellProps = {
   step: number;
@@ -17,6 +20,19 @@ type FamilyFlowShellProps = {
   nextHref?: string;
   nextLabel?: string;
   onNext?: () => void;
+};
+
+export const mapMaritalStatusToApi = (status: string): string => {
+  switch (status) {
+    case 'single':
+      return 'SINGLE';
+    case 'married':
+      return 'MARRIED';
+    case 'relationship':
+      return 'LONG_TERM_PARTNER';
+    default:
+      return 'SINGLE';
+  }
 };
 
 const TOTAL_STEPS = 5;
@@ -34,6 +50,30 @@ export default function FamilyFlowShell({
   nextLabel = "Save & Continue",
   onNext,
 }: FamilyFlowShellProps) {
+  const [updateProfile, { isLoading }] = useUpdateProfileMutation();
+  const { maritalStatus} = useSelector((state: any) => state.family);
+
+const handleStatus = async () => {
+  if (!maritalStatus) {
+    toast.error("Please select your marital status before proceeding.");
+    return;
+  }
+
+  const apiStatus = mapMaritalStatusToApi(maritalStatus);
+  const formData = new FormData();
+  formData.append("maritalStatus", apiStatus);
+  
+  try {
+    await updateProfile(formData).unwrap();
+    if (onNext) {
+      onNext();
+    }
+  } catch (error) {
+    toast.error("Failed to update marital status. Please try again.");
+  }
+};
+
+
   return (
     <div className="min-h-screen bg-[#f6f1eb] text-[#161616]">
       <header className="sticky top-0 z-20 border-b border-[#ece6de] bg-[#f6f1eb]/95 px-4 py-3 backdrop-blur md:px-8">
@@ -101,6 +141,7 @@ export default function FamilyFlowShell({
 
             {nextHref ? (
               <Link
+              onClick={handleStatus}
                 href={nextHref}
                 className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)]"
               >

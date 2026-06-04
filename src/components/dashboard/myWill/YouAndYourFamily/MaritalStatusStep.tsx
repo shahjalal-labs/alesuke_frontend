@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddPersonModal from "@/components/ui/AddPersonModal";
 import FamilyFlowShell from "./FamilyFlowShell";
 import { AddItemRow, DetailItem, MemberListSkeleton, OptionCard, OptionGrid } from "./shared";
 import { useDeleteMemberMutation, useGetMemberQuery } from '@/redux/api/profileApi';
 import { PencilLine, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setMaritalData } from "@/redux/familySlice";
 
 type MaritalStatus = "single" | "married" | "relationship";
 
@@ -34,6 +36,18 @@ export default function MaritalStatusStep() {
     setActiveMember(member);
     setIsAddPersonOpen(true);
   };
+
+
+  const dispatch = useDispatch();
+
+useEffect(() => {
+  if (status !== 'single') {
+    dispatch(setMaritalData({ maritalStatus: status, data: members || [] }));
+  } else {
+    dispatch(setMaritalData({ maritalStatus: 'single', data: [] }));
+  }
+}, [status, members, dispatch]);
+
 
   return (
     <>

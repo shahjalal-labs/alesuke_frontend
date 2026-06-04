@@ -3,7 +3,7 @@ import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import adminAuth from "./ReduxFunction";
 import profileSetupReducer from "./profileSetupSlice";
-
+import familyReducer from './familySlice';
 import baseApi from "./api/baseApi";
 
 // 🔐 Persist configuration for authentication
@@ -26,7 +26,7 @@ export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
     profileSetup: persistedProfileSetupReducer,
-
+    family: familyReducer,
     [baseApi.reducerPath]: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
