@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { PencilLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
 
 import AddAccountModal, { type AccountType } from "@/components/ui/AddAccountModal";
-import { useAddAssetsMutation, useDeleteAssetsMutation, useGetAllAssetsQuery } from "@/redux/api/assetsApi";
+import { useAddAssetsMutation, useDeleteAssetsMutation, useEditAssetsMutation, useGetAllAssetsQuery } from "@/redux/api/assetsApi";
 import { useAddGiftMutation, useGetGiftsTypeQuery } from "@/redux/api/giftApi";
 import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
 import { useRouter } from "next/navigation";
@@ -130,11 +131,11 @@ function getAssetTitle(asset: AssetRecord) {
 
 function getAssetSubtitle(asset: AssetRecord) {
   if (asset.accountNumber && asset.institutionName) {
-    return `${asset.institutionName} • ${asset.accountNumber}`;
+    return `• ${asset.accountNumber}`;
   }
 
   if (asset.policyNumber && asset.institutionName) {
-    return `${asset.institutionName} • ${asset.policyNumber}`;
+    return `• ${asset.policyNumber}`;
   }
 
   return asset.institutionName || asset.companyName || asset.description || "Financial item";
@@ -150,14 +151,81 @@ function getAssetValue(asset: AssetRecord) {
   return "S$ 0";
 }
 
+function getAccountTypeFromAssetType(type?: AssetRecord["type"]) {
+  switch (type) {
+    case "BANK_ACCOUNT":
+      return "bank";
+    case "INVESTMENT_ACCOUNT":
+      return "investment";
+    case "BUSINESS_INTEREST":
+      return "business";
+    case "RETIREMENT_ACCOUNT":
+      return "retirement";
+    case "INSURANCE_PLAN":
+      return "insurance";
+    case "SAFE_DEPOSIT_BOX":
+      return "safe";
+    case "CRYPTO":
+      return "crypto";
+    default:
+      return null;
+  }
+}
+
+function getAssetInitialValues(asset: AssetRecord, type: AccountType) {
+  const values: Record<string, string> = {};
+
+  switch (type) {
+    case "bank":
+      values.institutionName = asset.institutionName ?? "";
+      values.accountNumber = asset.accountNumber ?? "";
+      values.approximateValue = asset.approximateValue != null ? String(asset.approximateValue) : "";
+      break;
+    case "investment":
+      values.companyName = asset.companyName ?? "";
+      values.institutionName = asset.institutionName ?? "";
+      values.approximateValue = asset.approximateValue != null ? String(asset.approximateValue) : "";
+      break;
+    case "business":
+      values.companyName = asset.companyName ?? "";
+      values.approximateValue = asset.approximateValue != null ? String(asset.approximateValue) : "";
+      break;
+    case "retirement":
+      values.institutionName = asset.institutionName ?? "";
+      values.accountNumber = asset.accountNumber ?? "";
+      values.approximateValue = asset.approximateValue != null ? String(asset.approximateValue) : "";
+      break;
+    case "insurance":
+      values.institutionName = asset.institutionName ?? "";
+      values.policyNumber = asset.policyNumber ?? "";
+      values.coverType = asset.coverType ?? "TERM_LIFE";
+      values.maturityDate = asset.maturityDate ? String(asset.maturityDate).slice(0, 10) : "";
+      values.faceValue = asset.faceValue != null ? String(asset.faceValue) : "";
+      break;
+    case "safe":
+      values.description = asset.description ?? "";
+      values.approximateValue = asset.approximateValue != null ? String(asset.approximateValue) : "";
+      break;
+    case "crypto":
+      values.description = asset.description ?? "";
+      values.institutionName = asset.institutionName ?? "";
+      values.approximateValue = asset.approximateValue != null ? String(asset.approximateValue) : "";
+      break;
+  }
+
+  return values;
+}
+
 export default function AddFinancials() {
 //   const { data: members = [] } = useGetAllMemberListQuery(undefined);
   const { data: assetsResponse, isLoading, isFetching } = useGetAllAssetsQuery(undefined);
   const { data: financialAccountGiftResponse } = useGetGiftsTypeQuery("FINANCIAL_ACCOUNT");
   const [addAssets] = useAddAssetsMutation();
   const [deleteAssets] = useDeleteAssetsMutation();
+  const [editAssets] = useEditAssetsMutation();
 //   const [addGift] = useAddGiftMutation();
   const [activeType, setActiveType] = useState<AccountType | null>(null);
+  const [editingAsset, setEditingAsset] = useState<AssetRecord | null>(null);
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<Array<string | number>>([]);
   const [selectedAssetId, setSelectedAssetId] = useState<string | number | null>(null);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
@@ -212,6 +280,25 @@ export default function AddFinancials() {
   const handleDeleteAsset = async (id?: string | number) => {
     if (id == null) return;
 
+    const result = await Swal.fire({
+      title: "Delete this account?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      focusCancel: true,
+      confirmButtonColor: "#c34141",
+      cancelButtonColor: "#d9cec1",
+      background: "#fbf4ed",
+      color: "#171612",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
     setDeletingId(id);
 
     try {
@@ -225,6 +312,18 @@ export default function AddFinancials() {
     }
   };
 
+  const handleEditAsset = (asset: AssetRecord) => {
+    const type = getAccountTypeFromAssetType(asset.type);
+
+    if (!type) {
+      toast.error("Unable to edit this account");
+      return;
+    }
+
+    setEditingAsset(asset);
+    setActiveType(type);
+  };
+
   const handleSelectAsset = (assetId?: string | number) => {
     if (assetId == null) return;
 
@@ -232,6 +331,7 @@ export default function AddFinancials() {
   };
 
   const openModal = (type: AccountType) => {
+    setEditingAsset(null);
     setActiveType(type);
   };
 
@@ -247,6 +347,8 @@ export default function AddFinancials() {
     nominated: boolean;
   }) => {
     const assetType = assetTypeMap[type];
+    const editTargetId = editingAsset?.id;
+    const editTargetFlags = editingAsset ?? null;
 
     const payload = (() => {
       switch (type) {
@@ -314,7 +416,22 @@ export default function AddFinancials() {
       }
     })();
 
-    await addAssets(payload).unwrap();
+    const nextPayload = editTargetFlags
+      ? {
+          ...payload,
+          isJointlyOwned: editTargetFlags.isJointlyOwned ?? false,
+          isNominated: editTargetFlags.isNominated ?? false,
+        }
+      : payload;
+
+    if (editTargetId != null) {
+      await editAssets({ id: editTargetId, data: nextPayload }).unwrap();
+      setEditingAsset(null);
+      setActiveType(null);
+      return;
+    }
+
+    await addAssets(nextPayload).unwrap();
   };
   const router = useRouter();
 
@@ -417,18 +534,32 @@ export default function AddFinancials() {
                           ) : null}
                         </div>
 
-                        <button
-                          type="button"
-                          aria-label="Delete account"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleDeleteAsset(asset.id);
-                          }}
-                          disabled={deletingId === asset.id}
-                          className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-[#c34141] transition-colors hover:bg-[#feecec] disabled:opacity-60"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex flex-none items-center gap-2">
+                          <button
+                            type="button"
+                            aria-label="Edit account"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEditAsset(asset);
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#152035] transition-colors hover:bg-[#eef2f7]"
+                          >
+                            <PencilLine className="h-4 w-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            aria-label="Delete account"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDeleteAsset(asset.id);
+                            }}
+                            disabled={deletingId === asset.id}
+                            className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-[#c34141] transition-colors hover:bg-[#feecec] disabled:opacity-60"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -477,7 +608,17 @@ export default function AddFinancials() {
         </div>
       </main>
 
-      <AddAccountModal open={activeType !== null} type={activeType} onClose={() => setActiveType(null)} onSave={handleSaveAsset} />
+      <AddAccountModal
+        open={activeType !== null}
+        type={activeType}
+        mode={editingAsset ? 'edit' : 'create'}
+        initialValues={editingAsset && activeType ? getAssetInitialValues(editingAsset, activeType) : undefined}
+        onClose={() => {
+          setActiveType(null);
+          setEditingAsset(null);
+        }}
+        onSave={handleSaveAsset}
+      />
     </div>
   );
 }

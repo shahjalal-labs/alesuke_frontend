@@ -2,19 +2,40 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 import logo from '@/assets/logo.png'
-import { useAddGiftMutation } from '@/redux/api/giftApi'
+import { useAddGiftMutation, useEditGiftMutation, useGetAllGiftsQuery } from '@/redux/api/giftApi'
 import { useGetAllMemberListQuery } from '@/redux/api/profileApi'
 
 type RecipientRecord = {
   id: string
   fullName?: string | null
   relationType?: string | null
+}
+
+type GiftRecipientRecord = {
+  id: string
+  peopleID?: string | null
+  percentage?: number | null
+  recipient?: {
+    id?: string
+    fullName?: string | null
+  }
+}
+
+type GiftRecord = {
+  id: string
+  giftType: string
+  amount?: number | null
+  itemName?: string | null
+  description?: string | null
+  vehicleDetails?: string | null
+  personalMessage?: string | null
+  recipients?: GiftRecipientRecord[]
 }
 
 export type GiftFieldConfig = {
@@ -59,8 +80,14 @@ export default function GiftFormPage({
   payloadBuilder,
 }: GiftFormPageProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editingGiftId = searchParams.get('giftId')
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined)
+  const { data: giftsResponse } = useGetAllGiftsQuery(undefined, {
+    skip: !editingGiftId,
+  })
   const [addGift] = useAddGiftMutation()
+  const [editGift] = useEditGiftMutation()
   const [values, setValues] = useState<Record<string, string>>(() =>
     fields.reduce((accumulator, field) => {
       accumulator[field.key] = ''
@@ -71,6 +98,18 @@ export default function GiftFormPage({
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const currentGift = useMemo(() => {
+    const gifts = ((giftsResponse as { data?: GiftRecord[] } | undefined)?.data ?? []) as GiftRecord[]
+
+    if (!editingGiftId) {
+      return null
+    }
+
+    return gifts.find((gift) => gift.id === editingGiftId) ?? null
+  }, [editingGiftId, giftsResponse])
+
+  const isEditing = Boolean(currentGift)
+
   const memberRows = useMemo(() => {
     return (members as RecipientRecord[]).map((member, index) => ({
       id: member.id,
@@ -78,6 +117,36 @@ export default function GiftFormPage({
       helper: member.relationType ? member.relationType.toLowerCase() : undefined,
     }))
   }, [members])
+
+  useEffect(() => {
+    if (!currentGift) {
+      return
+    }
+
+    const nextValues = fields.reduce((accumulator, field) => {
+      if (field.key === 'amount') {
+        accumulator[field.key] = currentGift.amount != null ? String(currentGift.amount) : ''
+      } else if (field.key === 'itemName') {
+        accumulator[field.key] = currentGift.itemName ?? ''
+      } else if (field.key === 'description') {
+        accumulator[field.key] = currentGift.description ?? ''
+      } else if (field.key === 'vehicleDetails') {
+        accumulator[field.key] = currentGift.vehicleDetails ?? ''
+      } else {
+        accumulator[field.key] = ''
+      }
+
+      return accumulator
+    }, {} as Record<string, string>)
+
+    setValues(nextValues)
+    setSelectedRecipientIds(
+      (currentGift.recipients ?? [])
+        .map((recipient) => recipient.peopleID ?? recipient.recipient?.id ?? '')
+        .filter((recipientId): recipientId is string => Boolean(recipientId))
+    )
+    setMessage(currentGift.personalMessage ?? '')
+  }, [currentGift, fields])
 
   const toggleRecipient = (id: string) => {
     setSelectedRecipientIds((current) => (current.includes(id) ? current.filter((currentId) => currentId !== id) : [...current, id]))
@@ -99,12 +168,18 @@ export default function GiftFormPage({
         recipients: recipientPayload,
       })
 
-      await addGift(payload).unwrap()
-      toast.success(`${giftType} gift saved.`)
+      if (currentGift) {
+        await editGift({ id: currentGift.id, data: payload }).unwrap()
+        toast.success(`${giftType} gift updated.`)
+      } else {
+        await addGift(payload).unwrap()
+        toast.success(`${giftType} gift saved.`)
+      }
+
       router.push('/will/gifts')
     } catch (error) {
       console.error(error)
-      toast.error('Unable to save gift. Please try again.')
+      toast.error(`Unable to ${currentGift ? 'update' : 'save'} gift. Please try again.`)
     } finally {
       setSubmitting(false)
     }
@@ -236,7 +311,7 @@ export default function GiftFormPage({
               onClick={handleSave}
               className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)] disabled:opacity-70"
             >
-              {submitting ? 'Saving...' : nextLabel ?? saveLabel}
+              {submitting ? 'Saving...' : currentGift ? 'Update gift' : nextLabel ?? saveLabel}
             </button>
           </div>
         </footer>

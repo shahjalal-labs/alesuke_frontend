@@ -1,13 +1,13 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import GiftAddTemplate from './GiftAddTemplate'
 import AddAccountModal, { type AccountType } from '@/components/ui/AddAccountModal'
 import { useAddAssetsMutation, useDeleteAssetsMutation, useGetAllAssetsQuery } from '@/redux/api/assetsApi'
-import { useAddGiftMutation, useGetGiftsTypeQuery } from '@/redux/api/giftApi'
+import { useAddGiftMutation, useEditGiftMutation, useGetGiftsTypeQuery } from '@/redux/api/giftApi'
 import { useGetAllMemberListQuery } from '@/redux/api/profileApi'
 
 type AssetType =
@@ -151,12 +151,15 @@ function getAssetValue(asset: AssetRecord) {
 
 export default function Account() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editingGiftId = searchParams.get('giftId')
   const { data: members = [] } = useGetAllMemberListQuery(undefined)
   const { data: assetsResponse, isLoading, isFetching } = useGetAllAssetsQuery(undefined)
   const { data: financialAccountGiftResponse } = useGetGiftsTypeQuery('FINANCIAL_ACCOUNT')
   const [addAssets] = useAddAssetsMutation()
   const [deleteAssets] = useDeleteAssetsMutation()
   const [addGift] = useAddGiftMutation()
+  const [editGift] = useEditGiftMutation()
   const [activeType, setActiveType] = useState<AccountType | null>(null)
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<Array<string | number>>([])
   const [selectedAssetId, setSelectedAssetId] = useState<string | number | null>(null)
@@ -183,8 +186,12 @@ export default function Account() {
   const selectedFinancialAccountGift = useMemo(() => {
     const gifts = ((financialAccountGiftResponse as { data?: FinancialAccountGiftRecord[] } | undefined)?.data ?? []) as FinancialAccountGiftRecord[]
 
+    if (editingGiftId) {
+      return gifts.find((gift) => gift.id === editingGiftId) ?? null
+    }
+
     return gifts[0] ?? null
-  }, [financialAccountGiftResponse])
+  }, [editingGiftId, financialAccountGiftResponse])
 
   const selectedAsset = useMemo(() => {
     if (selectedAssetId == null) return null
@@ -193,16 +200,10 @@ export default function Account() {
   }, [savedAssets, selectedAssetId])
 
   useEffect(() => {
-    if (!selectedFinancialAccountGift) {
-      return
-    }
+    const savedAssetId = selectedFinancialAccountGift?.assetId ?? selectedFinancialAccountGift?.asset?.id ?? null
+    setSelectedAssetId(savedAssetId)
 
-    const savedAssetId = selectedFinancialAccountGift.assetId ?? selectedFinancialAccountGift.asset?.id ?? null
-    if (savedAssetId != null) {
-      setSelectedAssetId(savedAssetId)
-    }
-
-    const savedRecipientIds = (selectedFinancialAccountGift.recipients ?? [])
+    const savedRecipientIds = (selectedFinancialAccountGift?.recipients ?? [])
       .map((recipient) => recipient.peopleID ?? recipient.recipient?.id ?? '')
       .filter((recipientId): recipientId is string => Boolean(recipientId))
 
@@ -331,16 +332,23 @@ export default function Account() {
     setSubmittingGift(true)
 
     try {
-      await addGift({
+      const payload = {
         giftType: 'FINANCIAL_ACCOUNT',
         recipients: selectedRecipientIds.map((peopleId) => ({ peopleId: String(peopleId) })),
         assetId: String(selectedAssetId),
-      }).unwrap()
+      }
 
-      toast.success('Financial account gift saved')
+      if (editingGiftId && selectedFinancialAccountGift?.id) {
+        await editGift({ id: selectedFinancialAccountGift.id, data: payload }).unwrap()
+        toast.success('Financial account gift updated')
+      } else {
+        await addGift(payload).unwrap()
+        toast.success('Financial account gift saved')
+      }
+
       router.push('/will/gifts')
     } catch (error) {
-      toast.error('Unable to save financial account gift')
+      toast.error(`Unable to ${editingGiftId ? 'update' : 'save'} financial account gift`)
     } finally {
       setSubmittingGift(false)
     }
@@ -359,7 +367,7 @@ export default function Account() {
         onRecipientToggle={toggleRecipient}
         messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."
         messagePlaceholder=""
-        nextLabel={submittingGift ? 'Saving...' : 'Save & continue'}
+        nextLabel={submittingGift ? 'Saving...' : editingGiftId ? 'Update gift' : 'Save & continue'}
         onNext={handleSaveGift}
         nextDisabled={submittingGift || !selectedRecipientIds.length || selectedAssetId == null}
         customMiddle={

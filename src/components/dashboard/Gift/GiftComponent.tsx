@@ -3,9 +3,11 @@ import React, { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, PencilLine, Trash2 } from 'lucide-react'
+import Swal from 'sweetalert2'
+import { toast } from 'sonner'
 import logo from '@/assets/logo.png'
-import { useGetAllGiftsQuery } from '@/redux/api/giftApi'
+import { useDeleteGiftMutation, useGetAllGiftsQuery } from '@/redux/api/giftApi'
 
 type GiftRecipient = {
   id: string
@@ -22,7 +24,7 @@ type GiftRecipient = {
 
 type GiftRecord = {
   id: string
-  giftType: 'CASH' | 'ITEM' | 'COLLECTION' | 'PROPERTY' | 'VEHICLE'
+  giftType: string
   amount?: number | null
   itemName?: string | null
   description?: string | null
@@ -54,17 +56,36 @@ function formatGiftSummary(gift: GiftRecord) {
     return gift.vehicleDetails || 'Vehicle gift'
   }
 
+  if (gift.giftType === 'FINANCIAL_ACCOUNT') {
+    return gift.financialAccountDetails || 'Financial account gift'
+  }
+
   return 'Gift'
 }
 
-function formatGiftTypeLabel(giftType: GiftRecord['giftType']) {
+function formatGiftTypeLabel(giftType: string) {
   return giftType.toLowerCase().replace(/_/g, ' ')
+}
+
+function getGiftEditHref(gift: GiftRecord) {
+  const editRoutes: Record<string, string> = {
+    CASH: '/will/gifts/add/cash',
+    ITEM: '/will/gifts/add/item',
+    COLLECTION: '/will/gifts/add/collection',
+    PROPERTY: '/will/gifts/add/property',
+    VEHICLE: '/will/gifts/add/vehicle',
+    FINANCIAL_ACCOUNT: '/will/gifts/add/account',
+  }
+
+  return `${editRoutes[gift.giftType] ?? '/will/gifts'}?giftId=${encodeURIComponent(gift.id)}`
 }
 
 export default function GiftComponent() {
   const [hasGifts, setHasGifts] = useState(true)
   const router = useRouter()
   const { data: giftsResponse, isLoading } = useGetAllGiftsQuery(undefined)
+  const [deleteGift, { isLoading: isDeletingGift }] = useDeleteGiftMutation()
+  const [deletingGiftId, setDeletingGiftId] = useState<string | null>(null)
 
   const allocated = useMemo(() => {
     const gifts = ((giftsResponse as { success?: boolean; message?: string; data?: GiftRecord[] } | undefined)?.data ?? []) as GiftRecord[]
@@ -82,6 +103,43 @@ export default function GiftComponent() {
 
   const handleContinue = () => {
     router.push('/will')
+  }
+
+  const handleEditGift = (gift: GiftRecord) => {
+    router.push(getGiftEditHref(gift))
+  }
+
+  const handleDeleteGift = async (gift: GiftRecord) => {
+    const result = await Swal.fire({
+      title: 'Delete this gift?',
+      text: 'This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      focusCancel: true,
+      confirmButtonColor: '#c34141',
+      cancelButtonColor: '#d9cec1',
+      background: '#fbf4ed',
+      color: '#171612',
+    })
+
+    if (!result.isConfirmed) {
+      return
+    }
+
+    setDeletingGiftId(gift.id)
+
+    try {
+      await deleteGift(gift.id).unwrap()
+      toast.success('Gift deleted')
+    } catch (error) {
+      console.error(error)
+      toast.error('Unable to delete gift. Please try again.')
+    } finally {
+      setDeletingGiftId(null)
+    }
   }
 
   return (
@@ -145,7 +203,7 @@ export default function GiftComponent() {
         {hasGifts && (
           <section className="mt-10 space-y-10">
             <div>
-              <h2 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">Gifts you've allocated</h2>
+              <h2 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">Gifts you have allocated</h2>
               <div className="mt-5 rounded-[10px] border border-[#eadfcc] bg-secondary p-4 shadow-[0_1px_0_rgba(17,24,39,0.02)] md:mt-6 md:p-6">
                 {isLoading ? (
                   <div className="rounded-[6px] bg-white px-4 py-6 text-center text-[0.92rem] text-[#7d8594]">
@@ -189,9 +247,26 @@ export default function GiftComponent() {
                               </div>
                             </div>
 
-                            <button className="min-w-[58px] rounded-[3px] bg-[#152035] px-4 py-2 text-[0.92rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)]">
-                              Edit
-                            </button>
+                            <div className="flex flex-none items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleEditGift(gift)}
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-[3px] border border-[#d9cec1] bg-white text-[#152035] transition-colors hover:bg-[#f2e7db]"
+                                aria-label={`Edit ${formatGiftTypeLabel(gift.giftType)} gift`}
+                              >
+                                <PencilLine className="h-4 w-4" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteGift(gift)}
+                                disabled={isDeletingGift && deletingGiftId === gift.id}
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-[3px] border border-[#efd1d1] bg-white text-[#c34141] transition-colors hover:bg-[#feecec] disabled:cursor-not-allowed disabled:opacity-60"
+                                aria-label={`Delete ${formatGiftTypeLabel(gift.giftType)} gift`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )

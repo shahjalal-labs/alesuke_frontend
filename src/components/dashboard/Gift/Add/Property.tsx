@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -10,6 +10,7 @@ import AddPropertyModal from '@/components/ui/AddPropertyModal'
 import {
   giftApi,
   useAddGiftMutation,
+  useEditGiftMutation,
   useAddPropertyMutation,
   useDeletePropertyMutation,
   useGetGiftsTypeQuery,
@@ -68,16 +69,18 @@ const propertyOptions: Array<{ id: PropertyType; label: string }> = [
 
 export default function Property() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editingGiftId = searchParams.get('giftId')
   const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined)
   const { data: propertyGiftResponse } = useGetGiftsTypeQuery('PROPERTY')
   const [addProperty] = useAddPropertyMutation()
   const [addGift] = useAddGiftMutation()
+  const [editGift] = useEditGiftMutation()
   const [activePropertyType, setActivePropertyType] = useState<PropertyType | null>(null)
   const dispatch = useDispatch<AppDispatch>()
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<Array<string | number>>([])
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null)
   const [submittingGift, setSubmittingGift] = useState(false)
-  const [hydratedFromGift, setHydratedFromGift] = useState(false)
 
   useEffect(() => {
     const promise = dispatch(giftApi.endpoints.getAllProperties.initiate(undefined))
@@ -103,12 +106,8 @@ export default function Property() {
   }
 
   useEffect(() => {
-    if (hydratedFromGift) {
-      return
-    }
-
     const gifts = ((propertyGiftResponse as { data?: PropertyGiftRecord[] } | undefined)?.data ?? []) as PropertyGiftRecord[]
-    const existingGift = gifts.find((gift) => gift.giftType === 'PROPERTY')
+    const existingGift = editingGiftId ? gifts.find((gift) => gift.id === editingGiftId) : gifts.find((gift) => gift.giftType === 'PROPERTY')
 
     if (!existingGift) {
       return
@@ -120,8 +119,17 @@ export default function Property() {
         .map((recipient) => recipient.peopleID ?? recipient.recipient?.id ?? '')
         .filter((recipientId): recipientId is string => Boolean(recipientId))
     )
-    setHydratedFromGift(true)
-  }, [hydratedFromGift, propertyGiftResponse])
+  }, [editingGiftId, propertyGiftResponse])
+
+    const selectedPropertyGift = useMemo(() => {
+      const gifts = ((propertyGiftResponse as { data?: PropertyGiftRecord[] } | undefined)?.data ?? []) as PropertyGiftRecord[]
+
+      if (editingGiftId) {
+        return gifts.find((gift) => gift.id === editingGiftId) ?? null
+      }
+
+      return gifts.find((gift) => gift.giftType === 'PROPERTY') ?? null
+    }, [editingGiftId, propertyGiftResponse])
 
   const savedProperties = useSelector((state: RootState) => {
     return ((giftApi.endpoints.getAllProperties.select(undefined)(state) as { data?: { success?: boolean; statusCode?: number; message?: string; data?: PropertyRecord[] } } | undefined)?.data?.data ?? []) as PropertyRecord[]
@@ -145,7 +153,6 @@ export default function Property() {
   }
 
   const handleSelectProperty = (id: string) => {
-    setHydratedFromGift(true)
     setSelectedPropertyId(id)
   }
 
@@ -172,12 +179,17 @@ export default function Property() {
 
     setSubmittingGift(true)
     try {
-      await addGift(payload).unwrap()
-      setHydratedFromGift(false)
-      toast.success('Property gift saved')
+      if (editingGiftId && selectedPropertyGift?.id) {
+        await editGift({ id: selectedPropertyGift.id, data: payload }).unwrap()
+        toast.success('Property gift updated')
+      } else {
+        await addGift(payload).unwrap()
+        toast.success('Property gift saved')
+      }
+
       router.push('/will/gifts')
     } catch (error) {
-      toast.error('Unable to save property gift')
+      toast.error(`Unable to ${editingGiftId ? 'update' : 'save'} property gift`)
     } finally {
       setSubmittingGift(false)
     }
@@ -211,7 +223,7 @@ export default function Property() {
         onRecipientToggle={toggleRecipient}
         messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."
         messagePlaceholder=""
-        nextLabel={submittingGift ? 'Saving...' : 'Save & continue'}
+        nextLabel={submittingGift ? 'Saving...' : editingGiftId ? 'Update gift' : 'Save & continue'}
         onNext={handleSaveGift}
         nextDisabled={submittingGift}
         customMiddle={

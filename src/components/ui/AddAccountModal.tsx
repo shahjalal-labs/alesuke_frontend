@@ -128,6 +128,8 @@ interface AddAccountModalProps {
   open: boolean
   type: AccountType | null
   onClose: () => void
+  mode?: 'create' | 'edit'
+  initialValues?: Record<string, string>
   onSave?: (data: {
     type: AccountType
     fields: Record<string, string>
@@ -136,7 +138,7 @@ interface AddAccountModalProps {
   }) => void
 }
 
-export default function AddAccountModal({ open, type, onClose, onSave }: AddAccountModalProps) {
+export default function AddAccountModal({ open, type, onClose, mode = 'create', initialValues, onSave }: AddAccountModalProps) {
   const [mounted, setMounted] = useState(false)
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -145,6 +147,15 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
   const selectMenuRef = useRef<HTMLDivElement | null>(null)
 
   const config = useMemo(() => (type ? accountConfigs[type] : null), [type])
+  const title = useMemo(() => {
+    if (!config) return ''
+
+    if (mode === 'edit') {
+      return config.title.replace(/^Add /, 'Edit ')
+    }
+
+    return config.title
+  }, [config, mode])
 
   useEffect(() => {
     setMounted(true)
@@ -156,7 +167,9 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
     const nextValues: Record<string, string> = {}
 
     config.fields.forEach((field) => {
-      if (field.kind === 'select' && field.options?.length) {
+      if (initialValues?.[field.key] != null && initialValues[field.key] !== '') {
+        nextValues[field.key] = initialValues[field.key]
+      } else if (field.kind === 'select' && field.options?.length) {
         nextValues[field.key] = field.options[0].value
       } else {
         nextValues[field.key] = ''
@@ -165,7 +178,7 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
 
     setFieldValues(nextValues)
     setOpenSelectKey(null)
-  }, [open, config])
+  }, [open, config, initialValues])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -194,7 +207,7 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
           <div className="max-h-[92vh] overflow-y-auto px-5 py-5 sm:px-8 sm:py-8">
             <div className="flex items-start justify-between gap-4">
               <h2 className="text-[1.6rem] font-medium tracking-[-0.03em] text-[#111827] sm:text-[2rem]">
-                {config.title}
+                {title}
               </h2>
               <button type="button" onClick={onClose} className="text-[#7c7c7c] transition-colors hover:text-[#111827]" aria-label="Close modal">
               <X className="h-5 w-5" />
@@ -280,17 +293,17 @@ export default function AddAccountModal({ open, type, onClose, onSave }: AddAcco
                   setSaving(true)
                   try {
                     await Promise.resolve(onSave?.({ type, fields: fieldValues, joint: false, nominated: false }))
-                    toast.success('Account saved')
+                    toast.success(mode === 'edit' ? 'Account updated' : 'Account saved')
                     onClose()
                   } catch (error) {
-                    toast.error('Unable to save account')
+                    toast.error(mode === 'edit' ? 'Unable to update account' : 'Unable to save account')
                   } finally {
                     setSaving(false)
                   }
                 }}
                 className="h-[46px] rounded-[4px] bg-[#111827] px-5 text-[1rem] text-white transition-opacity hover:opacity-95 disabled:opacity-60"
               >
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? 'Saving…' : mode === 'edit' ? 'Update' : 'Save'}
               </button>
             </div>
           </div>

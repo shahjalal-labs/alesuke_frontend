@@ -22,6 +22,15 @@ export const assetsApi = baseApi.injectEndpoints({
       
     }),
 
+     editAssets: builder.mutation({
+      query: ({id, data}) => ({
+        url: `/assets/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["assets"],
+    }),
+
      deleteAssets: builder.mutation({
       query: (id) => ({
         url: `/assets/${id}`,
@@ -87,6 +96,7 @@ export const assetsApi = baseApi.injectEndpoints({
 export const {
     useAddAssetsMutation,
     useGetAllAssetsQuery,
+    useEditAssetsMutation,
     useDeleteAssetsMutation,
     useAddCaretakerMutation,
     useGetCaretakerQuery,

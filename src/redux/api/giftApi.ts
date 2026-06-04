@@ -28,6 +28,26 @@ export const giftApi = baseApi.injectEndpoints({
       providesTags: ["gifts"],
     }),
 
+     editGift: builder.mutation({
+      query: ({id, data}) => ({
+        url: `/gifts/${id}`,
+        method: "PUT",  
+        body: data,
+      }),
+      invalidatesTags: ["gifts"],
+    }),
+
+     deleteGift: builder.mutation({
+      query: (id) => ({
+        url: `/gifts/${id}`,
+        method: "DELETE",  
+      }),
+      invalidatesTags: ["gifts"],
+    }),
+
+
+    
+
     // type of property, RESIDENTIAL, COMMERCIAL, LAND, OTHER
     addProperty: builder.mutation({
       query: (data) => ({
@@ -61,6 +81,8 @@ export const {
     useAddGiftMutation,
     useGetAllGiftsQuery,
     useGetGiftsTypeQuery,
+    useEditGiftMutation,
+    useDeleteGiftMutation,
     useAddPropertyMutation,
     useGetAllPropertiesQuery,
     useDeletePropertyMutation
