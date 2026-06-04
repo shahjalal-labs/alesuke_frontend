@@ -8,6 +8,7 @@ import { ChevronDown, CheckCircle2, Lock, PenLine, Shield, Users2, Wallet, Wrenc
 
 import logo from '@/assets/logo.png'
 import { useGetWillDetailsQuery } from '@/redux/api/profileApi'
+import DigitalAssetPdfPreview from './DigitalAssetPdfPreview'
 
 type FamilyMember = {
   id: string
@@ -606,6 +607,9 @@ export default function WillPreviewPage() {
                 ))}
               </div>
             </div>
+          <div className='mt-10'>
+              <DigitalAssetPdfPreview />
+          </div>
           </section>
 
           <aside className="space-y-6">
