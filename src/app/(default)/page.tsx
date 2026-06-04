@@ -6,7 +6,7 @@ import Process from "@/components/homePage/Process";
 import FAQ from "@/components/homePage/FAQ";
 import CTABanner from "@/components/homePage/CTABanner";
 import Footer from '@/shared/Footer';
-
+ 
 function Page() {
   return (
    <div>
