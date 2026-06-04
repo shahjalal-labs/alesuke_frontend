@@ -66,7 +66,7 @@ useEffect(() => {
             <p className="mt-2 text-[1rem] text-[#6f7786] md:text-[1.2rem]">Choose an option that represents your current status</p>
 
             <div className="mt-4">
-              <OptionGrid>
+              <OptionGrid >
                 <OptionCard label="Single" selected={status === "single"} onClick={() => setStatus("single")} icon="single" />
                 <OptionCard label="Married" selected={status === "married"} onClick={() => setStatus("married")} icon="married" />
                 <OptionCard

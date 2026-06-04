@@ -31,6 +31,20 @@ export default function YourChildrenStep() {
     }
   }, [children]);
 
+
+  
+   const dispatch = useDispatch();
+
+useEffect(() => {
+  if (!isLoading && Array.isArray(children) && children.length > 0) {
+    dispatch(setHaveChildren(true));
+  } else {
+    dispatch(setHaveChildren(false));
+  }
+
+}, [hasChildren, children, dispatch]);
+
+
   const showChildrenDetails = hasSavedChildren || hasChildren;
   const isHaveChildrenSelected = hasSavedChildren || hasChildren;
 

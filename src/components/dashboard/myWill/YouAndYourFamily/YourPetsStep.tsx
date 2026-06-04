@@ -31,6 +31,19 @@ export default function YourPetsStep() {
     }
   }, [pets]);
 
+   const dispatch = useDispatch();
+
+useEffect(() => {
+  if (!isLoading && Array.isArray(pets) && pets.length > 0) {
+    console.log("yes");
+    dispatch(setHavePets(true));
+  } else {
+    console.log("no");
+    dispatch(setHavePets(false));
+  }
+}, [hasPet, pets, dispatch]);
+
+
   const showPetsDetails = hasSavedPets || hasPet;
   const isHavePetSelected = hasSavedPets || hasPet;
 
