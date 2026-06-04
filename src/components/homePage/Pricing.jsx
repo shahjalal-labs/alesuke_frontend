@@ -3,6 +3,7 @@ import checkIcon from '@/assets/check.png'
 import centerCImage from '@/assets/CloseUPenPaper.png';
 import bookIcon from "@/assets/book.png";
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 const essentialFeatures = [
   "Comprehensive last will and final intentions",
@@ -16,7 +17,7 @@ const unlimitedFeatures = [
   "Comprehensive last will and final intentions",
   "Time & Value. Get your will in 15 mins that traditional firms provide in 15 days",
   "Final intentions – you last words of love",
-  "Unlimited revisions for life",
+  "Unlimited changes for life",
   "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grabunlimited, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
 ];
 
@@ -56,9 +57,12 @@ export default function Pricing() {
               ))}
             </ul>
             <div className="mt-2" />
-            <button className="mt-4 w-full rounded-lg border border-[#1e1912]/10  px-4 py-4 text-[1rem] font-semibold tracking-[0.04em] text-[#1e1912] transition-colors duration-200 hover:bg-[#1e1912] hover:text-white">
+            <Link
+              href="/will"
+              className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-[#1e1912]/10 px-4 py-4 text-[1rem] font-semibold tracking-[0.04em] text-[#1e1912] transition-colors duration-200 hover:bg-[#1e1912] hover:text-white"
+            >
               Secure Essential Will
-            </button>
+            </Link>
             
           </div>
 
@@ -83,8 +87,8 @@ export default function Pricing() {
               <p className="m-0 text-[0.95rem] leading-[1.5] text-grey">For those whose lives, assets, and families are in beautiful state of growth</p>
             </div>
             <div>
-              <span className="text-[3rem] font-bold text-default">SGD 12</span>
-              <span className="ml-2 text-[0.9rem] text-grey">/ month (billed annually)</span>
+              <span className="text-[3rem] font-bold text-default">SGD 2</span>
+              <span className="ml-2 text-[0.9rem] text-grey">/ mth (billed annually)</span>
             </div>
             <ul className="m-0 flex flex-1 list-none flex-col gap-3 p-0">
               {unlimitedFeatures.map((f, i) => (
@@ -94,9 +98,12 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <button className="rounded-lg bgrad px-4 py-4 bg-gradient-to-l from-[#1D2736] to-[#081220] text-[1rem] font-bold tracking-[0.04em] text-white transition-colors duration-200 hover:bg-white">
+            <Link
+              href="/will"
+              className="inline-flex items-center justify-center rounded-lg bgrad bg-gradient-to-l from-[#1D2736] to-[#081220] px-4 py-4 text-[1rem] font-bold tracking-[0.04em] text-white transition-colors duration-200 hover:bg-white"
+            >
               Begin Unlimited Journey
-            </button>
+            </Link>
            
           </div>
         </div>

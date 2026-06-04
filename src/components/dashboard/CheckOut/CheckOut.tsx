@@ -191,12 +191,12 @@ function CheckOut() {
               {activePlan === 'direct' ? (
                 <>
                   <div className="flex items-center justify-between gap-3 border-b border-[#e9e1d7] pb-3">
-                    <p className="text-[0.95rem] font-semibold text-[#1d1f26]">Last will and testament</p>
+                    <p className="text-[0.95rem] font-semibold text-[#1d1f26]">1) $88 one time fee</p>
                     <p className="text-[0.95rem] font-semibold text-[#1d1f26]">SGD 88.00</p>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between text-[0.92rem] text-[#1d1f26]">
-                    <span className="font-medium">Pay today</span>
+                    <span className="font-medium">Only allowed 30 days unlimited edit</span>
                     <span className="font-semibold">SGD 88.00</span>
                   </div>
                   <p className="mt-1 text-[0.78rem] text-[#7f8794]">include GST</p>
@@ -221,23 +221,20 @@ function CheckOut() {
                     <span className="rounded-full bg-[#141826] px-3 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.12em] text-white">Optional</span>
                   </div>
 
-                  <h3 className="mt-4 text-[2rem] leading-[1.05] text-[#23262e]">Unlimited Legacy</h3>
+                  <h3 className="mt-4 text-[2rem] leading-[1.05] text-[#23262e]">2) $88 one time fee + $2/mth</h3>
                   <p className="mt-3 max-w-[250px] text-[0.9rem] leading-[1.55] text-[#8a8f9d]">
-                    A future-proof plan for those whose lives, assets, and families are in a state of growth.
+                    (billed annually) Unlimited changes &amp; digital memorandum in will.
                   </p>
 
                   <div className="mt-6 flex items-end gap-2">
-                    <p className="text-[2.4rem] leading-none text-[#191c23]">SGD 12</p>
-                    <p className="pb-1 text-[0.78rem] text-[#80848f]">/ billed annually</p>
+                    <p className="text-[2.4rem] leading-none text-[#191c23]">SGD 2</p>
+                    <p className="pb-1 text-[0.78rem] text-[#80848f]">/ mth (billed annually)</p>
                   </div>
 
                   <div className="mt-6 space-y-3 text-[0.84rem] leading-[1.45] text-[#2a2f36]">
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Comprehensive last will and final intentions.</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Time &amp; value. Get your will in 15 mins that traditional firms provide in 15 days.</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Final intentions - you last words of love.</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Zero-access legacy vault to revise your will. (Strictly confidential including us).</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Digital Asset Memorandum digital life doesn't end after you pass on.</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Unlimited lifetime revisions to revise will.</p>
+                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Unlimited changes for life.</p>
+                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Digital Asset Memorandum included in your will.</p>
+                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Final intentions and continued updates for your legacy.</p>
                   </div>
 
                   <button
@@ -246,7 +243,7 @@ function CheckOut() {
                     disabled={isLoading}
                     className="mt-6 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isLoading ? 'Redirecting...' : 'Begin Unlimited Journey'}
+                    {isLoading ? 'Redirecting...' : 'Choose this option'}
                   </button>
                 </div>
               )}

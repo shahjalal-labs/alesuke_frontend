@@ -12,6 +12,7 @@ import { setHavePets } from "@/redux/familySlice";
 
 export default function YourPetsStep() {
   const [hasPet, setHasPet] = useState(false);
+  const [hasSavedPets, setHasSavedPets] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activePet, setActivePet] = useState<any>(null);
   const [removingIds, setRemovingIds] = useState<string[]>([]);
@@ -24,17 +25,15 @@ export default function YourPetsStep() {
     setIsAddModalOpen(true);
   };
 
-   const dispatch = useDispatch();
+  useEffect(() => {
+    if (Array.isArray(pets)) {
+      setHasSavedPets(pets.length > 0);
+    }
+  }, [pets]);
 
-  //  dispatch(setHavePets(value));
-useEffect(() => {
-  if (hasPet) {
-    dispatch(setHavePets(true));
-  } else {
-    dispatch(setHavePets(false));
-  }
+  const showPetsDetails = hasSavedPets || hasPet;
+  const isHavePetSelected = hasSavedPets || hasPet;
 
-}, [hasPet, pets, dispatch]);
   return (
     <>
       <FamilyFlowShell
@@ -44,12 +43,12 @@ useEffect(() => {
         description="By adding your pets, you can choose the right caretaker for them."
         optionsBlock={
           <OptionGrid>
-            <OptionCard label="I don't have a pet" selected={!hasPet} onClick={() => setHasPet(false)} icon="no" />
-            <OptionCard label="I have a pet" selected={hasPet} onClick={() => setHasPet(true)} icon="yes" />
+            <OptionCard label="I don't have a pet" selected={!showPetsDetails} disabled={hasSavedPets} onClick={() => setHasPet(false)} icon="no" />
+            <OptionCard label="I have a pet" selected={isHavePetSelected} onClick={() => setHasPet(true)} icon="yes" />
           </OptionGrid>
         }
         detailsBlock={
-          hasPet ? (
+          showPetsDetails ? (
             <>
               <p className="mb-3 text-[1.05rem] font-medium text-[#161616] md:text-[1.5rem]">Details of your pet</p>
               <div className="space-y-3 rounded-[8px] bg-[#eee7de] p-4 md:p-6">

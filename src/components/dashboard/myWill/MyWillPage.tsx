@@ -22,7 +22,10 @@ type EstateDistributionRecord = {
   percentage?: number | null;
   distributionType?: string | null;
   person?: FamilyMember | null;
-  backupDistributors?: Array<{ person?: FamilyMember | null }>;
+  backupDistributors?: Array<{
+    id?: string;
+    person?: FamilyMember | null;
+  }>;
 };
 
 type GiftRecord = {
@@ -169,6 +172,25 @@ function PersonBubble({
         <p className="mt-1 text-[0.94rem] leading-[1.35] text-[#767e8c] sm:text-[1rem]">
           {member?.relationType ?? "Not selected"}
         </p>
+      </div>
+    </div>
+  );
+}
+
+function DistributionPeopleBadge({ member }: { member?: FamilyMember | null }) {
+  const badge = member ? getMemberBadge(member) : { label: "Member", icon: UserRound };
+  const BadgeIcon = badge.icon;
+
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-[10px] border border-[#ece8e2] bg-[#fcfaf7] px-3 py-3">
+      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+        <BadgeIcon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-[0.92rem] font-medium text-[#2b221a] sm:text-[0.98rem]">
+          {member?.fullName ?? "Not selected"}
+        </p>
+        <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
       </div>
     </div>
   );
@@ -360,19 +382,60 @@ export default function MyWillPage() {
               }
             >
               {canAccessOtherSections ? (
-                <div className="space-y-1">
-                  {estateDistributions.map((distribution) => (
-                    <SummaryRow
-                      key={distribution.id}
-                      label={distribution.person?.fullName ?? "Not selected"}
-                      value={`${Math.round(Number(distribution.percentage ?? 0) / 5) * 5} %`}
-                      icons={
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <UserRound className="h-4 w-4" />
-                        </span>
-                      }
-                    />
-                  ))}
+                <div className="space-y-3">
+                  {estateDistributions.map((distribution) => {
+                    const backupMembers = distribution.backupDistributors ?? [];
+
+                    return (
+                      <div
+                        key={distribution.id}
+                        className="rounded-[10px] border border-[#ece8e2] bg-[#fcfaf7] p-3 sm:p-4"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                              <UserRound className="h-4 w-4" />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-[0.98rem] font-medium text-[#2b221a] sm:text-[1.05rem]">
+                                {distribution.person?.fullName ?? "Not selected"}
+                              </p>
+                              <p className="mt-1 text-[0.82rem] uppercase tracking-[0.12em] text-[#8c8072]">
+                                Estate distribution
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="inline-flex items-center self-start rounded-full bg-[#f4e8da] px-3 py-1 text-[0.84rem] font-medium text-[#2b221a] sm:self-center">
+                            {Math.round(Number(distribution.percentage ?? 0) / 5) * 5} %
+                          </div>
+                        </div>
+
+                        <div className="mt-4 border-t border-[#ece8e2] pt-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[#8c8072]">
+                              Backup distributors
+                            </p>
+                            <span className="text-[0.78rem] text-[#7a8190]">
+                              {backupMembers.length ? `${backupMembers.length} selected` : "None selected"}
+                            </span>
+                          </div>
+
+                          {backupMembers.length ? (
+                            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                              {backupMembers.map((backup) => (
+                                <DistributionPeopleBadge key={backup.id ?? backup.person?.id ?? `${distribution.id}-backup`} member={backup.person ?? null} />
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="rounded-[8px] bg-white px-3 py-3 text-[0.92rem] text-[#6f7685]">
+                              No backup distributors have been added for this distribution.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <PrerequisiteMessage />

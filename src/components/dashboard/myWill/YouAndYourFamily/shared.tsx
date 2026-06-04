@@ -4,6 +4,7 @@ type OptionCardProps = {
   label: string;
   selected: boolean;
   onClick: () => void;
+  disabled?: boolean;
   icon?: "single" | "married" | "relationship" | "yes" | "no";
   layout?: "column" | "row";
 };
@@ -22,16 +23,17 @@ function OptionIcon({ icon }: { icon?: OptionCardProps["icon"] }) {
   return <UserRound className="h-5 w-5" />;
 }
 
-export function OptionCard({ label, selected, onClick, icon, layout = "column" }: OptionCardProps) {
+export function OptionCard({ label, selected, onClick, disabled = false, icon, layout = "column" }: OptionCardProps) {
   const isRowLayout = layout === "row";
 
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={`flex min-h-[112px] flex-1 flex-col items-center justify-center rounded-[4px] bg-[#f4f5f7] px-4 py-6 text-center transition-all md:min-h-[112px] ${
         selected ? "border-2 border-[#2e3b4f]" : "border border-transparent"
-      }`}
+      } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
     >
       {isRowLayout ? (
         <div className="flex w-full items-center gap-4 text-left">

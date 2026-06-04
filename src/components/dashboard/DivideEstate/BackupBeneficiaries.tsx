@@ -92,14 +92,45 @@ function BackupBeneficiaries() {
     return distributions.find((distribution) => distribution.peopleId === primaryChildId || distribution.person?.id === primaryChildId);
   }, [distributionResponse, primaryChildId]);
 
+  // derive saved backup ids for the currently selected distributor (or primaryDistribution if none selected)
+  const savedBackupIdsForSelected = useMemo(() => {
+    const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
+    const chosen = selectedDistributorId
+      ? distributions.find((d) => d.id === selectedDistributorId)
+      : primaryDistribution ?? null;
+
+    if (!chosen) return [] as string[];
+
+    const ids = new Set<string>();
+    (chosen.backupDistributors ?? []).forEach((bd) => {
+      const id = bd.person?.id ?? bd.peopleId;
+      if (id) ids.add(id as string);
+    });
+    return Array.from(ids);
+  }, [distributionResponse, selectedDistributorId, primaryDistribution]);
+
+  // When the selected distributor changes, update selectedBackupIds to reflect saved backups
   useEffect(() => {
-    const firstSelectedDistributor =
-      distributorRows.find((distribution) => distribution.id === primaryDistribution?.id) ?? distributorRows[0] ?? null;
+    // Always sync to the saved backups for the chosen distributor so the UI reflects persisted state
+    setSelectedBackupIds(savedBackupIdsForSelected);
+  }, [savedBackupIdsForSelected]);
+
+  // compute current distributor name (use selected distributor if available)
+  const currentDistributorName = useMemo(() => {
+    const chosenId = selectedDistributorId ?? primaryDistribution?.id ?? null;
+    const found = distributorRows.find((d) => d.id === chosenId) ?? null;
+    return found?.name ?? primaryChildName;
+  }, [selectedDistributorId, distributorRows, primaryDistribution, primaryChildName]);
+
+  useEffect(() => {
+    // Prefer distributor whose peopleId matches the primary child, otherwise default to first distributor
+    const primaryMatch = distributorRows.find((d) => d.peopleId && d.peopleId === primaryChildId) ?? null;
+    const firstSelectedDistributor = primaryMatch ?? distributorRows[0] ?? null;
 
     if (!selectedDistributorId && firstSelectedDistributor?.id) {
       setSelectedDistributorId(firstSelectedDistributor.id);
     }
-  }, [distributorRows, primaryDistribution?.id, selectedDistributorId]);
+  }, [distributorRows, primaryChildId, selectedDistributorId]);
 
   // backup candidates: all members except the primary child
   const backupCandidates = useMemo(() => {
@@ -158,12 +189,12 @@ function BackupBeneficiaries() {
         <SectionEyebrow>Estate Distribution</SectionEyebrow>
 
         <div className="space-y-4">
-          <FlowTitle>Backup beneficiaries for {primaryChildName}</FlowTitle>
+          <FlowTitle>Backup beneficiaries for {currentDistributorName}</FlowTitle>
           <FlowLead>
-            If {primaryChildName}'s share of their estate cannot be given, then who should inherit their share?
+            If {currentDistributorName}'s share of their estate cannot be given, then who should inherit their share?
           </FlowLead>
           <BodyCopy>
-            When planning your estate, it is important to decide who should receive assets if the primary recipient ({primaryChildName}) is unable to take them. This situation might occur if the child:
+            When planning your estate, it is important to decide who should receive assets if the primary recipient ({currentDistributorName}) is unable to take them. This situation might occur if the child:
           </BodyCopy>
           <ul className="space-y-1 pl-5 text-[0.96rem] leading-[1.55] text-[#727b8b] md:text-[1rem]">
             <li>Passes away before you.</li>

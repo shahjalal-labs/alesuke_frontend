@@ -12,6 +12,7 @@ import { setHaveChildren } from "@/redux/familySlice";
 
 export default function YourChildrenStep() {
   const [hasChildren, setHasChildren] = useState(false);
+  const [hasSavedChildren, setHasSavedChildren] = useState(false);
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [activeChild, setActiveChild] = useState<any>(null);
   const [removingIds, setRemovingIds] = useState<string[]>([]);
@@ -24,18 +25,14 @@ export default function YourChildrenStep() {
     setIsAddChildOpen(true);
   };
 
+  useEffect(() => {
+    if (Array.isArray(children)) {
+      setHasSavedChildren(children.length > 0);
+    }
+  }, [children]);
 
-   const dispatch = useDispatch();
-
-useEffect(() => {
-  if (hasChildren) {
-    dispatch(setHaveChildren(true));
-  } else {
-    dispatch(setHaveChildren(false));
-  }
-
-}, [hasChildren, children, dispatch]);
-
+  const showChildrenDetails = hasSavedChildren || hasChildren;
+  const isHaveChildrenSelected = hasSavedChildren || hasChildren;
 
   return (
     <>
@@ -49,23 +46,18 @@ useEffect(() => {
             <div className="grid grid-cols-1 gap-5 md:gap-5">
               <OptionCard
                 label="I don't have children"
-                selected={!hasChildren}
+                selected={!showChildrenDetails}
+                disabled={hasSavedChildren}
                 onClick={() => setHasChildren(false)}
                 icon="no"
                 layout="row"
               />
-              <OptionCard
-                label="I have children"
-                selected={hasChildren}
-                onClick={() => setHasChildren(true)}
-                icon="yes"
-                layout="row"
-              />
+              <OptionCard label="I have children" selected={isHaveChildrenSelected} onClick={() => setHasChildren(true)} icon="yes" layout="row" />
             </div>
           </OptionGrid>
         }
         detailsBlock={
-          hasChildren ? (
+          showChildrenDetails ? (
             <>
               <p className="mb-3 text-[1.05rem] font-medium text-[#161616] md:text-[1.5rem]">Details of your children</p>
               <div className="space-y-3 rounded-[8px] bg-[#eee7de] p-4 md:p-6">

@@ -87,6 +87,24 @@ const profileApi = baseApi.injectEndpoints({
 
       providesTags: ["profile"],
     }),
+
+      selectPerson: builder.mutation({
+      query: (data) => ({
+        url: `/profile/selected`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["profile"],
+    }),
+
+     getAllSelectedPerson: builder.query({
+      query: () => ({
+        url: `/profile/selected`,
+        method: "GET",  
+      }),
+
+      providesTags: ["profile"],
+    }),
   }),
 });
 
@@ -100,4 +118,6 @@ export const {
   useUpdateAddressMutation,
   useGetAllMemberListQuery,
   useGetWillDetailsQuery,
+  useSelectPersonMutation,
+  useGetAllSelectedPersonQuery,
 } = profileApi;

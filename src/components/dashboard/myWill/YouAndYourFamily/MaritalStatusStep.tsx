@@ -24,9 +24,9 @@ export default function MaritalStatusStep() {
     return "";
   }, [status]);
 
-  const addActionLabel = status === "married" ? "Add Person" : "Add Partner";
-  const modalTitle = status === "married" ? "Add a new person" : "Add a new relationship partner";
-  const modalActionLabel = status === "married" ? "Create a person" : "Create a Partner";
+  const addActionLabel = status === "married" ? "Add Spouse" : "Add Partner";
+  const modalTitle = status === "married" ? "Add a new spouse" : "Add a new relationship partner";
+  const modalActionLabel = status === "married" ? "Create a spouse" : "Create a partner";
 
   const relationType = status === 'married' ? 'SPOUSE' : status === 'relationship' ? 'PARTNER' : undefined;
   const { data: members, isLoading, isFetching } = useGetMemberQuery(relationType ? relationType : '', { skip: !relationType });
