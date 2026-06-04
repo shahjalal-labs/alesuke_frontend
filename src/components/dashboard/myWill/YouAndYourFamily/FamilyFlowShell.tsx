@@ -51,27 +51,67 @@ export default function FamilyFlowShell({
   onNext,
 }: FamilyFlowShellProps) {
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
-  const { maritalStatus} = useSelector((state: any) => state.family);
+  const { maritalStatus, haveChildren, havePets } = useSelector((state: any) => state.family);
 
-const handleStatus = async () => {
-  if (!maritalStatus) {
-    toast.error("Please select your marital status before proceeding.");
-    return;
-  }
+  const handleStatus = async () => {
+    if (step === 1) {
+      if (!maritalStatus) {
+        toast.error("Please select your marital status before proceeding.");
+        return;
+      }
 
-  const apiStatus = mapMaritalStatusToApi(maritalStatus);
-  const formData = new FormData();
-  formData.append("maritalStatus", apiStatus);
-  
-  try {
-    await updateProfile(formData).unwrap();
-    if (onNext) {
-      onNext();
+      const apiStatus = mapMaritalStatusToApi(maritalStatus);
+      const formData = new FormData();
+      formData.append("maritalStatus", apiStatus);
+
+      try {
+        await updateProfile(formData).unwrap();
+        if (onNext) {
+          onNext();
+        }
+      } catch (error) {
+        toast.error("Failed to update marital status. Please try again.");
+      }
     }
-  } catch (error) {
-    toast.error("Failed to update marital status. Please try again.");
-  }
-};
+    else if (step === 2) {
+      if (haveChildren === null) {
+        toast.error("Please indicate whether you have children before proceeding.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("haveChildren", haveChildren.toString());
+
+      try {
+        await updateProfile(formData).unwrap();
+        if (onNext) {
+          onNext();
+        }
+      } catch (error) {
+        toast.error("Failed to update family details. Please try again.");
+      }
+    } else if (step === 3) {
+      if (havePets === null) {
+        toast.error("Please indicate whether you have pets before proceeding.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("havePets", havePets.toString());
+      try {
+        await updateProfile(formData).unwrap();
+        if (onNext) {
+          onNext();
+        }
+      } catch (error) {
+        toast.error("Failed to update family details. Please try again.");
+      }
+    } else {
+      if (onNext) {
+        onNext();
+      }
+    }
+  };
 
 
   return (
@@ -141,7 +181,7 @@ const handleStatus = async () => {
 
             {nextHref ? (
               <Link
-              onClick={handleStatus}
+                onClick={handleStatus}
                 href={nextHref}
                 className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)]"
               >

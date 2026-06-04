@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddPersonModal from "@/components/ui/AddPersonModal";
 import FamilyFlowShell from "./FamilyFlowShell";
 import { AddItemRow, DetailItem, MemberListSkeleton, OptionCard, OptionGrid } from "./shared";
 import { useGetMemberQuery, useDeleteMemberMutation } from '@/redux/api/profileApi';
 import { PencilLine, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setHaveChildren } from "@/redux/familySlice";
 
 export default function YourChildrenStep() {
   const [hasChildren, setHasChildren] = useState(false);
@@ -21,6 +23,19 @@ export default function YourChildrenStep() {
     setActiveChild(child);
     setIsAddChildOpen(true);
   };
+
+
+   const dispatch = useDispatch();
+
+useEffect(() => {
+  if (hasChildren) {
+    dispatch(setHaveChildren(true));
+  } else {
+    dispatch(setHaveChildren(false));
+  }
+
+}, [hasChildren, children, dispatch]);
+
 
   return (
     <>

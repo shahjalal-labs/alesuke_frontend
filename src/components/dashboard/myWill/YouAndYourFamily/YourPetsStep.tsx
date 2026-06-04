@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FamilyFlowShell from "./FamilyFlowShell";
 import AddPersonModal from "@/components/ui/AddPersonModal";
 import { AddItemRow, DetailItem, MemberListSkeleton, OptionCard, OptionGrid } from "./shared";
 import { useGetMemberQuery, useDeleteMemberMutation } from '@/redux/api/profileApi';
 import { PawPrint, PencilLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setHavePets } from "@/redux/familySlice";
 
 export default function YourPetsStep() {
   const [hasPet, setHasPet] = useState(false);
@@ -22,6 +24,17 @@ export default function YourPetsStep() {
     setIsAddModalOpen(true);
   };
 
+   const dispatch = useDispatch();
+
+  //  dispatch(setHavePets(value));
+useEffect(() => {
+  if (hasPet) {
+    dispatch(setHavePets(true));
+  } else {
+    dispatch(setHavePets(false));
+  }
+
+}, [hasPet, pets, dispatch]);
   return (
     <>
       <FamilyFlowShell

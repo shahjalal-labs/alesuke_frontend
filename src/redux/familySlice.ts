@@ -9,12 +9,16 @@ interface FamilyState {
   maritalStatus: MaritalStatus;
   spouse: any[];   // Replace `any` with a proper Member type if available
   partner: any[];  // Replace `any` with a proper Member type if available
+  haveChildren: boolean | null;
+  havePets: boolean | null; // ✅ Added
 }
 
 const initialState: FamilyState = {
   maritalStatus: null,
   spouse: [],
   partner: [],
+  haveChildren: null,
+  havePets: null, // ✅ Initialized
 };
 
 const familySlice = createSlice({
@@ -28,24 +32,30 @@ const familySlice = createSlice({
       state.maritalStatus = action.payload.maritalStatus;
       if (action.payload.maritalStatus === 'married') {
         state.spouse = action.payload.data;
-        state.partner = []; // Optionally clear partner data when switching to married
+        state.partner = [];
       } else if (action.payload.maritalStatus === 'relationship') {
         state.partner = action.payload.data;
-        state.spouse = []; // Optionally clear spouse data
+        state.spouse = [];
       } else if (action.payload.maritalStatus === 'single') {
-        // Clear both arrays for single
         state.spouse = [];
         state.partner = [];
       }
     },
-    // Optional: add a reset action
+    setHaveChildren(state, action: PayloadAction<boolean>) {
+      state.haveChildren = action.payload;
+    },
+    setHavePets(state, action: PayloadAction<boolean>) {
+      state.havePets = action.payload;
+    },
     resetFamilyData(state) {
       state.maritalStatus = null;
       state.spouse = [];
       state.partner = [];
+      state.haveChildren = null;
+      state.havePets = null; // ✅ Reset
     },
   },
 });
 
-export const { setMaritalData, resetFamilyData } = familySlice.actions;
+export const { setMaritalData, setHaveChildren, setHavePets, resetFamilyData } = familySlice.actions;
 export default familySlice.reducer;
