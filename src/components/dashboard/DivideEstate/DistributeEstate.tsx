@@ -16,7 +16,10 @@ import {
   SuccessSummary,
 } from "./DivideEstateShell";
 
-import { useGetDistributionsQuery } from "@/redux/api/executorApi";
+import {
+  useAddManualDistributionMutation,
+  useGetDistributionsQuery,
+} from "@/redux/api/executorApi";
 
 type MemberRecord = {
   id: string;
@@ -39,13 +42,18 @@ const PERCENT_STEP = 5;
 const TOTAL_PERCENT = 100;
 
 function normalizeToStep(value: number) {
-  return Math.max(0, Math.min(TOTAL_PERCENT, Math.round(value / PERCENT_STEP) * PERCENT_STEP));
+  return Math.max(
+    0,
+    Math.min(TOTAL_PERCENT, Math.round(value / PERCENT_STEP) * PERCENT_STEP),
+  );
 }
 
 function buildStepAllocation(distributions: DistributionRecord[]) {
   if (!distributions.length) return [] as EditableDistributionRecord[];
 
-  const baseShare = Math.floor((TOTAL_PERCENT / distributions.length) / PERCENT_STEP) * PERCENT_STEP;
+  const baseShare =
+    Math.floor(TOTAL_PERCENT / distributions.length / PERCENT_STEP) *
+    PERCENT_STEP;
   const remaining = TOTAL_PERCENT - baseShare * distributions.length;
   const bonusCount = remaining / PERCENT_STEP;
 
@@ -58,28 +66,40 @@ function buildStepAllocation(distributions: DistributionRecord[]) {
 function rebalanceAllocation(
   current: EditableDistributionRecord[],
   targetId: string,
-  nextValue: number
+  nextValue: number,
 ) {
   if (!current.length) return current;
 
-  const targetIndex = current.findIndex((distribution) => distribution.id === targetId);
+  const targetIndex = current.findIndex(
+    (distribution) => distribution.id === targetId,
+  );
   if (targetIndex < 0) return current;
 
   const normalizedTarget = normalizeToStep(nextValue);
   const target = current[targetIndex];
-  const otherDistributions = current.filter((distribution) => distribution.id !== targetId);
-  const otherTotal = otherDistributions.reduce((sum, distribution) => sum + distribution.percentage, 0);
+  const otherDistributions = current.filter(
+    (distribution) => distribution.id !== targetId,
+  );
+  const otherTotal = otherDistributions.reduce(
+    (sum, distribution) => sum + distribution.percentage,
+    0,
+  );
   const targetShare = Math.min(normalizedTarget, TOTAL_PERCENT);
   const delta = targetShare - target.percentage;
 
   if (delta === 0) {
     return current.map((distribution) =>
-      distribution.id === targetId ? { ...distribution, percentage: targetShare } : distribution
+      distribution.id === targetId
+        ? { ...distribution, percentage: targetShare }
+        : distribution,
     );
   }
 
   if (delta > 0) {
-    const cappedTargetShare = Math.min(target.percentage + delta, target.percentage + otherTotal);
+    const cappedTargetShare = Math.min(
+      target.percentage + delta,
+      target.percentage + otherTotal,
+    );
     let remainingReduction = cappedTargetShare - target.percentage;
 
     const updatedOthers = otherDistributions
@@ -90,7 +110,10 @@ function rebalanceAllocation(
 
         const reduction = Math.min(distribution.percentage, remainingReduction);
         remainingReduction -= reduction;
-        return { ...distribution, percentage: distribution.percentage - reduction };
+        return {
+          ...distribution,
+          percentage: distribution.percentage - reduction,
+        };
       })
       .reverse();
 
@@ -99,7 +122,10 @@ function rebalanceAllocation(
         return { ...distribution, percentage: cappedTargetShare };
       }
 
-      return updatedOthers.find((item) => item.id === distribution.id) ?? distribution;
+      return (
+        updatedOthers.find((item) => item.id === distribution.id) ??
+        distribution
+      );
     });
   }
 
@@ -115,14 +141,17 @@ function rebalanceAllocation(
     return { ...distribution, percentage: distribution.percentage + increase };
   });
 
-  const finalTargetShare = target.percentage - (increaseAmount - remainingIncrease);
+  const finalTargetShare =
+    target.percentage - (increaseAmount - remainingIncrease);
 
   return current.map((distribution) => {
     if (distribution.id === targetId) {
       return { ...distribution, percentage: finalTargetShare };
     }
 
-    return updatedOthers.find((item) => item.id === distribution.id) ?? distribution;
+    return (
+      updatedOthers.find((item) => item.id === distribution.id) ?? distribution
+    );
   });
 }
 
@@ -134,7 +163,10 @@ function normalizeLoadedAllocations(distributions: DistributionRecord[]) {
     percentage: normalizeToStep(Number(distribution.percentage ?? 0)),
   }));
 
-  const currentTotal = normalized.reduce((sum, distribution) => sum + distribution.percentage, 0);
+  const currentTotal = normalized.reduce(
+    (sum, distribution) => sum + distribution.percentage,
+    0,
+  );
   if (currentTotal === TOTAL_PERCENT) {
     return normalized;
   }
@@ -142,18 +174,27 @@ function normalizeLoadedAllocations(distributions: DistributionRecord[]) {
   const targetId = normalized[normalized.length - 1]?.id;
   if (!targetId) return normalized;
 
-  return rebalanceAllocation(normalized, targetId, normalized[normalized.length - 1].percentage + (TOTAL_PERCENT - currentTotal));
+  return rebalanceAllocation(
+    normalized,
+    targetId,
+    normalized[normalized.length - 1].percentage +
+      (TOTAL_PERCENT - currentTotal),
+  );
 }
 
 function DistributeEstate() {
   const router = useRouter();
-  const { data, isLoading } = useGetDistributionsQuery(undefined);
+  const { data, isLoading, refetch } = useGetDistributionsQuery(undefined);
+  const [addManualDistribution, { isLoading: isSubmitting }] = useAddManualDistributionMutation();
 
   const distributions = useMemo(() => {
-    return ((data as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
+    return ((data as { data?: DistributionRecord[] } | undefined)?.data ??
+      []) as DistributionRecord[];
   }, [data]);
 
-  const [editableDistributions, setEditableDistributions] = useState<EditableDistributionRecord[]>([]);
+  const [editableDistributions, setEditableDistributions] = useState<
+    EditableDistributionRecord[]
+  >([]);
 
   useEffect(() => {
     if (!distributions.length) {
@@ -161,7 +202,9 @@ function DistributeEstate() {
       return;
     }
 
-    const savedPercentages = distributions.some((distribution) => typeof distribution.percentage === "number");
+    const savedPercentages = distributions.some(
+      (distribution) => typeof distribution.percentage === "number",
+    );
 
     if (!savedPercentages) {
       setEditableDistributions(buildStepAllocation(distributions));
@@ -172,27 +215,46 @@ function DistributeEstate() {
   }, [distributions]);
 
   const totalAllocated = useMemo(() => {
-    return editableDistributions.reduce((sum, distribution) => sum + distribution.percentage, 0);
+    return editableDistributions.reduce(
+      (sum, distribution) => sum + distribution.percentage,
+      0,
+    );
   }, [editableDistributions]);
 
-  const handlePercentageChange = (distributionId: string, nextValue: string) => {
+  const handlePercentageChange = (
+    distributionId: string,
+    nextValue: string,
+  ) => {
     const parsedValue = Number(nextValue);
 
-    setEditableDistributions((current) => rebalanceAllocation(current, distributionId, Number.isFinite(parsedValue) ? parsedValue : 0));
+    setEditableDistributions((current) =>
+      rebalanceAllocation(
+        current,
+        distributionId,
+        Number.isFinite(parsedValue) ? parsedValue : 0,
+      ),
+    );
   };
 
   const handleStepChange = (distributionId: string, direction: 1 | -1) => {
     setEditableDistributions((current) => {
-      const target = current.find((distribution) => distribution.id === distributionId);
+      const target = current.find(
+        (distribution) => distribution.id === distributionId,
+      );
 
       if (!target) return current;
 
-      return rebalanceAllocation(current, distributionId, target.percentage + direction * PERCENT_STEP);
+      return rebalanceAllocation(
+        current,
+        distributionId,
+        target.percentage + direction * PERCENT_STEP,
+      );
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!editableDistributions.length) {
+      toast.error("No distributions to save.");
       return;
     }
 
@@ -201,7 +263,28 @@ function DistributeEstate() {
       return;
     }
 
-    router.push("/will/divide-estate/choose-backup-option");
+    // Prepare the distribution data for the API
+    const distributionData = {
+      distributions: editableDistributions.map((distribution) => ({
+        peopleId: distribution.peopleId,
+        percentage: distribution.percentage,
+      })),
+    };
+
+    try {
+      await addManualDistribution(distributionData).unwrap();
+      toast.success("Distribution saved successfully!");
+      
+      // Refetch to get updated data
+      await refetch();
+      
+      // Navigate to next step
+      router.push("/will/divide-estate/choose-backup-option");
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || error?.message || "Failed to save distribution. Please try again.";
+      toast.error(errorMessage);
+      console.error("Save distribution failed:", error);
+    }
   };
 
   return (
@@ -211,7 +294,9 @@ function DistributeEstate() {
 
         <div className="space-y-4">
           <FlowTitle>Divide your estate</FlowTitle>
-          <FlowLead>Your estate is divided using a simple % for each beneficiary</FlowLead>
+          <FlowLead>
+            Your estate is divided using a simple % for each beneficiary
+          </FlowLead>
           <BodyCopy>Please adjust the % number below.</BodyCopy>
         </div>
 
@@ -219,7 +304,10 @@ function DistributeEstate() {
           <p className="text-[0.95rem] font-semibold leading-[1.3] text-[#191715] md:text-[1rem]">
             You have allocated {totalAllocated}% of your estate
           </p>
-          <p className="text-[0.82rem] leading-[1.45] text-[#7b8594] md:text-[0.9rem]">You can proceed to the next step, or review the % distribution below.</p>
+          <p className="text-[0.82rem] leading-[1.45] text-[#7b8594] md:text-[0.9rem]">
+            You can proceed to the next step, or review the % distribution
+            below.
+          </p>
         </SuccessSummary>
 
         <Panel>
@@ -242,7 +330,8 @@ function DistributeEstate() {
                         <Heart className="h-4.5 w-4.5 fill-current" />
                       </span>
                       <span className="min-w-0 truncate text-[1rem] font-medium text-[#657081] md:text-[1.18rem]">
-                        {distribution.person?.fullName ?? `Beneficiary ${index + 1}`}
+                        {distribution.person?.fullName ??
+                          `Beneficiary ${index + 1}`}
                       </span>
                     </span>
 
@@ -250,7 +339,8 @@ function DistributeEstate() {
                       <button
                         type="button"
                         onClick={() => handleStepChange(distribution.id, -1)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5dde6] bg-[#f8fafc] text-[#394355] transition-colors hover:bg-white"
+                        disabled={isSubmitting}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5dde6] bg-[#f8fafc] text-[#394355] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label={`Decrease ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} by 5 percent`}
                       >
                         <span className="text-lg leading-none">−</span>
@@ -263,15 +353,22 @@ function DistributeEstate() {
                         min={0}
                         max={TOTAL_PERCENT}
                         value={distribution.percentage}
-                        onChange={(event) => handlePercentageChange(distribution.id, event.target.value)}
-                        className="h-11 w-20 rounded-[8px] border border-[#d5dde6] bg-white px-3 text-center text-[1rem] font-medium text-[#657081] outline-none focus:border-[#25b6e8]"
+                        onChange={(event) =>
+                          handlePercentageChange(
+                            distribution.id,
+                            event.target.value,
+                          )
+                        }
+                        disabled={isSubmitting}
+                        className="h-11 w-20 rounded-[8px] border border-[#d5dde6] bg-white px-3 text-center text-[1rem] font-medium text-[#657081] outline-none focus:border-[#25b6e8] disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label={`Set ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} allocation percentage`}
                       />
 
                       <button
                         type="button"
                         onClick={() => handleStepChange(distribution.id, 1)}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5dde6] bg-[#f8fafc] text-[#394355] transition-colors hover:bg-white"
+                        disabled={isSubmitting}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5dde6] bg-[#f8fafc] text-[#394355] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label={`Increase ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} by 5 percent`}
                       >
                         <span className="text-lg leading-none">+</span>
@@ -284,7 +381,6 @@ function DistributeEstate() {
                   </div>
                 );
               })}
-
             </div>
           ) : (
             <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">
@@ -293,7 +389,12 @@ function DistributeEstate() {
           )}
         </Panel>
 
-        <FooterActions previousHref="/will/divide-estate/choose-beneficaries" nextLabel="Save & Continue" onNext={handleContinue} nextDisabled={!editableDistributions.length} />
+        <FooterActions
+          previousHref="/will/divide-estate/choose-beneficaries"
+          nextLabel={isSubmitting ? "Saving..." : "Save & Continue"}
+          onNext={handleContinue}
+          nextDisabled={!editableDistributions.length || isSubmitting}
+        />
       </section>
     </DivideEstateShell>
   );

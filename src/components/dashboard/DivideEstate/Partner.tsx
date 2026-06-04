@@ -43,7 +43,7 @@ function Partner() {
             </BodyCopy>
           </TipCallout>
 
-          <FlowLead>Do you want to give 100% of your residuary estate to Spouse?</FlowLead>
+          <FlowLead>Do you want to give 100% of your residuary estate to Spouse / Children?</FlowLead>
 
           <DualChoicePanel
             leftLabel="No"

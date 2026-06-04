@@ -73,6 +73,17 @@ const profileApi = baseApi.injectEndpoints({
       invalidatesTags: ["executors"],
     }),
 
+ addManualDistribution: builder.mutation({
+      query: (data) => ({
+        url: `/will/distributions`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["executors"],
+    }),
+
+    
+
    
   }),
 });
@@ -86,4 +97,5 @@ export const {
   useAddDistributionMutation,
   useGetDistributionsQuery,
   useAddBackupDistributionMutation,
+  useAddManualDistributionMutation,
 } = profileApi;

@@ -433,12 +433,13 @@ export default function ChooseExecutor() {
           primaryDisabled={isSubmitting}
         />
 
-        <AddPersonModal
+       <AddPersonModal
           open={isAddExecutorOpen}
           onClose={() => setIsAddExecutorOpen(false)}
           title="Add an executor"
           actionLabel="Create Executor"
           allowGenericPerson
+          showRelationshipDropdown={true}  // Add this line
           onSuccess={handleExecutorAdded}
         />
       </div>
