@@ -132,9 +132,9 @@ function BackupBeneficiaries() {
     }
   }, [distributorRows, primaryChildId, selectedDistributorId]);
 
-  // backup candidates: all members except the primary child
+  // backup candidates: all members except the primary child and pets
   const backupCandidates = useMemo(() => {
-    return (members as MemberRecord[]).filter((m) => m.id !== primaryChildId);
+    return (members as MemberRecord[]).filter((m) => m.id !== primaryChildId && m.relationType !== "PET");
   }, [members, primaryChildId]);
 
   const toggleBackup = (id: string) => {
@@ -289,7 +289,7 @@ function BackupBeneficiaries() {
         />
       </section>
 
-      <AddPersonModal open={isAddPersonOpen} onClose={() => setIsAddPersonOpen(false)} title="Add a new person" actionLabel="Create a person" onSuccess={() => setIsAddPersonOpen(false)} />
+      <AddPersonModal open={isAddPersonOpen} onClose={() => setIsAddPersonOpen(false)} title="Add a new person" actionLabel="Create a person" onSuccess={() => setIsAddPersonOpen(false)} showRelationshipDropdown={true} />
     </DivideEstateShell>
   );
 }

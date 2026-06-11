@@ -12,8 +12,8 @@ export default function Item() {
       ]}
       giftType="ITEM"
       fields={[
-        { key: 'itemName', label: 'What is the item?', placeholder: 'My painting of cleopatra' },
-        { key: 'description', label: 'Description of the item', placeholder: 'My Fender Stratocaster 1972 electric' },
+        { key: 'itemName', label: 'What is the item?', placeholder: 'Enter your item name' },
+        { key: 'description', label: 'Description of the item', placeholder: 'Enter a description' },
       ]}
       recipientTitle="Who would you like to give the item to?"
       messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."

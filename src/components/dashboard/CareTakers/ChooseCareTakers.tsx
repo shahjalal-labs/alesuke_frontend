@@ -55,7 +55,9 @@ export default function ChooseCareTakers() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const caretakerRows = useMemo(() => {
-    return (members as MemberRecord[]).map((member, index) => ({
+    return (members as MemberRecord[])
+      .filter((member) => member.relationType !== "PET")
+      .map((member, index) => ({
       id: member.id,
       name: member.fullName ?? `Person ${index + 1}`,
       helper: member.relationType ? member.relationType.toLowerCase() : undefined,
@@ -96,8 +98,9 @@ export default function ChooseCareTakers() {
       await addCaretaker({ caretakerId: selectedCaretakerId }).unwrap();
       toast.success("Caretaker saved.");
       router.push("/will/caretakers-of-pets/complete");
-    } catch (error) {
-      toast.error("Unable to save caretaker.");
+    } catch (error: any) {
+      console.log("Error saving caretaker", error);
+      toast.error( error.data?.message || "Unable to save caretaker.");
     } finally {
       setIsSubmitting(false);
     }

@@ -9,6 +9,7 @@ import { PencilLine, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { setMaritalData } from "@/redux/familySlice";
+import { useGetMeDataQuery } from "@/redux/api/authApi";
 
 type MaritalStatus = "single" | "married" | "relationship";
 
@@ -17,6 +18,9 @@ export default function MaritalStatusStep() {
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
   const [activeMember, setActiveMember] = useState<any>(null);
   const [removingIds, setRemovingIds] = useState<string[]>([]);
+
+  const { data: getMeData } = useGetMeDataQuery({});
+
 
   const detailTitle = useMemo(() => {
     if (status === "married") return "Details of your spouse";
@@ -40,13 +44,13 @@ export default function MaritalStatusStep() {
 
   const dispatch = useDispatch();
 
-useEffect(() => {
-  if (status !== 'single') {
-    dispatch(setMaritalData({ maritalStatus: status, data: members || [] }));
-  } else {
-    dispatch(setMaritalData({ maritalStatus: 'single', data: [] }));
-  }
-}, [status, members, dispatch]);
+  useEffect(() => {
+    if (status !== 'single') {
+      dispatch(setMaritalData({ maritalStatus: status, data: members || [] }));
+    } else {
+      dispatch(setMaritalData({ maritalStatus: 'single', data: [] }));
+    }
+  }, [status, members, dispatch]);
 
 
   return (

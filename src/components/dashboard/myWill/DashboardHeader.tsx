@@ -61,7 +61,7 @@ export default function DashboardHeader({ timeZone }: Props) {
 
   const { data: meData } = useGetMeDataQuery({});
   const userName = meData?.data?.fullName ?? "User";
-  const tz = timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tz = timeZone ?? "Asia/Singapore";
   const tzShort = now ? getTimezoneShortName(now, tz) : "";
 
   const hourInTz = now ? getHourInTZ(now, tz) : 0;

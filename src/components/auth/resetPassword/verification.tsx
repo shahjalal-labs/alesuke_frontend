@@ -28,7 +28,7 @@ function Verification() {
         purpose: "PASSWORD_RESET",
       }).unwrap();
       if (response?.success) {
-        const token = response?.data?.token ?? response?.token ?? response?.data?.verificationToken;
+        const token = response?.data?.resetPasswordToken;
         toast.success("Verification successful. Create your new password.");
         router.push(`/new-password?email=${encodeURIComponent(email)}${token ? `&token=${encodeURIComponent(token)}` : ""}`);
       }

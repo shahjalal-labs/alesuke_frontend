@@ -12,15 +12,51 @@ import {
 } from "./DivideEstateShell";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useGetWillDetailsQuery, useDistributionTypeMutation } from "@/redux/api/profileApi";
+import { toast } from "sonner";
 
 function Partner() {
   const router = useRouter();
   const [selectedChoice, setSelectedChoice] = useState<"no" | "yes" | null>(null);
+  const [hasSetInitialChoice, setHasSetInitialChoice] = useState(false);
+  
+  const { data: willDetails, isLoading } = useGetWillDetailsQuery(undefined);
+  const [updateDistributionType, { isLoading: isUpdating }] = useDistributionTypeMutation();
+
   const nextHref = selectedChoice === "yes" ? "/will/divide-estate/choose-backup-option" : "/will/divide-estate/choose-beneficaries";
+
+  useEffect(() => {
+    if (willDetails?.data?.estateDistributionType && !hasSetInitialChoice) {
+      if (willDetails.data.estateDistributionType === "MANUAL") setSelectedChoice("no");
+      else if (willDetails.data.estateDistributionType === "AUTO") setSelectedChoice("yes");
+      setHasSetInitialChoice(true);
+    }
+  }, [willDetails, hasSetInitialChoice]);
 
   const handleChoice = (choice: "no" | "yes") => {
     setSelectedChoice(choice);
+  };
+
+  const handleNext = async () => {
+    if (!selectedChoice) return;
+
+    if (willDetails?.data?.id) {
+      try {
+        await updateDistributionType({
+          willId: willDetails.data.id,
+          data: {
+            estateDistributionType: selectedChoice === "yes" ? "AUTO" : "MANUAL"
+          }
+        }).unwrap();
+        router.push(nextHref);
+      } catch (error) {
+        toast.error("Failed to update estate distribution type");
+        console.error(error);
+      }
+    } else {
+      toast.error("Will details not found. Please refresh the page.");
+    }
   };
 
   return (
@@ -56,9 +92,9 @@ function Partner() {
 
         <FooterActions
           previousHref="/will/divide-estate/intro"
-          nextLabel="Save & Continue"
-          nextDisabled={!selectedChoice}
-          onNext={() => router.push(nextHref)}
+          nextLabel={isUpdating ? "Saving..." : "Save & Continue"}
+          nextDisabled={!selectedChoice || isLoading || isUpdating}
+          onNext={handleNext}
         />
       </section>
     </DivideEstateShell>

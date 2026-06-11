@@ -111,7 +111,9 @@ export default function GiftFormPage({
   const isEditing = Boolean(currentGift)
 
   const memberRows = useMemo(() => {
-    return (members as RecipientRecord[]).map((member, index) => ({
+    return (members as RecipientRecord[])
+      .filter((member) => member.relationType !== 'PET')
+      .map((member, index) => ({
       id: member.id,
       title: member.fullName ?? `Person ${index + 1}`,
       helper: member.relationType ? member.relationType.toLowerCase() : undefined,

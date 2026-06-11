@@ -631,7 +631,7 @@ export default function WillPreviewPage() {
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/will/preview" className="inline-flex items-center rounded-[3px] border border-[#cbbdaa] bg-white px-5 py-3 text-[0.95rem] text-[#2b221a] shadow-[0_8px_18px_rgba(18,28,44,0.08)]">
+                <Link href="/will" className="inline-flex items-center rounded-[3px] border border-[#cbbdaa] bg-white px-5 py-3 text-[0.95rem] text-[#2b221a] shadow-[0_8px_18px_rgba(18,28,44,0.08)]">
                   Make edits to your will
                 </Link>
                 <Link href="/will/checkout" className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]">

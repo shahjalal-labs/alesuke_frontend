@@ -94,7 +94,7 @@ export default function GiftComponent() {
   }, [giftsResponse])
 
   const createOptions = [
-    { id: 'cash', label: 'Leave a cash gift', href: '/will/gifts/add/cash', hint: 'for example, S$10,000 to leave to a person or a charity' },
+    { id: 'cash', label: 'Leave a cash gift', href: '/will/gifts/add/cash', hint: 'for example, S$10,000 to leave to a person.' },
     { id: 'item', label: 'Leave an item', href: '/will/gifts/add/item' },
     { id: 'collection', label: 'Leave a collection of items', href: '/will/gifts/add/collection' },
     { id: 'property', label: 'Leave a property', href: '/will/gifts/add/property' },

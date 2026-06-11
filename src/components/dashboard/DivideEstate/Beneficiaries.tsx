@@ -17,8 +17,8 @@ import {
   Panel,
   PersonRow,
   SectionEyebrow,
-  TipButton,
-  TipCallout,
+  // TipButton,
+  // TipCallout,
 } from "./DivideEstateShell";
 
 import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
@@ -51,7 +51,7 @@ function Beneficiaries() {
 
   const beneficiaryMembers = useMemo(() => {
     return (members as MemberRecord[]).filter(
-      (member) => member.relationType === "SPOUSE" || member.relationType === "PARTNER" || member.relationType === "CHILD"
+      (member) => member.relationType !== "PET"
     );
   }, [members]);
 
@@ -153,7 +153,7 @@ function Beneficiaries() {
           )}
         </Panel>
 
-        <div className="space-y-4 border-l-2 border-[#90d8ef] pl-4">
+        {/* <div className="space-y-4 border-l-2 border-[#90d8ef] pl-4">
           <div className="inline-flex items-center gap-2 text-[0.92rem] font-medium text-[#55c4e9]">
             <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#90d8ef] text-[0.68rem]">i</span>
             Tip
@@ -163,7 +163,7 @@ function Beneficiaries() {
           </BodyCopy>
           <BodyCopy className="text-[#748192]">Any new people you add will also be added to your Address book.</BodyCopy>
           <TipButton>View my address book</TipButton>
-        </div>
+        </div> */}
 
         <FooterActions
           previousHref="/will/divide-estate/partner"
@@ -179,6 +179,7 @@ function Beneficiaries() {
         title="Add a new person"
         actionLabel="Create a person"
         onSuccess={() => setIsAddPersonOpen(false)}
+        showRelationshipDropdown={true}
       />
     </DivideEstateShell>
   );

@@ -105,6 +105,15 @@ const profileApi = baseApi.injectEndpoints({
 
       providesTags: ["profile"],
     }),
+     distributionType: builder.mutation({
+      query: ({willId, data}) => ({
+        url: `/will/estate-distribution-type/${willId}`,
+        method: "PUT",
+        body: data,
+      }),
+
+      invalidatesTags: ["profile"],
+    }),
   }),
 });
 
@@ -120,4 +129,5 @@ export const {
   useGetWillDetailsQuery,
   useSelectPersonMutation,
   useGetAllSelectedPersonQuery,
+  useDistributionTypeMutation,
 } = profileApi;

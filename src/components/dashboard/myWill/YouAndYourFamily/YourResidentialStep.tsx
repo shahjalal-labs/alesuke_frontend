@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { CheckCircle2, MapPin, House, Building2, FileText, ChevronDown, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "@/assets/logo.png";
 import FamilyFlowShell from "./FamilyFlowShell";
 import { toast } from "sonner";
-import { useAddAddressMutation } from "@/redux/api/profileApi";
+import { useAddAddressMutation, useUpdateAddressMutation } from "@/redux/api/profileApi";
 import * as z from "zod";
 import CompletionScreen from "@/components/dashboard/shared/CompletionScreen";
+import { useGetMeDataQuery } from "@/redux/api/authApi";
 
 const countryOptions = [
   { code: "AF", name: "Afghanistan" },
@@ -117,6 +118,25 @@ export default function YourResidentialStep() {
   const [fieldErrors, setFieldErrors] = useState<{ streetAddress?: string; postCode?: string }>({});
 
   const [addAddress] = useAddAddressMutation();
+  const [updateAddress] = useUpdateAddressMutation();
+  const { data: getMeData } = useGetMeDataQuery({});
+  const [hasSetInitialAddress, setHasSetInitialAddress] = useState(false);
+
+  useEffect(() => {
+    if (getMeData?.data?.addresses?.length > 0 && !hasSetInitialAddress) {
+      const address = getMeData.data.addresses[0];
+      
+      const foundCountry = countryOptions.find(c => c.name === address.country);
+      if (foundCountry) {
+        setSelectedCountry(foundCountry);
+      }
+      setStreetAddress(address.streetAddress || '');
+      setUnitNumber(address.unitNumber || '');
+      setPostCode(address.postCode || '');
+      
+      setHasSetInitialAddress(true);
+    }
+  }, [getMeData, hasSetInitialAddress]);
 
   const filteredCountries = useMemo(() => {
     const query = countryQuery.trim().toLowerCase();
@@ -146,12 +166,19 @@ export default function YourResidentialStep() {
     setFieldErrors({});
     setSubmitting(true);
     try {
-      await addAddress({
+      const payload = {
         country: selectedCountry.name,
         streetAddress,
         unitNumber,
         postCode,
-      }).unwrap();
+      };
+
+      if (getMeData?.data?.addresses?.length > 0) {
+        const addressId = getMeData.data.addresses[0].id;
+        await updateAddress({ id: addressId, address: payload }).unwrap();
+      } else {
+        await addAddress(payload).unwrap();
+      }
       toast.success('Address saved successfully.');
       setCompleted(true);
     } catch (error) {
