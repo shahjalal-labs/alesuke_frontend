@@ -2,10 +2,12 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness } from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 import { useGetMeDataQuery } from "@/redux/api/authApi";
+import { useEffect } from "react";
 
 type FamilyMember = {
   id: string;
@@ -207,14 +209,43 @@ function DistributionPeopleBadge({ member }: { member?: FamilyMember | null }) {
 }
 
 export default function MyWillPage() {
-  const { data: willResponse, isLoading } = useGetWillDetailsQuery(undefined);
-  const { data: getMeData } = useGetMeDataQuery({});
+  const router = useRouter();
+  const { data: willResponse, isLoading, refetch: refetchWillDetails } = useGetWillDetailsQuery(undefined);
+  const { data: getMeData, refetch: refetchMeData } = useGetMeDataQuery({});
   
   const dashboardResponse = willResponse as { data?: WillDetailsResponse } | undefined;
   const dashboard = (dashboardResponse?.data ?? {}) as WillDetailsResponse;
   const userData = (getMeData?.data ?? {}) as GetMeResponse;
   
   const isHydrating = isLoading && !dashboardResponse?.data;
+
+  // Listen for route changes to refetch data when returning from sub-pages
+  useEffect(() => {
+    const handleRouteChange = () => {
+      refetchWillDetails();
+      refetchMeData();
+    };
+
+    // Refetch when component mounts (in case user returns from a sub-page)
+    handleRouteChange();
+
+    // Listen for popstate events (browser back/forward)
+    window.addEventListener('popstate', handleRouteChange);
+    
+    // Optional: Set up an interval to check for updates (every 5 seconds)
+    // This ensures data stays fresh if user completes flows in other tabs
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refetchWillDetails();
+        refetchMeData();
+      }
+    }, 5000);
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      clearInterval(interval);
+    };
+  }, [refetchWillDetails, refetchMeData]);
 
   const userName = dashboard.user?.name ?? userData.fullName ?? "User";
   const family = dashboard.family ?? [];
@@ -265,9 +296,30 @@ export default function MyWillPage() {
   // Check if user is single and has no family members but has address
   const showSingleUserOnly = isSingle && !hasFamilyMembers && hasAddress;
 
+  // Create handleNavigation function to refetch before navigation
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
+
   return (
     <div className="w-full">
       <DashboardHeader />
+
+      {/* Manual refresh button - optional */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={() => {
+            refetchWillDetails();
+            refetchMeData();
+          }}
+          className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh
+        </button>
+      </div>
 
       <div className="mb-6 rounded-[3px] border border-[#eadfcf] bg-[#F6ECE2] px-4 py-4 sm:px-5">
         <div className="flex items-center justify-between gap-4">
@@ -290,6 +342,7 @@ export default function MyWillPage() {
                 <Link
                   href="/will/you-and-your-family/marital-status"
                   className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                  onClick={() => handleNavigation("/will/you-and-your-family/marital-status")}
                 >
                   <PencilLine className="h-4 w-4" />
                   Edit
@@ -298,6 +351,7 @@ export default function MyWillPage() {
                 <Link
                   href="/will/you-and-your-family/marital-status"
                   className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                  onClick={() => handleNavigation("/will/you-and-your-family/marital-status")}
                 >
                   Add you and your family
                 </Link>
@@ -362,6 +416,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/executor/get-started"
                         className="inline-flex items-center justify-center rounded-[3px] bg-[#172031] px-7 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/executor/get-started")}
                       >
                         Edit
                       </Link>
@@ -369,6 +424,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/executor/get-started"
                         className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/executor/get-started")}
                       >
                         Pick an executor
                       </Link>
@@ -406,6 +462,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/divide-estate/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/divide-estate/intro")}
                       >
                         <PencilLine className="h-4 w-4" />
                         Edit
@@ -414,6 +471,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/divide-estate/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/divide-estate/intro")}
                       >
                         Distribute your estate
                       </Link>
@@ -494,6 +552,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/gifts"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/gifts")}
                       >
                         <PencilLine className="h-4 w-4" />
                         Edit
@@ -502,6 +561,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/gifts"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/gifts")}
                       >
                         Add Gifts
                       </Link>
@@ -552,6 +612,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/caretakers-of-pets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/caretakers-of-pets/intro")}
                       >
                         <PencilLine className="h-4 w-4" />
                         Edit
@@ -560,6 +621,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/caretakers-of-pets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/caretakers-of-pets/intro")}
                       >
                         Add caretaker for pets
                       </Link>
@@ -599,6 +661,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/assets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/assets/intro")}
                       >
                         <PencilLine className="h-4 w-4" />
                         Edit
@@ -607,6 +670,7 @@ export default function MyWillPage() {
                       <Link
                         href="/will/assets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/assets/intro")}
                       >
                         Add your assets
                       </Link>
@@ -666,6 +730,7 @@ export default function MyWillPage() {
                 <Link
                   href={previewHref}
                   className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-6 py-3 text-[0.98rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                  onClick={() => handleNavigation(previewHref)}
                 >
                   Will Preview
                 </Link>
@@ -674,6 +739,6 @@ export default function MyWillPage() {
           </>
         ) : null}
       </div>
-      </div>
+    </div>
   );
 }
