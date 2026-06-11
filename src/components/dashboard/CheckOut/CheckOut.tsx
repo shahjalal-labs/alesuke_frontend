@@ -58,8 +58,8 @@ function CheckOut() {
 
   const isLoading = activePlan === 'direct' ? isEssentialLoading : isUnlimitedLoading
   const checkoutPayload = {
-    successUrl: 'http://206.162.244.144:3181/will/checkout/success',
-    cancelUrl: 'http://206.162.244.144:3181/will/checkout/cancel',
+    successUrl: 'https://will-way.smtsigma.com/will/checkout/success',
+    cancelUrl: 'https://will-way.smtsigma.com/will/checkout/cancel',
   }
 
   const handleCheckout = async () => {
