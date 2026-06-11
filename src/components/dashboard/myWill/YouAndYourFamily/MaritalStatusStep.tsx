@@ -13,14 +13,22 @@ import { useGetMeDataQuery } from "@/redux/api/authApi";
 
 type MaritalStatus = "single" | "married" | "relationship";
 
+// Helper function to map API marital status to component status
+const mapApiStatusToComponentStatus = (apiStatus?: string): MaritalStatus => {
+  if (apiStatus === "MARRIED") return "married";
+  if (apiStatus === "SINGLE") return "single";
+  // Add more mappings as needed (e.g., "RELATIONSHIP" if exists)
+  return "single"; // Default fallback
+};
+
 export default function MaritalStatusStep() {
   const [status, setStatus] = useState<MaritalStatus>("single");
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
   const [activeMember, setActiveMember] = useState<any>(null);
   const [removingIds, setRemovingIds] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const { data: getMeData } = useGetMeDataQuery({});
-
+  const { data: getMeData, isLoading: isMeLoading } = useGetMeDataQuery({});
 
   const detailTitle = useMemo(() => {
     if (status === "married") return "Details of your spouse";
@@ -36,11 +44,19 @@ export default function MaritalStatusStep() {
   const { data: members, isLoading, isFetching } = useGetMemberQuery(relationType ? relationType : '', { skip: !relationType });
   const [deleteMember] = useDeleteMemberMutation();
 
+  // Set initial status based on getMeData maritalStatus
+  useEffect(() => {
+    if (getMeData?.data?.maritalStatus && !isInitialized) {
+      const mappedStatus = mapApiStatusToComponentStatus(getMeData.data.maritalStatus);
+      setStatus(mappedStatus);
+      setIsInitialized(true);
+    }
+  }, [getMeData, isInitialized]);
+
   const openEditMember = (member: any) => {
     setActiveMember(member);
     setIsAddPersonOpen(true);
   };
-
 
   const dispatch = useDispatch();
 
@@ -52,6 +68,33 @@ export default function MaritalStatusStep() {
     }
   }, [status, members, dispatch]);
 
+  // Show loading state while fetching user data
+  if (isMeLoading && !isInitialized) {
+    return (
+      <FamilyFlowShell
+        step={1}
+        title="Your marital status"
+        hintLines={[
+          "You must revise your will once your marital status changes. i.e. Married to Single",
+          "Your account includes lifetime access",
+        ]}
+        optionsBlock={
+          <>
+            <p className="text-[1.05rem] font-semibold text-[#161616] md:text-[1.95rem]">
+              Select The option below that best represents your situation
+            </p>
+            <p className="mt-2 text-[1rem] text-[#6f7786] md:text-[1.2rem]">Loading your information...</p>
+            <div className="mt-4">
+              <div className="h-32 animate-pulse rounded-lg bg-gray-100" />
+            </div>
+          </>
+        }
+        detailsBlock={null}
+        prevHref="/will"
+        nextHref="/will/you-and-your-family/your-children"
+      />
+    );
+  }
 
   return (
     <>
@@ -65,14 +108,24 @@ export default function MaritalStatusStep() {
         optionsBlock={
           <>
             <p className="text-[1.05rem] font-semibold text-[#161616] md:text-[1.95rem]">
-              Select The option below *haf best represents your situation
+              Select The option below that best represents your situation
             </p>
             <p className="mt-2 text-[1rem] text-[#6f7786] md:text-[1.2rem]">Choose an option that represents your current status</p>
 
             <div className="mt-4">
-              <OptionGrid >
-                <OptionCard label="Single" selected={status === "single"} onClick={() => setStatus("single")} icon="single" />
-                <OptionCard label="Married" selected={status === "married"} onClick={() => setStatus("married")} icon="married" />
+              <OptionGrid>
+                <OptionCard 
+                  label="Single" 
+                  selected={status === "single"} 
+                  onClick={() => setStatus("single")} 
+                  icon="single" 
+                />
+                <OptionCard 
+                  label="Married" 
+                  selected={status === "married"} 
+                  onClick={() => setStatus("married")} 
+                  icon="married" 
+                />
                 <OptionCard
                   label="In a relationship"
                   selected={status === "relationship"}

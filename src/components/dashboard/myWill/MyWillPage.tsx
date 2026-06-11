@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness } from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
+import { useGetMeDataQuery } from "@/redux/api/authApi";
 
 type FamilyMember = {
   id: string;
@@ -46,6 +47,7 @@ type WillDetailsResponse = {
   user?: {
     name?: string | null;
     profileImage?: string | null;
+    maritalStatus?: string | null;
   };
   family?: FamilyMember[];
   executors?: ExecutorRecord[];
@@ -64,6 +66,14 @@ type WillDetailsResponse = {
     totalOutstanding?: number;
     netWorth?: number;
   };
+};
+
+type GetMeResponse = {
+  fullName?: string;
+  maritalStatus?: string;
+  addresses?: Array<{ id: string }>;
+  haveChildren?: boolean;
+  havePets?: boolean;
 };
 
 function getMemberBadge(member: FamilyMember) {
@@ -198,11 +208,15 @@ function DistributionPeopleBadge({ member }: { member?: FamilyMember | null }) {
 
 export default function MyWillPage() {
   const { data: willResponse, isLoading } = useGetWillDetailsQuery(undefined);
+  const { data: getMeData } = useGetMeDataQuery({});
+  
   const dashboardResponse = willResponse as { data?: WillDetailsResponse } | undefined;
   const dashboard = (dashboardResponse?.data ?? {}) as WillDetailsResponse;
+  const userData = (getMeData?.data ?? {}) as GetMeResponse;
+  
   const isHydrating = isLoading && !dashboardResponse?.data;
 
-  const userName = dashboard.user?.name ?? "User";
+  const userName = dashboard.user?.name ?? userData.fullName ?? "User";
   const family = dashboard.family ?? [];
   const executors = dashboard.executors ?? [];
   const estateDistributions = dashboard.estateDistributions ?? [];
@@ -212,7 +226,17 @@ export default function MyWillPage() {
   const properties = dashboard.assets?.properties ?? [];
   const loans = dashboard.assets?.loans ?? [];
 
-  const hasFamilyData = family.length > 0;
+  // Modified logic for family completion
+  const hasAddress = (userData.addresses ?? []).length > 0;
+  const isSingle = dashboard.user?.maritalStatus === "SINGLE" || userData.maritalStatus === "SINGLE";
+  const hasFamilyMembers = family.length > 0;
+  
+  // Family flow is complete if:
+  // 1. User has address AND (is single OR has family members)
+  // OR
+  // 2. User is not single and has family members
+  const hasFamilyData = hasAddress && (isSingle || hasFamilyMembers);
+  
   const hasExecutorData = executors.length > 0;
   const hasEstateDistributionData = estateDistributions.length > 0;
   const hasGiftsData = gifts.length > 0;
@@ -237,6 +261,9 @@ export default function MyWillPage() {
   const primaryExecutor = executors[0]?.person ?? null;
   const backupExecutor = executors[0]?.backupPerson ?? null;
   const previewHref = "/will/preview";
+
+  // Check if user is single and has no family members but has address
+  const showSingleUserOnly = isSingle && !hasFamilyMembers && hasAddress;
 
   return (
     <div className="w-full">
@@ -286,24 +313,38 @@ export default function MyWillPage() {
           ) : hasFamilyData ? (
             <div className="space-y-4">
               <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">About You and Your Loved Ones</p>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {family.map((member) => {
-                  const badge = getMemberBadge(member);
-                  const BadgeIcon = badge.icon;
+              
+              {/* Show single user info when applicable */}
+              {showSingleUserOnly ? (
+                <div className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4e8da] text-[#223048]">
+                    <UserRound className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{userName}</p>
+                    <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">Single</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {family.map((member) => {
+                    const badge = getMemberBadge(member);
+                    const BadgeIcon = badge.icon;
 
-                  return (
-                    <div key={member.id} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4e8da] text-[#223048]">
-                        <BadgeIcon className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{member.fullName}</p>
-                        <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
+                    return (
+                      <div key={member.id} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4e8da] text-[#223048]">
+                          <BadgeIcon className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{member.fullName}</p>
+                          <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : null}
         </SectionShell>
