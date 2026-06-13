@@ -93,9 +93,9 @@ export default function Sidebar({ onNavigate, mobile = false }: SidebarProps) {
           <Link href="/assets" className={makeClass("/assets")} onClick={onNavigate}>
             Assets
           </Link>
-          <Link href="/digital-assets" className={makeClass("/digital-assets")} onClick={onNavigate}>
+          {/* <Link href="/digital-assets" className={makeClass("/digital-assets")} onClick={onNavigate}>
             Digital Assets
-          </Link>
+          </Link> */}
         </nav>
 
         <div className="mt-auto px-1 pb-2 pt-6">

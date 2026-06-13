@@ -3,11 +3,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness, Gift } from "lucide-react";
+import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness, Gift, Globe } from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 import { useGetMeDataQuery } from "@/redux/api/authApi";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useGetDigitalAssetsQuery } from "@/redux/api/assetsApi";
 
 type FamilyMember = {
   id: string;
@@ -76,6 +77,25 @@ type GetMeResponse = {
   addresses?: Array<{ id: string }>;
   haveChildren?: boolean;
   havePets?: boolean;
+};
+
+type DigitalAssetsResponse = {
+  id?: string;
+  hasNetflix?: boolean;
+  hasDisneyPlus?: boolean;
+  hasPrimeVideo?: boolean;
+  hasViu?: boolean;
+  hasAppleTVPlus?: boolean;
+  hasSpotify?: boolean;
+  hasYouTubePremium?: boolean;
+  hasAudible?: boolean;
+  hasICloud?: boolean;
+  hasGoogleDrive?: boolean;
+  hasOneDrive?: boolean;
+  hasGrab?: boolean;
+  hasFoodpanda?: boolean;
+  hasBrokerageETF?: boolean;
+  brokerageDetails?: string | null;
 };
 
 function getMemberBadge(member: FamilyMember) {
@@ -239,44 +259,104 @@ function getGiftValueDisplay(gift: GiftRecord) {
   return "No description";
 }
 
+// Helper function to get digital assets count
+function getDigitalAssetsCount(digitalAssets: DigitalAssetsResponse | null | undefined): number {
+  if (!digitalAssets) return 0;
+  
+  const platforms = [
+    digitalAssets.hasNetflix,
+    digitalAssets.hasDisneyPlus,
+    digitalAssets.hasPrimeVideo,
+    digitalAssets.hasViu,
+    digitalAssets.hasAppleTVPlus,
+    digitalAssets.hasSpotify,
+    digitalAssets.hasYouTubePremium,
+    digitalAssets.hasAudible,
+    digitalAssets.hasICloud,
+    digitalAssets.hasGoogleDrive,
+    digitalAssets.hasOneDrive,
+    digitalAssets.hasGrab,
+    digitalAssets.hasFoodpanda,
+    digitalAssets.hasBrokerageETF,
+  ];
+  
+  return platforms.filter(Boolean).length;
+}
+
+// Helper function to get platform names
+function getPlatformNames(digitalAssets: DigitalAssetsResponse | null | undefined): string[] {
+  if (!digitalAssets) return [];
+  
+  const platforms: { key: keyof DigitalAssetsResponse; name: string }[] = [
+    { key: 'hasNetflix', name: 'Netflix' },
+    { key: 'hasDisneyPlus', name: 'Disney+' },
+    { key: 'hasPrimeVideo', name: 'Prime Video' },
+    { key: 'hasViu', name: 'Viu' },
+    { key: 'hasAppleTVPlus', name: 'Apple TV+' },
+    { key: 'hasSpotify', name: 'Spotify' },
+    { key: 'hasYouTubePremium', name: 'YouTube Premium' },
+    { key: 'hasAudible', name: 'Audible' },
+    { key: 'hasICloud', name: 'iCloud' },
+    { key: 'hasGoogleDrive', name: 'Google Drive' },
+    { key: 'hasOneDrive', name: 'OneDrive' },
+    { key: 'hasGrab', name: 'Grab' },
+    { key: 'hasFoodpanda', name: 'Foodpanda' },
+    { key: 'hasBrokerageETF', name: 'Brokerage/ETF' },
+  ];
+  
+  return platforms
+    .filter(p => digitalAssets[p.key] === true)
+    .map(p => p.name);
+}
+
 export default function MyWillPage() {
   const router = useRouter();
   const { data: willResponse, isLoading, refetch: refetchWillDetails } = useGetWillDetailsQuery(undefined);
   const { data: getMeData, refetch: refetchMeData } = useGetMeDataQuery({});
+  const { data: digitalAssetsResponse, refetch: refetchDigitalAssets } = useGetDigitalAssetsQuery({});
   
   const dashboardResponse = willResponse as { data?: WillDetailsResponse } | undefined;
   const dashboard = (dashboardResponse?.data ?? {}) as WillDetailsResponse;
   const userData = (getMeData?.data ?? {}) as GetMeResponse;
+  const digitalAssets = (digitalAssetsResponse?.data ?? null) as DigitalAssetsResponse | null;
   
   const isHydrating = isLoading && !dashboardResponse?.data;
+  
+  // Use ref to track if initial mount has happened
+  const hasMounted = useRef(false);
 
-  // Listen for route changes to refetch data when returning from sub-pages
+  // Refetch data when component mounts or when returning from sub-pages
   useEffect(() => {
     const handleRouteChange = () => {
+      // Refetch all data when returning to this page
       refetchWillDetails();
       refetchMeData();
+      refetchDigitalAssets();
     };
 
-    // Refetch when component mounts (in case user returns from a sub-page)
-    handleRouteChange();
+    // Only refetch on initial mount if not already loaded
+    if (!hasMounted.current && !dashboardResponse?.data) {
+      handleRouteChange();
+      hasMounted.current = true;
+    }
 
     // Listen for popstate events (browser back/forward)
     window.addEventListener('popstate', handleRouteChange);
     
-    // Optional: Set up an interval to check for updates (every 5 seconds)
-    // This ensures data stays fresh if user completes flows in other tabs
-    const interval = setInterval(() => {
+    // Listen for page visibility changes (when tab becomes active again)
+    const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refetchWillDetails();
-        refetchMeData();
+        handleRouteChange();
       }
-    }, 5000);
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('popstate', handleRouteChange);
-      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [refetchWillDetails, refetchMeData]);
+  }, [refetchWillDetails, refetchMeData, refetchDigitalAssets, dashboardResponse?.data]);
 
   const userName = dashboard.user?.name ?? userData.fullName ?? "User";
   const family = dashboard.family ?? [];
@@ -304,6 +384,7 @@ export default function MyWillPage() {
   const hasGiftsData = gifts.length > 0;
   const hasPetCaretakerData = petCaretakers.length > 0;
   const hasAssetsData = financialAssets.length > 0 || properties.length > 0 || loans.length > 0;
+  const hasDigitalAssetsData = !!(digitalAssets && getDigitalAssetsCount(digitalAssets) > 0);
 
   const sectionStates = [
     hasFamilyData,
@@ -312,6 +393,7 @@ export default function MyWillPage() {
     hasGiftsData,
     hasPetCaretakerData,
     hasAssetsData,
+    hasDigitalAssetsData,
   ];
 
   const completedSections = sectionStates.filter(Boolean).length;
@@ -342,6 +424,7 @@ export default function MyWillPage() {
           onClick={() => {
             refetchWillDetails();
             refetchMeData();
+            refetchDigitalAssets();
           }}
           className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1"
         >
@@ -358,7 +441,7 @@ export default function MyWillPage() {
             <p className="text-[0.86rem] uppercase tracking-[0.12em] text-[#8c8072]">Progress</p>
             <h2 className="mt-1 text-[1.15rem] font-medium text-[#2b221a] sm:text-[1.2rem]">Your will is {completionPercent}% complete</h2>
           </div>
-          <div className="text-right text-[0.95rem] text-[#2f241c]">{allComplete ? "All sections complete" : `${completedSections}/6 complete`}</div>
+          <div className="text-right text-[0.95rem] text-[#2f241c]">{allComplete ? "All sections complete" : `${completedSections}/7 complete`}</div>
         </div>
       </div>
 
@@ -572,7 +655,7 @@ export default function MyWillPage() {
               )}
             </SectionShell>
 
-            {/* Updated Gifts Section */}
+            {/* Gifts Section */}
             <SectionShell
               title="Gifts"
               completed={hasGiftsData}
@@ -775,6 +858,95 @@ export default function MyWillPage() {
                   <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
                     Add your assets here to help your family locate them
                   </p>
+                )
+              ) : (
+                <PrerequisiteMessage />
+              )}
+            </SectionShell>
+
+            {/* Digital Assets Section */}
+            <SectionShell
+              title="Digital Assets"
+              completed={hasDigitalAssetsData}
+              time="2 min"
+              footer={
+                canAccessOtherSections ? (
+                  <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+                    {hasDigitalAssetsData ? (
+                      <Link
+                        href="/will/digital-assets"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/digital-assets")}
+                      >
+                        <PencilLine className="h-4 w-4" />
+                        Edit
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/will/digital-assets"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                        onClick={() => handleNavigation("/will/digital-assets")}
+                      >
+                        Add Digital Assets
+                      </Link>
+                    )}
+                  </div>
+                ) : null
+              }
+            >
+              {canAccessOtherSections ? (
+                hasDigitalAssetsData ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                        <Globe className="h-4 w-4" />
+                      </span>
+                      <p className="text-[0.95rem] font-medium text-[#2b221a] sm:text-[1rem]">
+                        Digital Subscriptions & Accounts
+                      </p>
+                    </div>
+                    
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {getPlatformNames(digitalAssets).map((platform, index) => (
+                        <div key={index} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] bg-[#fcfaf7] px-3 py-3">
+                          <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                            <CheckCircle className="h-4 w-4 text-emerald-600" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{platform}</p>
+                            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">Digital Account</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {digitalAssets?.brokerageDetails && (
+                      <div className="mt-3 rounded-[8px] bg-[#f4f0ea] px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#e8e0d6] text-[#5a4e42]">
+                              <BriefcaseBusiness className="h-4 w-4" />
+                            </span>
+                            <div>
+                              <p className="text-[0.85rem] font-medium text-[#5a4e42]">Brokerage/ETF Details</p>
+                              <p className="text-[0.9rem] text-[#2b221a]">{digitalAssets.brokerageDetails}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                        <Globe className="h-4 w-4" />
+                      </span>
+                      <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                        Add your digital subscriptions and accounts to ensure your loved ones can access or close them.
+                      </p>
+                    </div>
+                  </div>
                 )
               ) : (
                 <PrerequisiteMessage />

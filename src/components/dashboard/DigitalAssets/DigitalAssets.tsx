@@ -3,6 +3,9 @@ import { useDigitalAssetsMutation, useGetDigitalAssetsQuery } from '@/redux/api/
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
+import logo from '@/assets/logo.png'
 
 interface ServiceItem {
   id: string
@@ -383,6 +386,7 @@ function DigitalAssets() {
       }
       
       toast.success('Digital assets saved successfully!')
+      router.push('/will') // Redirect to dashboard after saving
       
       // Refetch to get updated data
       await refetch()
@@ -405,7 +409,21 @@ function DigitalAssets() {
   }
 
   return (
-    <div
+   <div>
+     <header className="sticky top-0 z-20 border-b border-[#ece6de] bg-[#f6f1eb]/95 px-4 py-3 backdrop-blur md:px-8">
+        <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between">
+          <Link href="/will" className="inline-flex items-center">
+            <Image src={logo} alt="Will & Way" className="h-auto w-[96px] md:w-[130px]" priority />
+          </Link>
+          <Link
+            href="/will"
+            className="rounded-[4px] border border-[#d8d1c8] px-4 py-2 text-[0.9rem] text-[#1b1b1b] transition-colors hover:bg-[#f0e8df]"
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </header>
+     <div
       className="min-h-screen"
       style={{ fontFamily: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" }}
     >
@@ -477,6 +495,7 @@ function DigitalAssets() {
         </div>
       )}
     </div>
+   </div>
   )
 }
 
