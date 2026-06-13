@@ -878,7 +878,7 @@ export default function WillPreviewPage() {
                 }}
               >
                 {documentPages.map((page, index) => {
-                  const isFree = userData?.subscriptionType === 'null';
+                  const isFree = userData?.subscriptionType === null;
                   const shouldBlur = isFree && index >= 2;
 
                   return (
