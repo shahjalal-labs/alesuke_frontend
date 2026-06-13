@@ -883,7 +883,7 @@ export default function WillPreviewPage() {
 
                   return (
                     <div key={page.pageNumber} className={shouldBlur ? 'relative' : ''}>
-                      <div className={shouldBlur ? 'blur-[8px] select-none pointer-events-none' : ''}>
+                      <div className={shouldBlur ? 'blur-[10px] select-none pointer-events-none' : ''}>
                         <PdfPageFrame
                           pageNumber={page.pageNumber}
                           totalPages={totalPages}
