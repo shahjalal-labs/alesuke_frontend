@@ -29,6 +29,8 @@ type GiftAddTemplateProps = {
   messageTitle?: string
   messageHelp?: string
   messagePlaceholder?: string
+  messageValue?: string // Add this prop
+  onMessageChange?: (value: string) => void // Add this prop
   showMessage?: boolean
   secondaryField?: {
     label: string
@@ -59,6 +61,8 @@ export default function GiftAddTemplate({
   messageTitle = 'Leave a personal message (optional)',
   messageHelp,
   messagePlaceholder,
+  messageValue = '', // Default value
+  onMessageChange, // Handler for message changes
   secondaryField,
   previousHref = '/will/gifts',
   previousLabel = 'Previous Step',
@@ -191,6 +195,8 @@ export default function GiftAddTemplate({
             <textarea
               className="mt-4 min-h-[148px] w-full rounded-[4px] border border-[#e7e1d9] bg-white px-4 py-3 text-[0.95rem] text-[#12100e] outline-none placeholder:text-[#aab0bb]"
               placeholder={messagePlaceholder}
+              value={messageValue}
+              onChange={(event) => onMessageChange?.(event.target.value)}
             />
           </section>
         ) : null}

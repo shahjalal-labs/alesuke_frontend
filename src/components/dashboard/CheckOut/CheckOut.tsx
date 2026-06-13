@@ -1,12 +1,13 @@
 "use client"
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ChevronDown, Circle, CircleDot, HelpCircle, ShieldCheck, BadgeCheck, CalendarDays, Package, Users, FileText, Home, LucideIcon } from 'lucide-react'
 
 import logo from '@/assets/logo.png'
 import { useCheckoutEssentialWillMutation, useCheckoutUnlimitedWillMutation } from '@/redux/api/checkoutApi'
+import { useGetMeDataQuery } from '@/redux/api/authApi'
 
 function SectionHeader({
   icon: Icon,
@@ -50,11 +51,14 @@ function DocumentRow({ title, icon: Icon, description }: { title: string; icon: 
 }
 
 function CheckOut() {
-  const router = useRouter()
+  // const router = useRouter()
   const [activePlan, setActivePlan] = useState<'direct' | 'subscription'>('direct')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [checkoutEssentialWill, { isLoading: isEssentialLoading }] = useCheckoutEssentialWillMutation()
   const [checkoutUnlimitedWill, { isLoading: isUnlimitedLoading }] = useCheckoutUnlimitedWillMutation()
+  const{data: getMeData} = useGetMeDataQuery({});
+  const userData = getMeData?.data;
+  const fullName = userData.fullName || '';
 
   const isLoading = activePlan === 'direct' ? isEssentialLoading : isUnlimitedLoading
   const checkoutPayload = {
@@ -121,7 +125,7 @@ function CheckOut() {
 
             <SectionHeader
               icon={CalendarDays}
-              title="Rahman’s Estate Plan"
+              title={`${fullName}’s Estate Plan`}
               subtitle="Everything you need for the future"
             />
 
@@ -135,12 +139,12 @@ function CheckOut() {
               <DocumentRow title="Guardianship arrangements" icon={Users} />
               <DocumentRow title="Schedule of assets" icon={Package} />
 
-              <div className="px-4 py-5">
+              {/* <div className="px-4 py-5">
                 <p className="text-[1rem] font-semibold text-[#1d222c]">We verify your documents for free</p>
                 <p className="mt-2 max-w-[520px] text-[0.8rem] leading-[1.45] text-[#7a8190]">
                   Upload your signature page and our friendly team will verify you&apos;ve done everything correctly.
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <div className="rounded-[16px] border border-white/80 bg-white shadow-[0_12px_30px_rgba(17,24,39,0.05)]">
@@ -150,9 +154,9 @@ function CheckOut() {
               <div className="border-b border-[#ece7df] px-4 py-4">
                 <DocumentRow title="Legally valid in Singapore" icon={BadgeCheck} description="Fully valid after signing with two neutral witnesses. Professional will review included with every purchase." />
               </div>
-              <div className="border-b border-[#ece7df] px-4 py-4">
+              {/* <div className="border-b border-[#ece7df] px-4 py-4">
                 <DocumentRow title="30-day money-back guarantee" icon={ShieldCheck} description="Every will comes with a 30-day money-back guarantee in case you&apos;re not satisfied. No strings attached." />
-              </div>
+              </div> */}
               <div className="px-4 py-4">
                 <DocumentRow title="Global coverage" icon={Home} description="Made in Singapore, to cover assets locally and abroad, especially for common law countries." />
               </div>

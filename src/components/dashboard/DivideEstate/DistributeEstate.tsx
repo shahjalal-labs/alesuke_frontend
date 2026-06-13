@@ -38,148 +38,93 @@ type EditableDistributionRecord = DistributionRecord & {
   percentage: number;
 };
 
-const PERCENT_STEP = 5;
 const TOTAL_PERCENT = 100;
 
-function normalizeToStep(value: number) {
-  return Math.max(
-    0,
-    Math.min(TOTAL_PERCENT, Math.round(value / PERCENT_STEP) * PERCENT_STEP),
-  );
+// Function to distribute integer percentages that sum to 100
+function distributeIntegerPercentages(count: number): number[] {
+  if (count === 0) return [];
+  
+  const equalShare = Math.floor(TOTAL_PERCENT / count);
+  const remainder = TOTAL_PERCENT - (equalShare * count);
+  
+  // Create array with equal shares
+  const percentages = new Array(count).fill(equalShare);
+  
+  // Distribute remainder (1% each to first 'remainder' beneficiaries)
+  for (let i = 0; i < remainder; i++) {
+    percentages[i] += 1;
+  }
+  
+  return percentages;
 }
 
-function buildStepAllocation(distributions: DistributionRecord[]) {
-  if (!distributions.length) return [] as EditableDistributionRecord[];
-
-  const baseShare =
-    Math.floor(TOTAL_PERCENT / distributions.length / PERCENT_STEP) *
-    PERCENT_STEP;
-  const remaining = TOTAL_PERCENT - baseShare * distributions.length;
-  const bonusCount = remaining / PERCENT_STEP;
-
-  return distributions.map((distribution, index) => ({
-    ...distribution,
-    percentage: baseShare + (index < bonusCount ? PERCENT_STEP : 0),
+// Initialize allocations with equal integer distribution
+function initializeEqualDistributions(distributions: DistributionRecord[]): EditableDistributionRecord[] {
+  if (!distributions.length) return [];
+  
+  const percentages = distributeIntegerPercentages(distributions.length);
+  
+  return distributions.map((dist, index) => ({
+    ...dist,
+    percentage: percentages[index]
   }));
 }
 
-function rebalanceAllocation(
-  current: EditableDistributionRecord[],
-  targetId: string,
-  nextValue: number,
-) {
-  if (!current.length) return current;
-
-  const targetIndex = current.findIndex(
-    (distribution) => distribution.id === targetId,
-  );
-  if (targetIndex < 0) return current;
-
-  const normalizedTarget = normalizeToStep(nextValue);
-  const target = current[targetIndex];
-  const otherDistributions = current.filter(
-    (distribution) => distribution.id !== targetId,
-  );
-  const otherTotal = otherDistributions.reduce(
-    (sum, distribution) => sum + distribution.percentage,
-    0,
-  );
-  const targetShare = Math.min(normalizedTarget, TOTAL_PERCENT);
-  const delta = targetShare - target.percentage;
-
-  if (delta === 0) {
-    return current.map((distribution) =>
-      distribution.id === targetId
-        ? { ...distribution, percentage: targetShare }
-        : distribution,
-    );
+function normalizeLoadedAllocations(distributions: DistributionRecord[]): EditableDistributionRecord[] {
+  if (!distributions.length) return [];
+  
+  // Check if any percentages are already set
+  const hasPercentages = distributions.some(d => typeof d.percentage === 'number' && d.percentage !== null);
+  
+  if (!hasPercentages) {
+    return initializeEqualDistributions(distributions);
   }
-
-  if (delta > 0) {
-    const cappedTargetShare = Math.min(
-      target.percentage + delta,
-      target.percentage + otherTotal,
-    );
-    let remainingReduction = cappedTargetShare - target.percentage;
-
-    const updatedOthers = otherDistributions
-      .slice()
-      .reverse()
-      .map((distribution) => {
-        if (remainingReduction <= 0) return distribution;
-
-        const reduction = Math.min(distribution.percentage, remainingReduction);
-        remainingReduction -= reduction;
-        return {
-          ...distribution,
-          percentage: distribution.percentage - reduction,
-        };
-      })
-      .reverse();
-
-    return current.map((distribution) => {
-      if (distribution.id === targetId) {
-        return { ...distribution, percentage: cappedTargetShare };
+  
+  // Load existing percentages and ensure they're integers
+  let loaded = distributions.map(d => ({
+    ...d,
+    percentage: Math.round(d.percentage ?? 0)
+  }));
+  
+  // Ensure total is 100%
+  const total = loaded.reduce((sum, d) => sum + d.percentage, 0);
+  if (total !== TOTAL_PERCENT && loaded.length > 0) {
+    // Adjust the first distribution to make total 100%
+    const adjustment = TOTAL_PERCENT - total;
+    loaded = loaded.map((dist, idx) => {
+      if (idx === 0) {
+        return { ...dist, percentage: Math.max(0, dist.percentage + adjustment) };
       }
-
-      return (
-        updatedOthers.find((item) => item.id === distribution.id) ??
-        distribution
-      );
+      return dist;
     });
   }
-
-  const increaseAmount = Math.abs(delta);
-  let remainingIncrease = increaseAmount;
-
-  const updatedOthers = otherDistributions.map((distribution) => {
-    if (remainingIncrease <= 0) return distribution;
-
-    const headroom = TOTAL_PERCENT - distribution.percentage;
-    const increase = Math.min(headroom, remainingIncrease);
-    remainingIncrease -= increase;
-    return { ...distribution, percentage: distribution.percentage + increase };
-  });
-
-  const finalTargetShare =
-    target.percentage - (increaseAmount - remainingIncrease);
-
-  return current.map((distribution) => {
-    if (distribution.id === targetId) {
-      return { ...distribution, percentage: finalTargetShare };
-    }
-
-    return (
-      updatedOthers.find((item) => item.id === distribution.id) ?? distribution
-    );
-  });
+  
+  return loaded;
 }
 
-function normalizeLoadedAllocations(distributions: DistributionRecord[]) {
-  if (!distributions.length) return [] as EditableDistributionRecord[];
-
-  const normalized = distributions.map((distribution) => ({
-    ...distribution,
-    percentage: normalizeToStep(Number(distribution.percentage ?? 0)),
-  }));
-
-  const currentTotal = normalized.reduce(
-    (sum, distribution) => sum + distribution.percentage,
-    0,
-  );
-  if (currentTotal === TOTAL_PERCENT) {
-    return normalized;
+// Function to rebalance all percentages to integers that sum to 100
+function rebalanceToIntegers(distributions: EditableDistributionRecord[]): EditableDistributionRecord[] {
+  if (!distributions.length) return distributions;
+  
+  const total = distributions.reduce((sum, d) => sum + d.percentage, 0);
+  const count = distributions.length;
+  
+  if (total === TOTAL_PERCENT) {
+    // Already sums to 100, just ensure integers
+    return distributions.map(d => ({
+      ...d,
+      percentage: Math.round(d.percentage)
+    }));
   }
-
-  const targetId = normalized[normalized.length - 1]?.id;
-  if (!targetId) return normalized;
-
-  return rebalanceAllocation(
-    normalized,
-    targetId,
-    normalized[normalized.length - 1].percentage +
-      (TOTAL_PERCENT - currentTotal),
-  );
+  
+  // Redistribute evenly as integers
+  const equalShare = Math.floor(TOTAL_PERCENT / count);
+  const remainder = TOTAL_PERCENT - (equalShare * count);
+  
+  return distributions.map((dist, index) => ({
+    ...dist,
+    percentage: equalShare + (index < remainder ? 1 : 0)
+  }));
 }
 
 function DistributeEstate() {
@@ -195,6 +140,10 @@ function DistributeEstate() {
   const [editableDistributions, setEditableDistributions] = useState<
     EditableDistributionRecord[]
   >([]);
+  
+  // Track which input is being edited to prevent rebalancing during typing
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [tempValues, setTempValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!distributions.length) {
@@ -202,16 +151,8 @@ function DistributeEstate() {
       return;
     }
 
-    const savedPercentages = distributions.some(
-      (distribution) => typeof distribution.percentage === "number",
-    );
-
-    if (!savedPercentages) {
-      setEditableDistributions(buildStepAllocation(distributions));
-      return;
-    }
-
-    setEditableDistributions(normalizeLoadedAllocations(distributions));
+    const normalized = normalizeLoadedAllocations(distributions);
+    setEditableDistributions(normalized);
   }, [distributions]);
 
   const totalAllocated = useMemo(() => {
@@ -223,33 +164,229 @@ function DistributeEstate() {
 
   const handlePercentageChange = (
     distributionId: string,
-    nextValue: string,
+    inputValue: string
   ) => {
-    const parsedValue = Number(nextValue);
-
-    setEditableDistributions((current) =>
-      rebalanceAllocation(
-        current,
-        distributionId,
-        Number.isFinite(parsedValue) ? parsedValue : 0,
-      ),
+    // Store temp value for the input being edited
+    setTempValues(prev => ({ ...prev, [distributionId]: inputValue }));
+    
+    // Allow any input while typing (including empty, partial numbers)
+    if (inputValue === '' || inputValue === '-') {
+      return;
+    }
+    
+    let parsedValue = Number(inputValue);
+    
+    // Check if valid number
+    if (isNaN(parsedValue)) {
+      return;
+    }
+    
+    // Allow any number between 0 and 100 while typing
+    if (parsedValue < 0 || parsedValue > TOTAL_PERCENT) {
+      return;
+    }
+    
+    // Round to integer for display
+    parsedValue = Math.round(parsedValue);
+    
+    // Update the distribution without rebalancing
+    setEditableDistributions(current =>
+      current.map(dist => 
+        dist.id === distributionId 
+          ? { ...dist, percentage: parsedValue }
+          : dist
+      )
     );
   };
 
-  const handleStepChange = (distributionId: string, direction: 1 | -1) => {
-    setEditableDistributions((current) => {
-      const target = current.find(
-        (distribution) => distribution.id === distributionId,
+  const handlePercentageBlur = (distributionId: string) => {
+    setEditingId(null);
+    
+    // Get the current value from temp or from state
+    let value: number;
+    
+    if (tempValues[distributionId] !== undefined) {
+      value = Number(tempValues[distributionId]);
+      if (isNaN(value)) value = 0;
+      setTempValues(prev => {
+        const newValues = { ...prev };
+        delete newValues[distributionId];
+        return newValues;
+      });
+    } else {
+      const dist = editableDistributions.find(d => d.id === distributionId);
+      value = dist?.percentage ?? 0;
+    }
+    
+    // Round to integer and clamp to valid range
+    value = Math.max(0, Math.min(TOTAL_PERCENT, Math.round(value)));
+    
+    // Update and rebalance
+    setEditableDistributions(current => {
+      // First update the changed value
+      let updated = current.map(dist =>
+        dist.id === distributionId
+          ? { ...dist, percentage: value }
+          : dist
       );
-
-      if (!target) return current;
-
-      return rebalanceAllocation(
-        current,
-        distributionId,
-        target.percentage + direction * PERCENT_STEP,
-      );
+      
+      // Calculate new total
+      let total = updated.reduce((sum, d) => sum + d.percentage, 0);
+      
+      // If total is not 100, adjust other beneficiaries
+      if (total !== TOTAL_PERCENT && updated.length > 0) {
+        const difference = TOTAL_PERCENT - total;
+        const otherIndices = updated
+          .map((_, idx) => idx)
+          .filter(idx => updated[idx].id !== distributionId);
+        
+        if (otherIndices.length > 0) {
+          // Distribute the difference among other beneficiaries
+          let remainingDiff = difference;
+          
+          for (const idx of otherIndices) {
+            if (remainingDiff === 0) break;
+            
+            const currentOtherValue = updated[idx].percentage;
+            let newOtherValue = currentOtherValue + remainingDiff;
+            
+            // If adjusting a single beneficiary would make it negative or >100, distribute differently
+            if (newOtherValue < 0) {
+              newOtherValue = 0;
+              remainingDiff = currentOtherValue + remainingDiff;
+            } else if (newOtherValue > TOTAL_PERCENT) {
+              newOtherValue = TOTAL_PERCENT;
+              remainingDiff = currentOtherValue + remainingDiff - TOTAL_PERCENT;
+            } else {
+              remainingDiff = 0;
+            }
+            
+            updated[idx] = {
+              ...updated[idx],
+              percentage: Math.round(newOtherValue)
+            };
+          }
+          
+          // Recalculate total after adjustments
+          total = updated.reduce((sum, d) => sum + d.percentage, 0);
+          
+          // If still not 100, force the last one to adjust
+          if (total !== TOTAL_PERCENT && otherIndices.length > 0) {
+            const lastIndex = otherIndices[otherIndices.length - 1];
+            const finalAdjustment = TOTAL_PERCENT - total;
+            updated[lastIndex] = {
+              ...updated[lastIndex],
+              percentage: Math.max(0, Math.min(TOTAL_PERCENT, updated[lastIndex].percentage + finalAdjustment))
+            };
+          }
+        } else if (updated.length === 1) {
+          // Only one beneficiary, force to 100%
+          updated[0] = { ...updated[0], percentage: TOTAL_PERCENT };
+        }
+      }
+      
+      // Ensure all percentages are integers
+      updated = updated.map(dist => ({
+        ...dist,
+        percentage: Math.round(dist.percentage)
+      }));
+      
+      return updated;
     });
+  };
+
+  const handleStepChange = (distributionId: string, direction: 1 | -1) => {
+    setEditableDistributions(current => {
+      const target = current.find(d => d.id === distributionId);
+      if (!target) return current;
+      
+      let newValue = target.percentage + direction;
+      
+      // Clamp to valid range
+      newValue = Math.max(0, Math.min(TOTAL_PERCENT, newValue));
+      
+      if (newValue === target.percentage) return current;
+      
+      // Update the value
+      let updated = current.map(dist =>
+        dist.id === distributionId
+          ? { ...dist, percentage: newValue }
+          : dist
+      );
+      
+      // Ensure total is 100% by adjusting others
+      let total = updated.reduce((sum, d) => sum + d.percentage, 0);
+      const difference = TOTAL_PERCENT - total;
+      
+      if (difference !== 0) {
+        const otherIndices = updated
+          .map((_, idx) => idx)
+          .filter(idx => updated[idx].id !== distributionId);
+        
+        if (otherIndices.length > 0) {
+          // Distribute difference across others
+          let remainingDiff = difference;
+          
+          for (const idx of otherIndices) {
+            if (remainingDiff === 0) break;
+            
+            const currentOtherValue = updated[idx].percentage;
+            let newOtherValue = currentOtherValue + remainingDiff;
+            
+            if (newOtherValue < 0) {
+              newOtherValue = 0;
+              remainingDiff = currentOtherValue + remainingDiff;
+            } else if (newOtherValue > TOTAL_PERCENT) {
+              newOtherValue = TOTAL_PERCENT;
+              remainingDiff = currentOtherValue + remainingDiff - TOTAL_PERCENT;
+            } else {
+              remainingDiff = 0;
+            }
+            
+            updated[idx] = {
+              ...updated[idx],
+              percentage: Math.round(newOtherValue)
+            };
+          }
+          
+          // Recalculate total
+          total = updated.reduce((sum, d) => sum + d.percentage, 0);
+          
+          // Final adjustment if needed
+          if (total !== TOTAL_PERCENT && otherIndices.length > 0) {
+            const lastIndex = otherIndices[otherIndices.length - 1];
+            const finalAdjustment = TOTAL_PERCENT - total;
+            updated[lastIndex] = {
+              ...updated[lastIndex],
+              percentage: Math.max(0, Math.min(TOTAL_PERCENT, updated[lastIndex].percentage + finalAdjustment))
+            };
+          }
+        }
+      }
+      
+      // Ensure all percentages are integers
+      updated = updated.map(dist => ({
+        ...dist,
+        percentage: Math.round(dist.percentage)
+      }));
+      
+      return updated;
+    });
+  };
+
+  const handleEqualDistribution = () => {
+    if (!editableDistributions.length) return;
+    
+    const percentages = distributeIntegerPercentages(editableDistributions.length);
+    
+    setEditableDistributions(current =>
+      current.map((dist, index) => ({
+        ...dist,
+        percentage: percentages[index]
+      }))
+    );
+    
+    toast.success(`Distribution evenly divided into ${percentages.join('%, ')}%`);
   };
 
   const handleContinue = async () => {
@@ -259,7 +396,7 @@ function DistributeEstate() {
     }
 
     if (totalAllocated !== TOTAL_PERCENT) {
-      toast.error("Please make sure all allocations add up to 100%.");
+      toast.error(`Please make sure all allocations add up to ${TOTAL_PERCENT}%. Currently at ${totalAllocated}%.`);
       return;
     }
 
@@ -287,6 +424,21 @@ function DistributeEstate() {
     }
   };
 
+  // Get status color for total allocation
+  const getTotalStatusColor = () => {
+    if (totalAllocated === TOTAL_PERCENT) return "text-green-600";
+    if (totalAllocated > TOTAL_PERCENT) return "text-red-600";
+    return "text-amber-600";
+  };
+
+  // Get display value for input
+  const getDisplayValue = (distribution: EditableDistributionRecord) => {
+    if (editingId === distribution.id && tempValues[distribution.id] !== undefined) {
+      return tempValues[distribution.id];
+    }
+    return distribution.percentage;
+  };
+
   return (
     <DivideEstateShell>
       <section className="space-y-6 md:space-y-8">
@@ -298,15 +450,27 @@ function DistributeEstate() {
             Your estate is divided using a simple % for each beneficiary
           </FlowLead>
           <BodyCopy>Please adjust the % number below.</BodyCopy>
+          
+          <button
+            type="button"
+            onClick={handleEqualDistribution}
+            className="text-sm text-blue-600 hover:text-blue-700 underline"
+          >
+            Distribute Evenly
+          </button>
         </div>
 
         <SuccessSummary>
-          <p className="text-[0.95rem] font-semibold leading-[1.3] text-[#191715] md:text-[1rem]">
+          <p className={`text-[0.95rem] font-semibold leading-[1.3] md:text-[1rem] ${getTotalStatusColor()}`}>
             You have allocated {totalAllocated}% of your estate
+            {totalAllocated === TOTAL_PERCENT && " ✓"}
+            {totalAllocated > TOTAL_PERCENT && " (Exceeds 100% - Please adjust)"}
+            {totalAllocated < TOTAL_PERCENT && ` (Need ${TOTAL_PERCENT - totalAllocated}% more)`}
           </p>
           <p className="text-[0.82rem] leading-[1.45] text-[#7b8594] md:text-[0.9rem]">
-            You can proceed to the next step, or review the % distribution
-            below.
+            {totalAllocated === TOTAL_PERCENT 
+              ? "You can proceed to the next step, or review the % distribution below."
+              : "Please adjust percentages to total 100% before continuing."}
           </p>
         </SuccessSummary>
 
@@ -341,7 +505,7 @@ function DistributeEstate() {
                         onClick={() => handleStepChange(distribution.id, -1)}
                         disabled={isSubmitting}
                         className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5dde6] bg-[#f8fafc] text-[#394355] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label={`Decrease ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} by 5 percent`}
+                        aria-label={`Decrease ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} by 1 percent`}
                       >
                         <span className="text-lg leading-none">−</span>
                       </button>
@@ -349,18 +513,26 @@ function DistributeEstate() {
                       <input
                         type="number"
                         inputMode="numeric"
-                        step={PERCENT_STEP}
+                        step="1"
                         min={0}
                         max={TOTAL_PERCENT}
-                        value={distribution.percentage}
+                        value={getDisplayValue(distribution)}
                         onChange={(event) =>
                           handlePercentageChange(
                             distribution.id,
                             event.target.value,
                           )
                         }
+                        onFocus={() => {
+                          setEditingId(distribution.id);
+                          setTempValues(prev => ({
+                            ...prev,
+                            [distribution.id]: String(distribution.percentage)
+                          }));
+                        }}
+                        onBlur={() => handlePercentageBlur(distribution.id)}
                         disabled={isSubmitting}
-                        className="h-11 w-20 rounded-[8px] border border-[#d5dde6] bg-white px-3 text-center text-[1rem] font-medium text-[#657081] outline-none focus:border-[#25b6e8] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="h-11 w-20 rounded-[8px] border border-[#d5dde6] bg-white px-3 text-center text-[1rem] font-medium text-[#657081] outline-none focus:border-[#25b6e8] focus:ring-1 focus:ring-[#25b6e8] disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label={`Set ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} allocation percentage`}
                       />
 
@@ -369,7 +541,7 @@ function DistributeEstate() {
                         onClick={() => handleStepChange(distribution.id, 1)}
                         disabled={isSubmitting}
                         className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d5dde6] bg-[#f8fafc] text-[#394355] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label={`Increase ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} by 5 percent`}
+                        aria-label={`Increase ${distribution.person?.fullName ?? `beneficiary ${index + 1}`} by 1 percent`}
                       >
                         <span className="text-lg leading-none">+</span>
                       </button>
@@ -393,7 +565,7 @@ function DistributeEstate() {
           previousHref="/will/divide-estate/choose-beneficaries"
           nextLabel={isSubmitting ? "Saving..." : "Save & Continue"}
           onNext={handleContinue}
-          nextDisabled={!editableDistributions.length || isSubmitting}
+          nextDisabled={!editableDistributions.length || isSubmitting || totalAllocated !== TOTAL_PERCENT}
         />
       </section>
     </DivideEstateShell>

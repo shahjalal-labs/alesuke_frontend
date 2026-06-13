@@ -35,6 +35,23 @@ type GiftRecord = {
   giftType?: string | null
   amount?: number | null
   description?: string | null
+  itemName?: string | null
+  asset?: {
+    id?: string
+    type?: string
+    institutionName?: string | null
+    accountNumber?: string | null
+    policyNumber?: string | null
+    approximateValue?: number | null
+    faceValue?: number | null
+    description?: string | null
+  } | null
+  property?: {
+    id?: string
+    type?: string
+    streetAddress?: string | null
+    estimatedValue?: number | null
+  } | null
 }
 
 type PetCaretakerRecord = {
@@ -76,14 +93,13 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
 }
 
 function Highlight({ children }: { children: ReactNode }) {
-  return <span className="text-inherit">{children}</span>
+  return <span className="text-inherit font-semibold text-[#c35b43]">{children}</span>
 }
 
 function formatMoney(value?: number | null) {
   if (value == null || Number.isNaN(value)) {
     return 'S$ 0'
   }
-
   return `S$ ${Number(value).toLocaleString()}`
 }
 
@@ -91,7 +107,6 @@ function formatPercent(value?: number | null) {
   if (value == null || Number.isNaN(value)) {
     return '0%'
   }
-
   return `${Math.round(Number(value) / 5) * 5}%`
 }
 
@@ -134,29 +149,21 @@ function PdfPageFrame({
   pageNumber,
   totalPages,
   title,
-  directive,
   blurred,
   children,
 }: {
   pageNumber: number
   totalPages: number
   title: string
-  directive: string
   blurred?: boolean
   children: ReactNode
 }) {
   return (
     <article className={`relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10 ${blurred ? 'overflow-hidden' : ''}`}>
       {blurred ? <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-[6px]" aria-hidden="true" /> : null}
-      <div className="border-l-[4px] border-[#c35b43] pl-4">
-        <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[1.85rem]">{title}</p>
+      <div className="pl-4">
+        <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[25px]">{title}</p>
         <div className="mt-3 h-[2px] bg-[#c35b43]" />
-      </div>
-
-      <div className="mt-5 rounded-[4px] border border-[#efe7dc] bg-[#faf8f3] px-4 py-3">
-        <p className="text-[0.82rem] leading-[1.55] text-[#4f5864]">
-          <strong>Directive:</strong> {directive}
-        </p>
       </div>
 
       <div className={`mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550] ${blurred ? 'blur-sm' : ''}`}>{children}</div>
@@ -169,6 +176,50 @@ function PdfPageFrame({
       </div>
     </article>
   )
+}
+
+// Helper function to format gift display text
+function formatGiftDisplay(gift: GiftRecord): string {
+  switch (gift.giftType) {
+    case 'CASH':
+      return formatMoney(gift.amount)
+    case 'ITEM':
+      return gift.itemName || gift.description || 'Item'
+    case 'COLLECTION':
+      return gift.itemName || gift.description || 'Collection'
+    case 'PROPERTY':
+      if (gift.property) {
+        return `${gift.property.type || 'Property'} at ${gift.property.streetAddress || 'address'}`
+      }
+      return gift.description || 'Property'
+    case 'FINANCIAL_ACCOUNT':
+      if (gift.asset) {
+        const assetType = gift.asset.type?.replace(/_/g, ' ').toLowerCase()
+        return `${assetType || 'Financial account'}`
+      }
+      return gift.description || 'Financial account'
+    default:
+      return gift.description || 'Gift'
+  }
+}
+
+// Helper to get gift type display name
+function getGiftTypeDisplay(giftType?: string | null): string {
+  switch (giftType) {
+    case 'CASH': return 'Cash'
+    case 'ITEM': return 'Item'
+    case 'COLLECTION': return 'Collection'
+    case 'PROPERTY': return 'Property'
+    case 'FINANCIAL_ACCOUNT': return 'Financial Account'
+    default: return 'Gift'
+  }
+}
+
+// Helper to get ID/NRIC display (placeholder for now)
+function getBeneficiaryId(recipientName?: string | null): string {
+  // In a real implementation, this would come from the member's ID data
+  // For now, return a placeholder
+  return `(${recipientName?.replace(/\s/g, '').substring(0, 8) || 'ID'})`
 }
 
 export default function WillPreviewPage() {
@@ -186,20 +237,30 @@ export default function WillPreviewPage() {
   const properties = dashboard.assets?.properties ?? []
   const loans = dashboard.assets?.loans ?? []
 
+  // Separate gifts by type for better display on page 6
+  const cashGifts = gifts.filter(g => g.giftType === 'CASH')
+  const itemGifts = gifts.filter(g => g.giftType === 'ITEM')
+  const collectionGifts = gifts.filter(g => g.giftType === 'COLLECTION')
+  const propertyGifts = gifts.filter(g => g.giftType === 'PROPERTY')
+  const financialGifts = gifts.filter(g => g.giftType === 'FINANCIAL_ACCOUNT')
+
+  // Get personal messages from gifts with descriptions
+  const personalMessages = gifts.filter(g => g.description && g.description.trim().length > 0)
+
   const userName = dashboard.user?.name ?? 'Your will'
   const primaryExecutor = executors[0]?.person?.fullName ?? 'Not selected'
   const backupExecutor = executors[0]?.backupPerson?.fullName ?? 'Not selected'
   const familyNames = family.map((member) => member.fullName).filter(Boolean) as string[]
-  const firstDistributions = estateDistributions.slice(0, 2)
+  const firstDistributions = estateDistributions.slice(0, 3)
   const firstPetCaretaker = petCaretakers[0]?.caretaker?.fullName ?? backupExecutor
   const firstPetName = petCaretakers[0]?.pet?.fullName ?? familyNames[0] ?? 'Companion animal'
   const totalPages = 9
+  
   const documentPages = useMemo(
     () => [
       {
         pageTitle: 'The Last Will and Testament',
         pageNumber: 1,
-        directive: 'Cover page layout with the live testator name highlighted in yellow from getWillDetails.',
         body: (
           <div className="flex min-h-[520px] flex-col items-center justify-center text-center">
             <p className="text-[0.82rem] uppercase tracking-[0.28em] text-[#8d918d]">OF</p>
@@ -222,7 +283,6 @@ export default function WillPreviewPage() {
       {
         pageTitle: 'Step-by-Step Execution Protocol',
         pageNumber: 2,
-        directive: 'Instruction page describing signing, witnesses, and physical binding requirements.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
@@ -245,7 +305,6 @@ export default function WillPreviewPage() {
       {
         pageTitle: 'Essential Singapore Statutory Principles',
         pageNumber: 3,
-        directive: 'Template page covering the statutory rules that govern the will structure.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
@@ -268,7 +327,6 @@ export default function WillPreviewPage() {
       {
         pageTitle: 'Testamentary Declarations & Family Structure',
         pageNumber: 4,
-        directive: 'This page carries the family identity fields that should remain highlighted and dynamic.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
@@ -303,7 +361,6 @@ export default function WillPreviewPage() {
       {
         pageTitle: 'Administrative Appointments & Minority Guardianship',
         pageNumber: 5,
-        directive: 'Guardian and trustee appointment page with live executor names highlighted.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
@@ -324,38 +381,118 @@ export default function WillPreviewPage() {
         ),
       },
       {
-        pageTitle: 'Special Bequests & Companion Animal Protection',
+        pageTitle: 'Special Bequests & Asset Distribution',
         pageNumber: 6,
-        directive: 'Specific gifts, vehicle, business shares, financial portfolio, and companion animal legacy stay dynamic.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
               <p>
-                <strong>Purpose:</strong> Isolation of specific assets and entities for immediate, direct transfer prior to residue calculations.
+                <strong>Purpose:</strong> Specific gifts and asset allocations to named beneficiaries.
               </p>
             </div>
-            <p>
-              5.1 Personal Valuables: I bequeath my physical time-piece asset to <Highlight>{gifts[0]?.recipientName ?? primaryExecutor}</Highlight>.
-            </p>
-            <p>
-              5.2 Vehicular Holdings: I bequeath my motor vehicle directly to <Highlight>{gifts[1]?.recipientName ?? backupExecutor}</Highlight>.
-            </p>
-            <p>
-              5.3 Corporate Equity: I bequeath my shareholding allocation to <Highlight>{gifts[2]?.recipientName ?? familyNames[0] ?? primaryExecutor}</Highlight>.
-            </p>
-            <p>
-              5.4 Financial Portfolios: I bequeath my complete entitlement under the financial portfolio framework directly to <Highlight>{formatMoney(dashboard.summary?.netWorth)}</Highlight>.
-            </p>
-            <p>
-              5.5 Companion Animal Legacy: I entrust my companion animal <Highlight>{firstPetName}</Highlight> to <Highlight>{firstPetCaretaker}</Highlight>.
-            </p>
+            
+            {/* Cash Gifts */}
+            {cashGifts.length > 0 && (
+              <div>
+                <p className="font-semibold text-[#2b221a]">5.1 Cash Gifts:</p>
+                <ul className="mt-2 space-y-2 pl-5">
+                  {cashGifts.map((gift) => (
+                    <li key={gift.id} className="list-disc">
+                      I bequeath <Highlight>{formatMoney(gift.amount)}</Highlight> in cash to <Highlight>{gift.recipientName}</Highlight>.
+                      {gift.description && <span className="italic text-[#6f7685]"> ({gift.description})</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Item Gifts */}
+            {itemGifts.length > 0 && (
+              <div className="mt-3">
+                <p className="font-semibold text-[#2b221a]">5.2 Specific Items:</p>
+                <ul className="mt-2 space-y-2 pl-5">
+                  {itemGifts.map((gift) => (
+                    <li key={gift.id} className="list-disc">
+                      I bequeath my <Highlight>{gift.itemName || gift.description || 'item'}</Highlight> to <Highlight>{gift.recipientName}</Highlight>.
+                      {gift.description && gift.description !== gift.itemName && <span className="italic text-[#6f7685]"> ({gift.description})</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Collection Gifts */}
+            {collectionGifts.length > 0 && (
+              <div className="mt-3">
+                <p className="font-semibold text-[#2b221a]">5.3 Collections:</p>
+                <ul className="mt-2 space-y-2 pl-5">
+                  {collectionGifts.map((gift) => (
+                    <li key={gift.id} className="list-disc">
+                      I bequeath my <Highlight>{gift.itemName || 'collection'}</Highlight> collection to <Highlight>{gift.recipientName}</Highlight>.
+                      {gift.description && <span className="italic text-[#6f7685]"> ({gift.description})</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Property Gifts */}
+            {propertyGifts.length > 0 && (
+              <div className="mt-3">
+                <p className="font-semibold text-[#2b221a]">5.4 Property Gifts:</p>
+                <ul className="mt-2 space-y-2 pl-5">
+                  {propertyGifts.map((gift) => (
+                    <li key={gift.id} className="list-disc">
+                      I bequeath my property at <Highlight>{gift.property?.streetAddress || 'address'}</Highlight> 
+                      (valued at {formatMoney(gift.property?.estimatedValue)}) to <Highlight>{gift.recipientName}</Highlight>.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Financial Account Gifts */}
+            {financialGifts.length > 0 && (
+              <div className="mt-3">
+                <p className="font-semibold text-[#2b221a]">5.5 Financial Accounts:</p>
+                <ul className="mt-2 space-y-2 pl-5">
+                  {financialGifts.map((gift) => {
+                    const accountValue = gift.asset?.approximateValue || gift.asset?.faceValue
+                    const accountType = gift.asset?.type?.replace(/_/g, ' ').toLowerCase() || 'financial account'
+                    return (
+                      <li key={gift.id} className="list-disc">
+                        I bequeath my <Highlight>{accountType}</Highlight> 
+                        {gift.asset?.institutionName ? ` from ${gift.asset.institutionName}` : ''}
+                        {accountValue ? ` (valued at ${formatMoney(accountValue)})` : ''}
+                        {' '}to <Highlight>{gift.recipientName}</Highlight>.
+                        {gift.description && <span className="italic text-[#6f7685]"> "{gift.description}"</span>}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {/* No gifts message */}
+            {gifts.length === 0 && (
+              <p className="italic text-[#6f7685]">No specific gifts have been added to this will.</p>
+            )}
+
+            {/* Companion Animal Legacy */}
+            {petCaretakers.length > 0 && (
+              <div className="mt-4 pt-2 border-t border-[#ece8e2]">
+                <p className="font-semibold text-[#2b221a]">5.6 Companion Animal Legacy:</p>
+                <p className="mt-2">
+                  I entrust my companion animal <Highlight>{firstPetName}</Highlight> to <Highlight>{firstPetCaretaker}</Highlight>.
+                </p>
+              </div>
+            )}
           </div>
         ),
       },
       {
         pageTitle: 'Apportionment of Residuary Estate & Legal Defenses',
         pageNumber: 7,
-        directive: 'Residuary percentages should match the distribution rows returned by the dashboard.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
@@ -367,8 +504,8 @@ export default function WillPreviewPage() {
               6.1 Residuary Allocations: All remaining capital, real estate interests, and investments not specifically named elsewhere shall be settled and distributed among the following survivors:
             </p>
             <ul className="space-y-3 pl-5">
-              {firstDistributions.length ? (
-                firstDistributions.map((distribution) => (
+              {estateDistributions.length ? (
+                estateDistributions.map((distribution) => (
                   <li key={distribution.id} className="list-disc">
                     Allocation to <Highlight>{distribution.person?.fullName ?? 'Not selected'}</Highlight> with a <Highlight>{formatPercent(distribution.percentage)}</Highlight> share.
                   </li>
@@ -389,7 +526,6 @@ export default function WillPreviewPage() {
       {
         pageTitle: 'Final Execution Interface',
         pageNumber: 8,
-        directive: 'Signature page with witness blocks, matching the final document layout in the screenshots.',
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
@@ -428,53 +564,101 @@ export default function WillPreviewPage() {
       {
         pageTitle: 'Personal Memos & Confidential Appendix',
         pageNumber: 9,
-        directive: 'Confidential appendix page with memo recipients and the final portfolio audit table.',
         body: (
-          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
+          <div className="space-y-5 text-[0.94rem] leading-[1.75] text-[#3f4550]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
               <p>
-                <strong>Directives:</strong> Instruct my executor to deliver these messages to my intended beneficiaries, either electronically or in hard copy.
+                <strong>Directives:</strong> I instruct my executor to deliver these messages to my intended beneficiaries, either electronically or in hard copy. They should not be shared with anyone other than the recipient, and should be excluded from public availability.
               </p>
             </div>
-            <p>
-              Private Memorandum to <Highlight>{familyNames[0] ?? primaryExecutor}</Highlight>:
-            </p>
-            <p className="font-semibold text-[#2f2d24]">
-              "Dear recipient, please find an appropriate buyer for my business, should you be able to liquidate. My wish is to leave 20% of its nett sale proceeds to you and remaining 80% divided equally between my children."
-            </p>
-            <p>
-              Private Memorandum to <Highlight>{familyNames[1] ?? backupExecutor}</Highlight>:
-            </p>
-            <p className="font-semibold text-[#2f2d24]">
-              "This plan is able to be transferred. I hope for this plan to be transferred to you so that you can enjoy the monthly dividends forward."
-            </p>
-            <div className="pt-2">
-              <p className="font-semibold uppercase tracking-[0.08em] text-[#2d2f35]">Informal Portfolio Audit</p>
-              <div className="mt-3 overflow-hidden rounded-[2px] border border-[#e1d7cb]">
-                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] bg-[#1f2937] text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">
-                  <div className="px-4 py-3">Asset Description</div>
-                  <div className="px-4 py-3">Asset Class</div>
-                  <div className="px-4 py-3">Beneficiary ID Link</div>
+            
+            {/* Personal Messages from Gifts */}
+            {personalMessages.length > 0 ? (
+              personalMessages.map((gift) => (
+                <div key={gift.id} className="space-y-2">
+                  <p>
+                    <strong>Private Memorandum to <Highlight>{gift.recipientName}</Highlight> {getBeneficiaryId(gift.itemName || "N/A")}:</strong>
+                  </p>
+                  <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
+                    "{gift.description}"
+                  </p>
                 </div>
-                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] border-t border-[#e1d7cb] bg-white text-[0.82rem] text-[#414957]">
-                  <div className="px-4 py-3">Prudential PruWealth Income</div>
-                  <div className="px-4 py-3">Insurance</div>
-                  <div className="px-4 py-3"><Highlight>{primaryExecutor}</Highlight></div>
+              ))
+            ) : (
+              // Default fallback messages if no personal messages exist
+              <>
+                <div className="space-y-2">
+                  <p>
+                    <strong>Private Memorandum to <Highlight>{familyNames[0] || primaryExecutor}</Highlight> {getBeneficiaryId(familyNames[0] || primaryExecutor)}:</strong>
+                  </p>
+                  <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
+                    "Dear recipient, please find an appropriate buyer for my business, should you be able to liquidate. My wish is to leave 20% of its nett sale proceeds to you and remaining 80% divided equally between my children. I kindly entrust you to do this for me."
+                  </p>
                 </div>
-                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] border-t border-[#e1d7cb] bg-white text-[0.82rem] text-[#414957]">
-                  <div className="px-4 py-3">Alessandria Pte Ltd</div>
-                  <div className="px-4 py-3">Business Shares</div>
-                  <div className="px-4 py-3"><Highlight>{familyNames[0] ?? userName}</Highlight></div>
+                <div className="space-y-2">
+                  <p>
+                    <strong>Private Memorandum to <Highlight>{familyNames[1] || backupExecutor}</Highlight> {getBeneficiaryId(familyNames[1] || backupExecutor)}:</strong>
+                  </p>
+                  <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
+                    "Dear recipient, This plan is able to be transferred. I hope for this plan to be transferred to you so that you can enjoy the monthly dividends forward."
+                  </p>
                 </div>
-                <div className="grid grid-cols-[1.5fr_1fr_1.2fr] border-t border-[#e1d7cb] bg-white text-[0.82rem] text-[#414957]">
-                  <div className="px-4 py-3">Interactive Brokers (IBKR) Account</div>
-                  <div className="px-4 py-3">Investment</div>
-                  <div className="px-4 py-3">Residuary Trust Split</div>
+              </>
+            )}
+
+            {/* Informal Portfolio Audit Table */}
+            <div className="pt-3">
+              <p className="font-semibold uppercase tracking-[0.08em] text-[#2d2f35] mb-3">Informal Portfolio Audit</p>
+              <div className="overflow-x-auto">
+                <div className="min-w-full overflow-hidden rounded-[2px] border border-[#e1d7cb]">
+                  <table className="min-w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#1f2937]">
+                        <th className="px-4 py-3 text-left text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">ASSET DESCRIPTION</th>
+                        <th className="px-4 py-3 text-left text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">ASSET CLASS</th>
+                        <th className="px-4 py-3 text-left text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">BENEFICIARY ID LINK</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Financial Gifts */}
+                      {financialGifts.slice(0, 3).map((gift, idx) => (
+                        <tr key={gift.id} className={idx > 0 ? 'border-t border-[#e1d7cb]' : ''}>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{formatGiftDisplay(gift)}</td>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{getGiftTypeDisplay(gift.giftType)}</td>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957] text-center">
+                            <Highlight>{gift.recipientName}</Highlight> 
+                          </td>
+                        </tr>
+                      ))}
+                      
+                      {/* Property Gifts */}
+                      {propertyGifts.slice(0, 2).map((gift, idx) => (
+                        <tr key={gift.id} className="border-t border-[#e1d7cb]">
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{formatGiftDisplay(gift)}</td>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{getGiftTypeDisplay(gift.giftType)}</td>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957] text-center">
+                            <Highlight>{gift.recipientName}</Highlight>
+                          </td>
+                        </tr>
+                      ))}
+                      
+                      {/* Fallback if no gifts */}
+                      {gifts.length === 0 && (
+                        <tr>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">No assets added</td>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">-</td>
+                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">-</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
-            <p className="pt-2 text-center text-[0.78rem] uppercase tracking-[0.08em] text-[#8c8072]">
-              Managed via the Will &amp; Way platform — end of portfolio draft
+
+            {/* Footer */}
+            <p className="pt-3 text-center text-[0.78rem] uppercase tracking-[0.08em] text-[#8c8072]">
+              MANAGED VIA THE WILL &amp; WAY PLATFORM — END OF PORTFOLIO DRAFT
             </p>
           </div>
         ),
@@ -482,18 +666,23 @@ export default function WillPreviewPage() {
     ],
     [
       backupExecutor,
+      cashGifts,
+      collectionGifts,
       dashboard.summary?.netWorth,
+      estateDistributions,
       executors.length,
       family,
       familyNames,
-      firstDistributions,
+      financialGifts,
       firstPetCaretaker,
       firstPetName,
       gifts,
-      loans.length,
-      petCaretakers,
+      itemGifts,
+      personalMessages,
+      petCaretakers.length,
       primaryExecutor,
       properties.length,
+      propertyGifts,
       userName,
     ]
   )
@@ -539,12 +728,12 @@ export default function WillPreviewPage() {
       icon: CheckCircle2,
       description: 'Review and revise your plan as your family and assets change over time.',
     },
-    {
-      id: 'money-back',
-      title: '30-day money-back guarantee',
-      icon: Wrench,
-      description: 'If you are not satisfied, the service provides a simple satisfaction window for your purchase.',
-    },
+    // {
+    //   id: 'money-back',
+    //   title: '30-day money-back guarantee',
+    //   icon: Wrench,
+    //   description: 'If you are not satisfied, the service provides a simple satisfaction window for your purchase.',
+    // },
     {
       id: 'pets',
       title: 'Caretakers for your pets',
@@ -564,6 +753,17 @@ export default function WillPreviewPage() {
       description: 'Keep your estate planning data centralised and accessible for the people who need it most.',
     },
   ]
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#fbf4ed] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#c35b43] border-t-transparent"></div>
+          <p className="mt-4 text-[#6f7685]">Loading your will preview...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#fbf4ed] text-[#171612]">
@@ -599,17 +799,15 @@ export default function WillPreviewPage() {
                     pageNumber={page.pageNumber}
                     totalPages={totalPages}
                     title={page.pageTitle}
-                    directive={page.directive}
-                    // blurred={page.pageNumber > 2}
                   >
                     {page.body}
                   </PdfPageFrame>
                 ))}
               </div>
             </div>
-          <div className='mt-10'>
+            <div className='mt-10'>
               <DigitalAssetPdfPreview />
-          </div>
+            </div>
           </section>
 
           <aside className="space-y-6">

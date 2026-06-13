@@ -53,6 +53,7 @@ type FinancialAccountGiftRecord = {
       fullName?: string | null
     }
   }>
+  description?: string | null
 }
 
 const addOptions: Array<{ id: AccountType; label: string }> = [
@@ -165,6 +166,7 @@ export default function Account() {
   const [selectedAssetId, setSelectedAssetId] = useState<string | number | null>(null)
   const [deletingId, setDeletingId] = useState<string | number | null>(null)
   const [submittingGift, setSubmittingGift] = useState(false)
+  const [personalMessage, setPersonalMessage] = useState('') // State for personal message
 
   const recipientRows = useMemo(() => {
     return (members as MemberRecord[]).map((member, index) => ({
@@ -208,6 +210,13 @@ export default function Account() {
       .filter((recipientId): recipientId is string => Boolean(recipientId))
 
     setSelectedRecipientIds(savedRecipientIds)
+    
+    // Load saved personal message if it exists
+    if (selectedFinancialAccountGift?.description) {
+      setPersonalMessage(selectedFinancialAccountGift.description)
+    } else {
+      setPersonalMessage('')
+    }
   }, [selectedFinancialAccountGift])
 
   const handleDeleteAsset = async (id?: string | number) => {
@@ -336,6 +345,7 @@ export default function Account() {
         giftType: 'FINANCIAL_ACCOUNT',
         recipients: selectedRecipientIds.map((peopleId) => ({ peopleId: String(peopleId) })),
         assetId: String(selectedAssetId),
+        description: personalMessage || '', // Include the personal message
       }
 
       if (editingGiftId && selectedFinancialAccountGift?.id) {
@@ -349,6 +359,7 @@ export default function Account() {
       router.push('/will/gifts')
     } catch (error) {
       toast.error(`Unable to ${editingGiftId ? 'update' : 'save'} financial account gift`)
+      console.error('Error saving gift:', error)
     } finally {
       setSubmittingGift(false)
     }
@@ -358,7 +369,6 @@ export default function Account() {
     <>
       <GiftAddTemplate
         title="Gift a financial account"
-
         fieldLabel=""
         fieldPlaceholder=""
         recipientsTitle="Who would you like to give the account to?"
@@ -366,7 +376,9 @@ export default function Account() {
         selectedRecipientIds={selectedRecipientIds}
         onRecipientToggle={toggleRecipient}
         messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."
-        messagePlaceholder=""
+        messagePlaceholder="Write your personal message here..."
+        messageValue={personalMessage} // Pass personal message value
+        onMessageChange={setPersonalMessage} // Handle message changes
         nextLabel={submittingGift ? 'Saving...' : editingGiftId ? 'Update gift' : 'Save & continue'}
         onNext={handleSaveGift}
         nextDisabled={submittingGift || !selectedRecipientIds.length || selectedAssetId == null}
@@ -390,6 +402,11 @@ export default function Account() {
                         .join(', ')
                     : 'N/A'}
                 </div>
+                {selectedFinancialAccountGift.description && (
+                  <div className="mt-2 text-[0.84rem] text-[#7b8594]">
+                    <span className="font-medium">Personal message:</span> {selectedFinancialAccountGift.description}
+                  </div>
+                )}
               </div>
             ) : null}
 
@@ -414,8 +431,8 @@ export default function Account() {
                             handleSelectAsset(asset.id)
                           }
                         }}
-                        className={`flex w-full items-center gap-4 rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow ${
-                          isSelected ? 'ring-2 ring-[#152035] shadow-[0_8px_24px_rgba(17,24,39,0.08)]' : ''
+                        className={`flex w-full items-center gap-4 rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow cursor-pointer ${
+                          isSelected ? 'ring-2 ring-[#152035] shadow-[0_8px_24px_rgba(17,24,39,0.08)]' : 'hover:shadow-[0_4px_12px_rgba(17,24,39,0.04)]'
                         } ${!isLast ? 'border-b border-[#ece3d6]' : ''}`}
                       >
                         <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-[#d8d8d8] bg-[#f9fbfc] text-[#27a5f7]">

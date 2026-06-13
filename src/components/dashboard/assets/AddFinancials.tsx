@@ -61,7 +61,7 @@ const addOptions: Array<{ id: AccountType; label: string }> = [
   { id: "bank", label: "Add Bank Account" },
   { id: "investment", label: "Add Investment Account" },
   { id: "business", label: "Add Business Interest" },
-  { id: "retirement", label: "Add Supplememtary Retirement Scheme (SRS)" },
+  // { id: "retirement", label: "Add Supplememtary Retirement Scheme (SRS)" },
   { id: "insurance", label: "Add Insurance Plan" },
   { id: "safe", label: "Add Safe deposit box" },
   { id: "crypto", label: "Add Crypto" },

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness } from "lucide-react";
+import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness, Gift } from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 import { useGetMeDataQuery } from "@/redux/api/authApi";
@@ -206,6 +206,37 @@ function DistributionPeopleBadge({ member }: { member?: FamilyMember | null }) {
       </div>
     </div>
   );
+}
+
+// Helper function to get gift icon
+function getGiftIcon(giftType?: string | null) {
+  if (giftType === "CASH") return Banknote;
+  if (giftType === "PROPERTY") return House;
+  if (giftType === "COLLECTION") return Gift;
+  if (giftType === "FINANCIAL_ACCOUNT") return BriefcaseBusiness;
+  return Heart;
+}
+
+// Helper function to get gift type label
+function getGiftTypeLabel(giftType?: string | null) {
+  if (giftType === "CASH") return "Cash";
+  if (giftType === "PROPERTY") return "Property";
+  if (giftType === "ITEM") return "Item";
+  if (giftType === "COLLECTION") return "Collection";
+  if (giftType === "VEHICLE") return "Vehicle";
+  if (giftType === "FINANCIAL_ACCOUNT") return "Financial Account";
+  return "Gift";
+}
+
+// Helper function to get gift value display
+function getGiftValueDisplay(gift: GiftRecord) {
+  if (gift.giftType === "CASH" && typeof gift.amount === "number") {
+    return formatMoney(gift.amount);
+  }
+  if (gift.description) {
+    return gift.description;
+  }
+  return "No description";
 }
 
 export default function MyWillPage() {
@@ -541,6 +572,7 @@ export default function MyWillPage() {
               )}
             </SectionShell>
 
+            {/* Updated Gifts Section */}
             <SectionShell
               title="Gifts"
               completed={hasGiftsData}
@@ -571,31 +603,55 @@ export default function MyWillPage() {
               }
             >
               {canAccessOtherSections ? (
-                <div className="space-y-1">
-                  {gifts.map((gift) => (
-                    <div key={gift.id} className="flex flex-col gap-3 rounded-[2px] py-3 sm:flex-row sm:items-center sm:gap-4">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <Heart className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="break-words text-[0.98rem] text-[#4b5361] sm:text-[1.05rem]">
-                            {gift.recipientName ?? "Recipient"}
-                          </p>
-                          <p className="mt-1 break-words text-[0.9rem] leading-[1.45] text-[#6f7685] sm:text-[0.98rem]">
-                            {gift.giftType === "CASH" && typeof gift.amount === "number"
-                              ? formatMoney(gift.amount)
-                              : gift.description ?? "Gift"}
-                          </p>
-                        </div>
-                      </div>
+                gifts.length > 0 ? (
+                  <div className="space-y-3">
+                    {gifts.map((gift) => {
+                      const GiftIcon = getGiftIcon(gift.giftType);
+                      const giftTypeLabel = getGiftTypeLabel(gift.giftType);
+                      const giftValue = getGiftValueDisplay(gift);
 
-                      <div className="self-start text-[0.82rem] uppercase tracking-[0.12em] text-[#8c8072] sm:self-center sm:pl-3 sm:text-right">
-                        Gift
+                      return (
+                        <div
+                          key={gift.id}
+                          className="flex flex-col gap-3 rounded-[10px] border border-[#ece8e2] bg-[#fcfaf7] p-4 transition-all hover:shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                              <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                                <GiftIcon className="h-5 w-5" />
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-baseline gap-2">
+                                  <p className="truncate text-[1rem] font-medium text-[#2b221a] sm:text-[1.05rem]">
+                                    {gift.recipientName ?? "Recipient"}
+                                  </p>
+                                  <span className="inline-flex rounded-full bg-[#e8e0d6] px-2 py-0.5 text-[0.7rem] font-medium uppercase tracking-wide text-[#5a4e42]">
+                                    {giftTypeLabel}
+                                  </span>
+                                </div>
+                                <p className="mt-1 break-words text-[0.9rem] leading-[1.45] text-[#6f7685] sm:text-[0.95rem]">
+                                  {giftValue}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Summary row for gifts count */}
+                    <div className="mt-3 rounded-[8px] bg-[#f4f0ea] px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[0.85rem] font-medium text-[#5a4e42]">Total Gifts</span>
+                        <span className="text-[0.85rem] font-semibold text-[#2b221a]">{gifts.length} item{gifts.length !== 1 ? 's' : ''}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                    No gifts have been added yet. Add specific gifts to leave to your loved ones.
+                  </p>
+                )
               ) : (
                 <PrerequisiteMessage />
               )}

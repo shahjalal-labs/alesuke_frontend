@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2, Plus } from "lucide-react";
 import AddPersonModal from "@/components/ui/AddPersonModal";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -19,7 +19,11 @@ import {
 } from "./DivideEstateShell";
 
 import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
-import { useAddBackupDistributionMutation, useGetDistributionsQuery } from "@/redux/api/executorApi";
+import { 
+  useAddBackupDistributionMutation, 
+  useRemoveBackupDistributionMutation,
+  useGetDistributionsQuery 
+} from "@/redux/api/executorApi";
 
 type MemberRecord = {
   id: string;
@@ -32,7 +36,11 @@ type DistributionRecord = {
   peopleId?: string | null;
   percentage?: number | null;
   order?: number | null;
-  backupDistributors?: Array<{ peopleId?: string | null; person?: { id?: string } }>;
+  backupDistributors?: Array<{ 
+    id?: string;
+    peopleId?: string | null; 
+    person?: { id?: string; fullName?: string | null };
+  }>;
   person?: { id?: string; fullName?: string | null };
 };
 
@@ -40,148 +48,158 @@ function formatSharePercent(value?: number | null) {
   if (value == null || Number.isNaN(value)) {
     return '0%';
   }
-
-  return `${Math.round(Number(value) / 5) * 5}%`;
+  return `${value}%`;
 }
 
 function BackupBeneficiaries() {
   const router = useRouter();
-  const { data: members = [], isLoading } = useGetAllMemberListQuery(undefined);
-  const { data: distributionResponse, isLoading: isLoadingDistributions } = useGetDistributionsQuery(undefined);
+  const { data: members = [], isLoading: isLoadingMembers } = useGetAllMemberListQuery(undefined);
+  const { data: distributionResponse, isLoading: isLoadingDistributions, refetch } = useGetDistributionsQuery(undefined);
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
-  const [selectedBackupIds, setSelectedBackupIds] = useState<string[]>([]);
+  const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
   const [selectedDistributorId, setSelectedDistributorId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addBackupDistribution] = useAddBackupDistributionMutation();
+  const [removeBackupDistribution] = useRemoveBackupDistributionMutation();
 
-  const childMembers = useMemo(() => {
-    return (members as MemberRecord[]).filter((member) => member.relationType === "CHILD");
+  // Filter out PET members
+  const nonPetMembers = useMemo(() => {
+    return (members as MemberRecord[]).filter((member) => member.relationType !== "PET");
   }, [members]);
-
-  const primaryChildId = childMembers[0]?.id;
-  const primaryChildName = childMembers[0]?.fullName ?? "Child 01";
-
-  // derive saved backup ids from distributions: find distribution for primary child and read backupDistributors
-  const savedBackupIds = useMemo(() => {
-    const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
-    if (!primaryChildId) return [] as string[];
-    const dist = distributions.find((d) => d.peopleId === primaryChildId || d.person?.id === primaryChildId);
-    if (!dist) return [] as string[];
-    const list: string[] = [];
-    (dist.backupDistributors ?? []).forEach((bd) => {
-      if (bd.peopleId) list.push(bd.peopleId);
-      else if (bd.person?.id) list.push(bd.person.id as string);
-    });
-    return list;
-  }, [distributionResponse, primaryChildId]);
 
   const distributorRows = useMemo(() => {
     const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
-
+    
     return distributions.map((distribution, index) => ({
       id: distribution.id ?? `distribution-${index}`,
       name: distribution.person?.fullName ?? `Distributor ${index + 1}`,
       peopleId: distribution.peopleId ?? distribution.person?.id ?? '',
       percentage: distribution.percentage,
+      backupDistributors: distribution.backupDistributors || []
     }));
   }, [distributionResponse]);
 
-  const primaryDistribution = useMemo(() => {
-    const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
+  // Get current selected distributor
+  const currentDistributor = useMemo(() => {
+    if (!selectedDistributorId) return null;
+    return distributorRows.find(d => d.id === selectedDistributorId);
+  }, [distributorRows, selectedDistributorId]);
 
-    return distributions.find((distribution) => distribution.peopleId === primaryChildId || distribution.person?.id === primaryChildId);
-  }, [distributionResponse, primaryChildId]);
-
-  // derive saved backup ids for the currently selected distributor (or primaryDistribution if none selected)
-  const savedBackupIdsForSelected = useMemo(() => {
-    const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
-    const chosen = selectedDistributorId
-      ? distributions.find((d) => d.id === selectedDistributorId)
-      : primaryDistribution ?? null;
-
-    if (!chosen) return [] as string[];
-
-    const ids = new Set<string>();
-    (chosen.backupDistributors ?? []).forEach((bd) => {
-      const id = bd.person?.id ?? bd.peopleId;
-      if (id) ids.add(id as string);
-    });
-    return Array.from(ids);
-  }, [distributionResponse, selectedDistributorId, primaryDistribution]);
-
-  // When the selected distributor changes, update selectedBackupIds to reflect saved backups
-  useEffect(() => {
-    // Always sync to the saved backups for the chosen distributor so the UI reflects persisted state
-    setSelectedBackupIds(savedBackupIdsForSelected);
-  }, [savedBackupIdsForSelected]);
-
-  // compute current distributor name (use selected distributor if available)
-  const currentDistributorName = useMemo(() => {
-    const chosenId = selectedDistributorId ?? primaryDistribution?.id ?? null;
-    const found = distributorRows.find((d) => d.id === chosenId) ?? null;
-    return found?.name ?? primaryChildName;
-  }, [selectedDistributorId, distributorRows, primaryDistribution, primaryChildName]);
-
-  useEffect(() => {
-    // Prefer distributor whose peopleId matches the primary child, otherwise default to first distributor
-    const primaryMatch = distributorRows.find((d) => d.peopleId && d.peopleId === primaryChildId) ?? null;
-    const firstSelectedDistributor = primaryMatch ?? distributorRows[0] ?? null;
-
-    if (!selectedDistributorId && firstSelectedDistributor?.id) {
-      setSelectedDistributorId(firstSelectedDistributor.id);
+  // Get current backup for selected distributor (single backup)
+  const currentBackup = useMemo(() => {
+    if (!currentDistributor || !currentDistributor.backupDistributors || currentDistributor.backupDistributors.length === 0) {
+      return null;
     }
-  }, [distributorRows, primaryChildId, selectedDistributorId]);
+    
+    const backup = currentDistributor.backupDistributors[0];
+    const backupId = backup.peopleId || backup.person?.id;
+    const backupMember = nonPetMembers.find(m => m.id === backupId);
+    
+    return {
+      id: backup.id,
+      peopleId: backupId,
+      name: backupMember?.fullName || backup.person?.fullName || 'Unknown',
+      member: backupMember
+    };
+  }, [currentDistributor, nonPetMembers]);
 
-  // backup candidates: all members except the primary child and pets
+  // Set initial selected distributor
+  useEffect(() => {
+    if (distributorRows.length > 0 && !selectedDistributorId) {
+      setSelectedDistributorId(distributorRows[0].id);
+    }
+  }, [distributorRows, selectedDistributorId]);
+
+  // Reset selected backup when distributor changes
+  useEffect(() => {
+    // Update selectedBackupId based on current distributor's backup
+    if (currentBackup?.peopleId) {
+      setSelectedBackupId(currentBackup.peopleId);
+    } else {
+      setSelectedBackupId(null);
+    }
+  }, [currentDistributor, currentBackup]);
+
+  // Get available backup candidates (exclude current distributor and already selected backup)
   const backupCandidates = useMemo(() => {
-    return (members as MemberRecord[]).filter((m) => m.id !== primaryChildId && m.relationType !== "PET");
-  }, [members, primaryChildId]);
+    if (!currentDistributor) return [];
+    
+    return nonPetMembers.filter((member) => {
+      // Don't show the distributor themselves as backup
+      if (member.id === currentDistributor.peopleId) return false;
+      // Don't show already selected backup
+      if (currentBackup?.peopleId === member.id) return false;
+      return true;
+    });
+  }, [nonPetMembers, currentDistributor, currentBackup]);
 
-  const toggleBackup = (id: string) => {
-    setSelectedBackupIds((current) => (current.includes(id) ? current.filter((i) => i !== id) : [...current, id]));
-  };
-
-  const getDistributorById = (distributionId: string | null) => {
-    if (!distributionId) return null;
-
-    return distributorRows.find((distribution) => distribution.id === distributionId) ?? null;
-  };
-
-  const handleSaveBackups = async () => {
-    const chosenDistributor = getDistributorById(selectedDistributorId ?? primaryDistribution?.id ?? null);
-
-    if (!selectedBackupIds.length && !chosenDistributor) {
-      toast.error("Select at least one backup beneficiary before continuing.");
+  const handleSelectBackup = async (memberId: string) => {
+    if (!currentDistributor?.id) {
+      toast.error("Please select a distributor first");
       return;
     }
 
-    if (!chosenDistributor?.id) {
-      toast.error("Unable to find the saved distributor record for this child.");
-      return;
-    }
+    // If clicking the already selected backup, do nothing
+    if (selectedBackupId === memberId) return;
 
     setIsSubmitting(true);
+    
     try {
-      const distributionId = chosenDistributor.id;
-
-      await Promise.all(
-        selectedBackupIds.map((peopleId) =>
-          addBackupDistribution({
-            id: distributionId,
-            data: { peopleId },
-          }).unwrap()
-        )
-      );
-
-      toast.success("Backup beneficiaries saved.");
-      router.push("/will/divide-estate/complete");
-    } catch (err) {
-      console.error(err);
-      toast.error("Unable to save backup beneficiaries. Please try again.");
+      // If there's an existing backup, remove it first
+      if (currentBackup?.id) {
+        await removeBackupDistribution(currentBackup.id).unwrap();
+      }
+      
+      // Add new backup
+      await addBackupDistribution({
+        id: currentDistributor.id,
+        data: { peopleId: memberId },
+      }).unwrap();
+      
+      setSelectedBackupId(memberId);
+      await refetch();
+      toast.success(`Backup beneficiary added successfully`);
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || error?.message || "Failed to add backup beneficiary";
+      toast.error(errorMessage);
+      console.error("Add backup failed:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleRemoveBackup = async () => {
+    if (!currentBackup?.id) {
+      toast.error("No backup to remove");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      await removeBackupDistribution(currentBackup.id).unwrap();
+      setSelectedBackupId(null);
+      await refetch();
+      toast.success("Backup beneficiary removed successfully");
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || error?.message || "Failed to remove backup beneficiary";
+      toast.error(errorMessage);
+      console.error("Remove backup failed:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleContinue = async () => {
+    if (!selectedDistributorId) {
+      toast.error("Please select a distributor");
+      return;
+    }
+
+    router.push("/will/divide-estate/complete");
+  };
+
+  const isLoading = isLoadingMembers || isLoadingDistributions;
 
   return (
     <DivideEstateShell>
@@ -189,12 +207,12 @@ function BackupBeneficiaries() {
         <SectionEyebrow>Estate Distribution</SectionEyebrow>
 
         <div className="space-y-4">
-          <FlowTitle>Backup beneficiaries for {currentDistributorName}</FlowTitle>
+          <FlowTitle>Backup beneficiaries for {currentDistributor?.name || 'Distributor'}</FlowTitle>
           <FlowLead>
-            If {currentDistributorName}'s share of their estate cannot be given, then who should inherit their share?
+            If {currentDistributor?.name || 'the distributor'}'s share of their estate cannot be given, then who should inherit their share?
           </FlowLead>
           <BodyCopy>
-            When planning your estate, it is important to decide who should receive assets if the primary recipient ({currentDistributorName}) is unable to take them. This situation might occur if the child:
+            When planning your estate, it is important to decide who should receive assets if the primary recipient is unable to take them. This situation might occur if the beneficiary:
           </BodyCopy>
           <ul className="space-y-1 pl-5 text-[0.96rem] leading-[1.55] text-[#727b8b] md:text-[1rem]">
             <li>Passes away before you.</li>
@@ -205,11 +223,11 @@ function BackupBeneficiaries() {
           <div className="space-y-3 pt-1">
             <h2 className="text-[1rem] font-semibold text-[#191715] md:text-[1.08rem]">How to Assign Backup Heirs</h2>
             <BodyCopy>
-              If {primaryChildName} cannot receive their portion, you need to designate a secondary beneficiary. You have two main options for distributing that specific share:
+              You need to designate a secondary beneficiary. The backup will inherit the entire share if the primary beneficiary cannot.
             </BodyCopy>
             <ol className="space-y-2 pl-5 text-[0.96rem] leading-[1.55] text-[#727b8b] md:text-[1rem]">
               <li>Single Successor: Name one specific individual to take over the entire share.</li>
-              <li>Group Distribution: Name several people to split that share equally among themselves.</li>
+              <li>You can change or remove the backup at any time.</li>
             </ol>
           </div>
         </div>
@@ -231,49 +249,89 @@ function BackupBeneficiaries() {
                     }`}
                   >
                     <div className="font-medium text-[#1d2430]">{distribution.name}</div>
-                    <div className="mt-1 text-[0.84rem] text-[#7b8594]">People ID: {distribution.peopleId || 'N/A'}</div>
-                    {distribution.percentage != null ? <div className="mt-1 text-[0.84rem] text-[#7b8594]">Share: {formatSharePercent(distribution.percentage)}</div> : null}
-                    {isSelectedDistributor ? <div className="mt-2 inline-flex rounded-full bg-[#152035] px-3 py-1 text-[0.75rem] font-medium text-white">Selected distributor</div> : null}
+                    {distribution.percentage != null ? (
+                      <div className="mt-1 text-[0.84rem] text-[#7b8594]">Share: {formatSharePercent(distribution.percentage)}</div>
+                    ) : null}
+                    {distribution.backupDistributors && distribution.backupDistributors.length > 0 ? (
+                      <div className="mt-1 text-[0.84rem] text-green-600">
+                        Backup: {distribution.backupDistributors[0]?.person?.fullName || 'Assigned'}
+                      </div>
+                    ) : null}
+                    {isSelectedDistributor ? (
+                      <div className="mt-2 inline-flex rounded-full bg-[#152035] px-3 py-1 text-[0.75rem] font-medium text-white">
+                        Selected distributor
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
           ) : (
-            <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">No distributors have been saved yet.</div>
+            <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">
+              No distributors have been saved yet.
+            </div>
           )}
         </Panel>
 
         <Panel>
-          {isLoading || isLoadingDistributions ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12 text-[#6e7886]">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
           ) : (
             <div className="space-y-4 md:space-y-5">
               <div className="space-y-2">
-                <h3 className="text-[1rem] font-semibold text-[#191715] md:text-[1.08rem]">Choose backup members for the selected distributor</h3>
+                <h3 className="text-[1rem] font-semibold text-[#191715] md:text-[1.08rem]">
+                  Choose backup member for {currentDistributor?.name || 'selected distributor'}
+                </h3>
                 <BodyCopy>
-                  The selected distributor is used as the parent record. Backups are saved under that distributor's id.
+                  Select ONE person to be the backup beneficiary. They will inherit the entire share if the primary cannot.
                 </BodyCopy>
               </div>
 
+              {/* Show current backup if exists */}
+              {currentBackup && (
+                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-800">Current Backup</p>
+                      <p className="text-base font-semibold text-green-900">{currentBackup.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveBackup}
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Backup candidates list */}
               {backupCandidates.length ? (
                 <div className="space-y-3">
                   {backupCandidates.map((member, index) => {
-                    const selected = selectedBackupIds.includes(member.id);
+                    const isSelected = selectedBackupId === member.id;
+                    
                     return (
                       <PersonRow
                         key={member.id}
                         title={member.fullName ?? `Person ${index + 1}`}
-                        selected={selected}
-                        action={selected ? "remove" : undefined}
-                        onClick={() => toggleBackup(member.id)}
+                        subtitle={member.relationType ? `(${member.relationType})` : undefined}
+                        selected={isSelected}
+                        action={isSelected ? "remove" : undefined}
+                        onClick={() => handleSelectBackup(member.id)}
                       />
                     );
                   })}
                 </div>
               ) : (
-                <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">No people available for backup.</div>
+                <div className="rounded-[10px] bg-white px-4 py-4 text-[0.9rem] text-[#7b8594]">
+                  No other members available for backup.
+                </div>
               )}
 
               <AddPersonRow onClick={() => setIsAddPersonOpen(true)} />
@@ -283,13 +341,22 @@ function BackupBeneficiaries() {
 
         <FooterActions
           previousHref="/will/divide-estate/choose-backup-option"
-          nextLabel={isSubmitting ? "Saving..." : "Save & Continue"}
-          onNext={handleSaveBackups}
-          nextDisabled={isSubmitting || !selectedBackupIds.length || !selectedDistributorId}
+          nextLabel="Save & Continue"
+          onNext={handleContinue}
         />
       </section>
 
-      <AddPersonModal open={isAddPersonOpen} onClose={() => setIsAddPersonOpen(false)} title="Add a new person" actionLabel="Create a person" onSuccess={() => setIsAddPersonOpen(false)} showRelationshipDropdown={true} />
+      <AddPersonModal 
+        open={isAddPersonOpen} 
+        onClose={() => setIsAddPersonOpen(false)} 
+        title="Add a new person" 
+        actionLabel="Create a person" 
+        onSuccess={() => {
+          setIsAddPersonOpen(false);
+          refetch();
+        }} 
+        showRelationshipDropdown={true} 
+      />
     </DivideEstateShell>
   );
 }

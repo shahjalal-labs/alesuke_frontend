@@ -81,6 +81,13 @@ const profileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["executors"],
     }),
+ removeBackupDistribution: builder.mutation({
+      query: (id) => ({
+        url: `/will/distributions/backup/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["executors"],
+    }),
 
     
 
@@ -98,4 +105,5 @@ export const {
   useGetDistributionsQuery,
   useAddBackupDistributionMutation,
   useAddManualDistributionMutation,
+  useRemoveBackupDistributionMutation,
 } = profileApi;

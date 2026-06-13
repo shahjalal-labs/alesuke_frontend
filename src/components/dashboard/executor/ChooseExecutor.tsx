@@ -91,6 +91,7 @@ export default function ChooseExecutor() {
   const [activeExecutorId, setActiveExecutorId] = useState<string | null>(savedExecutorId);
   const [isBackupListOpen, setIsBackupListOpen] = useState(false);
   const [isAddExecutorOpen, setIsAddExecutorOpen] = useState(false);
+  const [isAddBackupExecutorOpen, setIsAddBackupExecutorOpen] = useState(false); // New state for backup modal
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addExecutor] = useAddExecutorMutation();
   const [addBackupExecutor] = useAddBackupExecutorMutation();
@@ -222,6 +223,34 @@ export default function ChooseExecutor() {
       setActiveExecutorId(executorId);
       setIsAddExecutorOpen(false);
       toast.success("Executor added successfully.");
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // New handler for adding backup executor from modal
+  const handleBackupExecutorAdded = async (result: any) => {
+    const peopleId = result?.data?.id ?? result?.id ?? null;
+
+    if (!peopleId) {
+      toast.error("Unable to create backup executor. Please try again.");
+      return;
+    }
+
+    if (!primaryId || !activeExecutorId) {
+      toast.error("Primary executor must be selected first.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addBackupExecutor({ executorId: activeExecutorId, backupPeopleId: peopleId }).unwrap();
+      setBackupExecutorId(peopleId);
+      setIsAddBackupExecutorOpen(false);
+      setIsBackupListOpen(false);
+      toast.success("Backup executor added successfully.");
     } catch (error: any) {
       toast.error(getApiErrorMessage(error));
     } finally {
@@ -405,18 +434,62 @@ export default function ChooseExecutor() {
               ) : isBackupListOpen ? (
                 <div className="space-y-3 pt-1">
                   {backupOptions.length ? (
-                    backupOptions.map((member) => (
-                      <ExecutorPersonRow
-                        key={member.id}
-                        icon={getMemberIcon(member.relationType)}
-                        name={member.fullName ?? "Unnamed"}
-                        badge={getMemberLabel(member.relationType)}
-                        selected={backupExecutorId === member.id}
-                        onClick={() => handleBackupSelect(member)}
-                      />
-                    ))
+                    <>
+                      {backupOptions.map((member) => (
+                        <ExecutorPersonRow
+                          key={member.id}
+                          icon={getMemberIcon(member.relationType)}
+                          name={member.fullName ?? "Unnamed"}
+                          badge={getMemberLabel(member.relationType)}
+                          selected={backupExecutorId === member.id}
+                          onClick={() => handleBackupSelect(member)}
+                        />
+                      ))}
+                      
+                      {/* Add Backup Executor button - appears at bottom of list */}
+                      <button
+                        type="button"
+                        onClick={() => setIsAddBackupExecutorOpen(true)}
+                        disabled={isSubmitting}
+                        className="flex w-full items-center justify-between gap-4 rounded-[10px] border border-dashed border-[#d5cabd] bg-white/80 px-4 py-4 text-left text-[#5c6677] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 md:px-5 mt-3"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#e9ecef] text-[#2b3448]">
+                            <Plus className="h-5 w-5" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[1rem] font-medium leading-[1.2] md:text-[1.08rem]">Add Backup Executor</span>
+                            <span className="mt-0.5 block text-[0.82rem] leading-[1.25] text-[#8a92a0] md:text-[0.88rem]">
+                              Create someone new if the right person is not in your list yet.
+                            </span>
+                          </span>
+                        </span>
+                      </button>
+                    </>
                   ) : (
-                    <BodyCopy>No other members available for backup selection.</BodyCopy>
+                    <div className="space-y-3">
+                      <BodyCopy>No other members available for backup selection.</BodyCopy>
+                      
+                      {/* Add Backup Executor button even when no members available */}
+                      <button
+                        type="button"
+                        onClick={() => setIsAddBackupExecutorOpen(true)}
+                        disabled={isSubmitting}
+                        className="flex w-full items-center justify-between gap-4 rounded-[10px] border border-dashed border-[#d5cabd] bg-white/80 px-4 py-4 text-left text-[#5c6677] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 md:px-5"
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#e9ecef] text-[#2b3448]">
+                            <Plus className="h-5 w-5" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[1rem] font-medium leading-[1.2] md:text-[1.08rem]">Add Backup Executor</span>
+                            <span className="mt-0.5 block text-[0.82rem] leading-[1.25] text-[#8a92a0] md:text-[0.88rem]">
+                              Create someone new as backup executor
+                            </span>
+                          </span>
+                        </span>
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : null}
@@ -433,14 +506,26 @@ export default function ChooseExecutor() {
           primaryDisabled={isSubmitting}
         />
 
-       <AddPersonModal
+        {/* Modal for adding primary executor */}
+        <AddPersonModal
           open={isAddExecutorOpen}
           onClose={() => setIsAddExecutorOpen(false)}
           title="Add an executor"
           actionLabel="Create Executor"
           allowGenericPerson
-          showRelationshipDropdown={true}  // Add this line
+          showRelationshipDropdown={true}
           onSuccess={handleExecutorAdded}
+        />
+
+        {/* Modal for adding backup executor - Same as primary but with different title */}
+        <AddPersonModal
+          open={isAddBackupExecutorOpen}
+          onClose={() => setIsAddBackupExecutorOpen(false)}
+          title="Add a backup executor"
+          actionLabel="Create Backup Executor"
+          allowGenericPerson
+          showRelationshipDropdown={true}
+          onSuccess={handleBackupExecutorAdded}
         />
       </div>
     </ExecutorLayout>

@@ -289,10 +289,10 @@ export default function PrivacyPolicy() {
                 <p className="text-lg font-semibold">Lifetime document access</p>
                 <p className="mt-2 text-sm leading-6 text-white/75">Your will is securely stored and accessible whenever you need it. Update anytime.</p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-lg font-semibold">30-day money-back guarantee</p>
                 <p className="mt-2 text-sm leading-6 text-white/75">If MakeGoodwill is not right for you, we will refund you in full within 30 days. No questions asked.</p>
-              </div>
+              </div> */}
             </div>
             <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/65 sm:flex-row sm:items-center sm:justify-between">
               <span>support@makegoodwill.com</span>
