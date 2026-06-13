@@ -12,6 +12,7 @@ import DigitalAssetPdfPreview from './DigitalAssetPdfPreview'
 
 // Add html2pdf dependency
 import html2pdf from 'html2pdf.js'
+import { useGetMeDataQuery } from '@/redux/api/authApi'
 
 type FamilyMember = {
   id: string
@@ -160,18 +161,17 @@ function PdfPageFrame({
   children: ReactNode
 }) {
   return (
-    <div 
-      className="relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10" 
-      style={{ pageBreakAfter: 'always' }}
+    <div
+      className="pdf-page-frame relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10"
     >
-      <div className="pl-4">
+      <div className="pl-4" style={{ pageBreakInside: 'avoid' }}>
         <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[25px]">{title}</p>
         <div className="mt-3 h-[2px] bg-[#c35b43]" />
       </div>
 
       <div className="mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">{children}</div>
 
-      <div className="mt-10 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]">
+      <div className="mt-10 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]" style={{ pageBreakInside: 'avoid' }}>
         <div className="flex items-center justify-between gap-4">
           <span>Testator Initials: ______  Witness 1: ______  Witness 2: ______</span>
           <span>Page {pageNumber} of {totalPages}</span>
@@ -235,6 +235,8 @@ export default function WillPreviewPage() {
   }, [])
 
   const [activeStep, setActiveStep] = useState<string>('children')
+  const { data: getMeData } = useGetMeDataQuery(undefined)
+  const userData = getMeData?.data;
 
   const family = dashboard.family ?? []
   const executors = dashboard.executors ?? []
@@ -265,63 +267,81 @@ export default function WillPreviewPage() {
 
   const handleDownloadPDF = async () => {
     if (!pdfContentRef.current || !isClient) return
-    
+
     setIsDownloading(true)
-    
+    const element = pdfContentRef.current
+    const originalClassName = element.className
+    const originalBg = element.style.backgroundColor
+    const originalPadding = element.style.padding
+
+    // Store original classes of page frames to restore them later
+    const pages = Array.from(element.querySelectorAll('.pdf-page-frame'))
+    const pageOriginalClasses = new Map()
+
     try {
-      const element = pdfContentRef.current
-      
-      // Create a clone of the content to avoid affecting the displayed view
-      const cloneContainer = document.createElement('div')
-      cloneContainer.style.position = 'absolute'
-      cloneContainer.style.top = '-9999px'
-      cloneContainer.style.left = '-9999px'
-      cloneContainer.style.width = '720px' // Match max-w-[720px]
-      cloneContainer.style.backgroundColor = '#fbf4ed'
-      cloneContainer.style.padding = '20px'
-      
-      // Clone the content
-      const originalContent = element.cloneNode(true) as HTMLDivElement
-      cloneContainer.appendChild(originalContent)
-      document.body.appendChild(cloneContainer)
-      
-      // Ensure all pages have proper page breaks
-      const pages = cloneContainer.querySelectorAll('[style*="pageBreakAfter: always"]')
+      // Temporarily remove max-height, overflow, scrollbar spacing, and page gaps
+      element.className = element.className.replace('max-h-[calc(100vh-220px)]', '').replace('overflow-auto', '').replace('space-y-5', '').replace('pr-2', '')
+      element.style.backgroundColor = 'transparent'
+      element.style.padding = '0px'
+
+      // Strip shadows and borders from individual pages for a clean PDF look
       pages.forEach(page => {
-        (page as HTMLElement).style.pageBreakAfter = 'always'
+        pageOriginalClasses.set(page, page.className)
+        page.className = page.className.replace('shadow-[0_18px_40px_rgba(17,24,39,0.08)]', '').replace('ring-1', '').replace('ring-[#ebdfd2]', '')
       })
-      
+
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: [0, 0, 0, 0],
         filename: `Will_${userName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          letterRendering: true, 
+        html2canvas: {
+          scale: 2,
           useCORS: true,
           logging: false,
           windowWidth: 720,
-          windowHeight: 1050
+          scrollY: 0
         },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'a4', 
-          orientation: 'portrait' 
+        jsPDF: {
+          unit: 'in',
+          format: 'a4',
+          orientation: 'portrait'
         },
         pagebreak: { mode: ['css', 'legacy'] }
       }
-      
-      await html2pdf().set(opt).from(cloneContainer).save()
-      
-      // Clean up
-      document.body.removeChild(cloneContainer)
+
+      let worker = html2pdf().set(opt)
+
+      // Render each page individually and explicitly add it as a new PDF page
+      for (let i = 0; i < pages.length; i++) {
+        if (i === 0) {
+          worker = worker.from(pages[i]).toPdf()
+        } else {
+          worker = worker.get('pdf').then((pdf: any) => {
+            pdf.addPage()
+          }).from(pages[i]).toContainer().toCanvas().toPdf()
+        }
+      }
+
+      await worker.save()
     } catch (error) {
       console.error('PDF generation failed:', error)
     } finally {
+      // Restore the original scrollable container styles
+      element.className = originalClassName
+      element.style.backgroundColor = originalBg
+      element.style.padding = originalPadding
+
+      // Restore page frame shadows and borders
+      pages.forEach(page => {
+        if (pageOriginalClasses.has(page)) {
+          page.className = pageOriginalClasses.get(page)
+        }
+      })
+
       setIsDownloading(false)
     }
   }
-  
+
   const documentPages = useMemo(
     () => [
       {
@@ -373,7 +393,7 @@ export default function WillPreviewPage() {
         pageNumber: 3,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Legal Parameters:</strong> Understanding the operation of non-estate assets and life events under the Wills Act (Cap. 352).
               </p>
@@ -395,7 +415,7 @@ export default function WillPreviewPage() {
         pageNumber: 4,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Purpose:</strong> Explicitly establishes the identity of the testator, status of immediate kin, and revokes prior legal instruments.
               </p>
@@ -429,7 +449,7 @@ export default function WillPreviewPage() {
         pageNumber: 5,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Purpose:</strong> Designates fiduciary representatives to manage the estate liquidation and care for minor dependents.
               </p>
@@ -451,12 +471,12 @@ export default function WillPreviewPage() {
         pageNumber: 6,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Purpose:</strong> Specific gifts and asset allocations to named beneficiaries.
               </p>
             </div>
-            
+
             {/* Cash Gifts */}
             {cashGifts.length > 0 && (
               <div>
@@ -509,7 +529,7 @@ export default function WillPreviewPage() {
                 <ul className="mt-2 space-y-2 pl-5">
                   {propertyGifts.map((gift) => (
                     <li key={gift.id} className="list-disc">
-                      I bequeath my property at <Highlight>{gift.property?.streetAddress || 'address'}</Highlight> 
+                      I bequeath my property at <Highlight>{gift.property?.streetAddress || 'address'}</Highlight>
                       (valued at {formatMoney(gift.property?.estimatedValue)}) to <Highlight>{gift.recipientName}</Highlight>.
                     </li>
                   ))}
@@ -527,7 +547,7 @@ export default function WillPreviewPage() {
                     const accountType = gift.asset?.type?.replace(/_/g, ' ').toLowerCase() || 'financial account'
                     return (
                       <li key={gift.id} className="list-disc">
-                        I bequeath my <Highlight>{accountType}</Highlight> 
+                        I bequeath my <Highlight>{accountType}</Highlight>
                         {gift.asset?.institutionName ? ` from ${gift.asset.institutionName}` : ''}
                         {accountValue ? ` (valued at ${formatMoney(accountValue)})` : ''}
                         {' '}to <Highlight>{gift.recipientName}</Highlight>.
@@ -561,7 +581,7 @@ export default function WillPreviewPage() {
         pageNumber: 7,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Purpose:</strong> Dictates the definitive split of all remaining assets and introduces structural legal protection clauses.
               </p>
@@ -594,7 +614,7 @@ export default function WillPreviewPage() {
         pageNumber: 8,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Action:</strong> To be signed only when both witnesses are physically looking at your hand affixing the mark.
               </p>
@@ -632,12 +652,12 @@ export default function WillPreviewPage() {
         pageNumber: 9,
         body: (
           <div className="space-y-5 text-[0.94rem] leading-[1.75] text-[#3f4550]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
+            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
                 <strong>Directives:</strong> I instruct my executor to deliver these messages to my intended beneficiaries, either electronically or in hard copy. They should not be shared with anyone other than the recipient, and should be excluded from public availability.
               </p>
             </div>
-            
+
             {/* Personal Messages from Gifts */}
             {personalMessages.length > 0 ? (
               personalMessages.map((gift) => (
@@ -690,11 +710,11 @@ export default function WillPreviewPage() {
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{formatGiftDisplay(gift)}</td>
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{getGiftTypeDisplay(gift.giftType)}</td>
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957] text-center">
-                            <Highlight>{gift.recipientName}</Highlight> 
+                            <Highlight>{gift.recipientName}</Highlight>
                           </td>
                         </tr>
                       ))}
-                      
+
                       {propertyGifts.slice(0, 2).map((gift, idx) => (
                         <tr key={gift.id} className="border-t border-[#e1d7cb]">
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{formatGiftDisplay(gift)}</td>
@@ -704,7 +724,7 @@ export default function WillPreviewPage() {
                           </td>
                         </tr>
                       ))}
-                      
+
                       {gifts.length === 0 && (
                         <tr>
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">No assets added</td>
@@ -838,33 +858,52 @@ export default function WillPreviewPage() {
                   <h2 className="mt-2 text-[1.25rem] font-semibold text-[#241f1a]">Will pages from your live dashboard</h2>
                   <p className="text-[0.7rem] text-[#8a8378] mt-1">All {totalPages} pages included</p>
                 </div>
-                <button
-                  onClick={handleDownloadPDF}
-                  disabled={isDownloading}
-                  className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-4 py-2 text-[0.85rem] font-medium text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)] transition-all hover:bg-[#2a3548] disabled:opacity-50"
-                >
-                  <Download className="h-4 w-4" />
-                  {isDownloading ? 'Generating PDF...' : 'Download All Pages'}
-                </button>
+                {!!userData?.subscriptionType && (
+                  <button
+                    onClick={handleDownloadPDF}
+                    disabled={isDownloading}
+                    className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-4 py-2 text-[0.85rem] font-medium text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)] transition-all hover:bg-[#2a3548] disabled:opacity-50"
+                  >
+                    <Download className="h-4 w-4" />
+                    {isDownloading ? 'Generating PDF...' : 'Download All Pages'}
+                  </button>
+                )}
               </div>
-              <div 
-                ref={pdfContentRef} 
+              <div
+                ref={pdfContentRef}
                 className="max-h-[calc(100vh-220px)] space-y-5 overflow-auto pr-2"
-                style={{ 
+                style={{
                   backgroundColor: '#fbf4ed',
                   padding: '20px'
                 }}
               >
-                {documentPages.map((page) => (
-                  <PdfPageFrame
-                    key={page.pageNumber}
-                    pageNumber={page.pageNumber}
-                    totalPages={totalPages}
-                    title={page.pageTitle}
-                  >
-                    {page.body}
-                  </PdfPageFrame>
-                ))}
+                {documentPages.map((page, index) => {
+                  const isFree = userData?.subscriptionTier === 'FREE' || !userData?.subscriptionTier;
+                  const shouldBlur = isFree && index >= 2;
+
+                  return (
+                    <div key={page.pageNumber} className={shouldBlur ? 'relative' : ''}>
+                      <div className={shouldBlur ? 'blur-[8px] select-none pointer-events-none' : ''}>
+                        <PdfPageFrame
+                          pageNumber={page.pageNumber}
+                          totalPages={totalPages}
+                          title={page.pageTitle}
+                        >
+                          {page.body}
+                        </PdfPageFrame>
+                      </div>
+                      {shouldBlur && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10">
+                          <div className="bg-white/95 px-8 py-6 rounded-2xl shadow-xl border border-gray-100 text-center max-w-sm">
+                            <Lock className="w-10 h-10 text-[#c35b43] mx-auto mb-3" />
+                            <h3 className="text-xl font-bold text-gray-900">Premium Feature</h3>
+                            <p className="text-sm text-gray-600 mt-2 leading-relaxed">Upgrade to Premium to view the full document and download your complete PDF.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div className='mt-10'>
