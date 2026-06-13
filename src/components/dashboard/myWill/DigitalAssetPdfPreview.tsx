@@ -117,7 +117,7 @@ function DigitalAssetPdfPreview() {
           )}
         </div>
         
-        {(!userData?.subscriptionTier || userData?.subscriptionTier === 'FREE') && (
+        {(!userData?.subscriptionType) && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-[6px] rounded-[28px] mt-[60px]">
             <div className="bg-white/95 px-8 py-6 rounded-2xl shadow-xl border border-gray-100 text-center max-w-sm">
               <Lock className="w-10 h-10 text-[#c35b43] mx-auto mb-3" />
