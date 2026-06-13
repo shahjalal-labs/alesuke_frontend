@@ -11,6 +11,7 @@ const essentialFeatures = [
   "Final intentions – you last words of love",
   "Zero-access Legacy vault to revise your will. (Strictly confidential including us)",
   "1st 30 days unlimited revisions",
+   "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grabunlimited, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
 ];
 
 const unlimitedFeatures = [
@@ -45,7 +46,7 @@ export default function Pricing() {
               <p className="m-0 text-[0.95rem] leading-[1.5] text-[#6b6456]">A meticulously crafted self-customed will for your estate and final intentions</p>
             </div>
             <div>
-              <span className="text-[3rem] font-bold text-[#1e1912]">SGD 88</span>
+              <span className="text-[3rem] font-bold text-[#1e1912]">$88</span>
               <span className="ml-2 text-[0.9rem] text-[#6b6456]">one-time</span>
             </div>
             <ul className="m-0 flex flex-1 list-none flex-col gap-3 p-0">
@@ -87,7 +88,7 @@ export default function Pricing() {
               <p className="m-0 text-[0.95rem] leading-[1.5] text-grey">For those whose lives, assets, and families are in beautiful state of growth</p>
             </div>
             <div>
-              <span className="text-[3rem] font-bold text-default">SGD 2</span>
+              <span className="text-[3rem] font-bold text-default">$88 one time fee + $2/mth</span>
               <span className="ml-2 text-[0.9rem] text-grey">/ mth (billed annually)</span>
             </div>
             <ul className="m-0 flex flex-1 list-none flex-col gap-3 p-0">

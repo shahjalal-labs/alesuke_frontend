@@ -1,11 +1,13 @@
 "use client"
 import Image from 'next/image'
 import Link from 'next/link'
-// import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { ChevronDown, Circle, CircleDot, HelpCircle, ShieldCheck, BadgeCheck, CalendarDays, Package, Users, FileText, Home, LucideIcon } from 'lucide-react'
+import { ChevronDown, HelpCircle, ShieldCheck, BadgeCheck, CalendarDays, Package, Users, FileText, Home, LucideIcon, Check, Sparkles, Infinity } from 'lucide-react'
 
 import logo from '@/assets/logo.png'
+import checkIcon from '@/assets/check.png'
+import centerCImage from '@/assets/CloseUPenPaper.png'
+import bookIcon from "@/assets/book.png"
 import { useCheckoutEssentialWillMutation, useCheckoutUnlimitedWillMutation } from '@/redux/api/checkoutApi'
 import { useGetMeDataQuery } from '@/redux/api/authApi'
 
@@ -50,17 +52,39 @@ function DocumentRow({ title, icon: Icon, description }: { title: string; icon: 
   )
 }
 
+function CheckIcon() {
+  return (
+    <Image src={checkIcon} alt="Check" className="h-5 w-5" />
+  )
+}
+
+const essentialFeatures = [
+  "Comprehensive last will and final intentions",
+  "Time & Value. Get your will in 15 mins that traditional firms provide in 15 days",
+  "Final intentions – you last words of love",
+  "Zero-access Legacy vault to revise your will. (Strictly confidential including us)",
+  "30 days unlimited revisions",
+  "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grab, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
+]
+
+const unlimitedFeatures = [
+  "Comprehensive last will and final intentions",
+  "Time & Value. Get your will in 15 mins that traditional firms provide in 15 days",
+  "Final intentions – you last words of love",
+  "Unlimited changes for life",
+  "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grab, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
+]
+
 function CheckOut() {
-  // const router = useRouter()
-  const [activePlan, setActivePlan] = useState<'direct' | 'subscription'>('direct')
+  const [activeTab, setActiveTab] = useState<'essential' | 'unlimited'>('essential')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [checkoutEssentialWill, { isLoading: isEssentialLoading }] = useCheckoutEssentialWillMutation()
   const [checkoutUnlimitedWill, { isLoading: isUnlimitedLoading }] = useCheckoutUnlimitedWillMutation()
-  const{data: getMeData} = useGetMeDataQuery({});
+  const { data: getMeData } = useGetMeDataQuery({});
   const userData = getMeData?.data;
-  const fullName = userData.fullName || '';
+  const fullName = userData?.fullName || '';
 
-  const isLoading = activePlan === 'direct' ? isEssentialLoading : isUnlimitedLoading
+  const isLoading = activeTab === 'essential' ? isEssentialLoading : isUnlimitedLoading
   const checkoutPayload = {
     successUrl: 'https://will-way.smtsigma.com/will/checkout/success',
     cancelUrl: 'https://will-way.smtsigma.com/will/checkout/cancel',
@@ -71,7 +95,7 @@ function CheckOut() {
 
     try {
       const response =
-        activePlan === 'direct'
+        activeTab === 'essential'
           ? await checkoutEssentialWill(checkoutPayload).unwrap()
           : await checkoutUnlimitedWill(checkoutPayload).unwrap()
 
@@ -125,7 +149,7 @@ function CheckOut() {
 
             <SectionHeader
               icon={CalendarDays}
-              title={`${fullName}’s Estate Plan`}
+              title={`${fullName || 'Your'}’s Estate Plan`}
               subtitle="Everything you need for the future"
             />
 
@@ -138,13 +162,6 @@ function CheckOut() {
               <DocumentRow title="Last will & testament" icon={ShieldCheck} />
               <DocumentRow title="Guardianship arrangements" icon={Users} />
               <DocumentRow title="Schedule of assets" icon={Package} />
-
-              {/* <div className="px-4 py-5">
-                <p className="text-[1rem] font-semibold text-[#1d222c]">We verify your documents for free</p>
-                <p className="mt-2 max-w-[520px] text-[0.8rem] leading-[1.45] text-[#7a8190]">
-                  Upload your signature page and our friendly team will verify you&apos;ve done everything correctly.
-                </p>
-              </div> */}
             </div>
 
             <div className="rounded-[16px] border border-white/80 bg-white shadow-[0_12px_30px_rgba(17,24,39,0.05)]">
@@ -154,59 +171,83 @@ function CheckOut() {
               <div className="border-b border-[#ece7df] px-4 py-4">
                 <DocumentRow title="Legally valid in Singapore" icon={BadgeCheck} description="Fully valid after signing with two neutral witnesses. Professional will review included with every purchase." />
               </div>
-              {/* <div className="border-b border-[#ece7df] px-4 py-4">
-                <DocumentRow title="30-day money-back guarantee" icon={ShieldCheck} description="Every will comes with a 30-day money-back guarantee in case you&apos;re not satisfied. No strings attached." />
-              </div> */}
               <div className="px-4 py-4">
                 <DocumentRow title="Global coverage" icon={Home} description="Made in Singapore, to cover assets locally and abroad, especially for common law countries." />
               </div>
             </div>
           </section>
 
-          <aside className="rounded-[16px] border border-white/80 bg-[#f8efe5] p-4 shadow-[0_12px_30px_rgba(17,24,39,0.06)]">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#20242d]">Order Summary</p>
+          <aside>
+            <div className="rounded-[16px] border border-white/80 bg-[#f8efe5] p-4 shadow-[0_12px_30px_rgba(17,24,39,0.06)]">
+              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#20242d]">Choose Your Plan</p>
 
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setActivePlan('direct')}
-                className={`flex flex-1 items-center justify-between rounded-[6px] px-4 py-3 text-[0.78rem] font-semibold uppercase tracking-[0.08em] transition-colors ${activePlan === 'direct' ? 'bg-[#2ea0ff] text-white' : 'bg-[#cfe0ed] text-[#1d2430]'}`}
-              >
-                Direct Payment
-                {activePlan === 'direct' ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivePlan('subscription')}
-                className={`flex flex-1 items-center justify-between rounded-[6px] px-4 py-3 text-[0.78rem] font-semibold uppercase tracking-[0.08em] transition-colors ${activePlan === 'subscription' ? 'bg-[#2ea0ff] text-white' : 'bg-[#cfe0ed] text-[#1d2430]'}`}
-              >
-                Subscription Plan
-                {activePlan === 'subscription' ? <CircleDot className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-              </button>
-            </div>
+              {/* Tab Buttons */}
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('essential')}
+                  className={`flex flex-1 items-center justify-between rounded-[6px] px-4 py-3 text-[0.78rem] font-semibold uppercase tracking-[0.08em] transition-colors ${
+                    activeTab === 'essential' 
+                      ? 'bg-[#2ea0ff] text-white' 
+                      : 'bg-[#cfe0ed] text-[#1d2430]'
+                  }`}
+                >
+                  <span className="flex items-center gap-1">
+                    Essential Will
+                    {activeTab === 'essential' && <Sparkles className="h-3 w-3" />}
+                  </span>
+                  {activeTab === 'essential' ? (
+                    <div className="h-4 w-4 rounded-full border-2 border-white flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    </div>
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border-2 border-[#1d2430]" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('unlimited')}
+                  className={`flex flex-1 items-center justify-between rounded-[6px] px-4 py-3 text-[0.78rem] font-semibold uppercase tracking-[0.08em] transition-colors ${
+                    activeTab === 'unlimited' 
+                      ? 'bg-[#2ea0ff] text-white' 
+                      : 'bg-[#cfe0ed] text-[#1d2430]'
+                  }`}
+                >
+                  <span className="flex items-center gap-1">
+                    Unlimited Legacy
+                    {activeTab === 'unlimited' && <Infinity className="h-3 w-3" />}
+                  </span>
+                  {activeTab === 'unlimited' ? (
+                    <div className="h-4 w-4 rounded-full border-2 border-white flex items-center justify-center">
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    </div>
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border-2 border-[#1d2430]" />
+                  )}
+                </button>
+              </div>
 
-            <div className="mt-5 rounded-[12px] border border-[#e6ddd2] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(17,24,39,0.04)]">
-              {errorMessage ? (
-                <div className="mb-4 rounded-[10px] border border-[#e7b4b4] bg-[#fff3f3] px-4 py-3 text-[0.88rem] leading-[1.5] text-[#9f2f2f]">
-                  {errorMessage}
-                </div>
-              ) : null}
-
-              {activePlan === 'direct' ? (
-                <>
-                  <div className="flex items-center justify-between gap-3 border-b border-[#e9e1d7] pb-3">
-                    <p className="text-[0.95rem] font-semibold text-[#1d1f26]">1) $88 one time fee</p>
-                    <p className="text-[0.95rem] font-semibold text-[#1d1f26]">SGD 88.00</p>
+              {/* Essential Will Content */}
+              {activeTab === 'essential' && (
+                <div className="mt-5 rounded-[12px] border border-[#e6ddd2] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(17,24,39,0.04)]">
+                  <div className="">
+                    <p className="text-[25px] font-semibold text-[#1d1f26] pb-4">Essential Will</p>
+                    <p className="text-[0.95rem] font-semibold text-[#1d1f26]">
+                      <span className="text-[64px] font-bold">$88</span>
+                    </p>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-[0.92rem] text-[#1d1f26]">
-                    <span className="font-medium">Only allowed 30 days unlimited edit</span>
-                    <span className="font-semibold">SGD 88.00</span>
-                  </div>
-                  <p className="mt-1 text-[0.78rem] text-[#7f8794]">include GST</p>
+                  <ul className="mt-4 space-y-3">
+                    {essentialFeatures.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span className="text-[0.85rem] leading-[1.45] text-[#4a525f]">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                  <p className="mt-5 text-[0.8rem] leading-[1.5] text-[#687080]">
-                    After purchasing, you&apos;ll be able to download your will. All transactions are secured and encrypted by Stripe.
+                  <p className="mt-4 text-[0.78rem] leading-[1.5] text-[#687080]">
+                    After purchasing, you'll be able to download your will. All transactions are secured and encrypted by Stripe.
                   </p>
 
                   <button
@@ -217,40 +258,68 @@ function CheckOut() {
                   >
                     {isLoading ? 'Redirecting...' : 'Checkout'}
                   </button>
-                </>
-              ) : (
-                <div className="min-h-[344px] rounded-[10px] border border-[#ddd3c8] bg-[#f5f0ea] px-4 py-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[0.72rem] uppercase tracking-[0.2em] text-[#a2a3a7]">The living document</p>
-                    <span className="rounded-full bg-[#141826] px-3 py-1 text-[0.64rem] font-semibold uppercase tracking-[0.12em] text-white">Optional</span>
+                </div>
+              )}
+
+              {/* Unlimited Legacy Content */}
+              {activeTab === 'unlimited' && (
+                <div className="mt-5 rounded-[12px] border border-[#e6ddd2] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(17,24,39,0.04)]">
+                  <div className="relative">
+                    <div className="absolute -top-2 right-0">
+                      <span className="inline-block rounded-full bg-gradient-to-r from-[#081220] to-[#1D2736] px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-white">
+                        OPTIONAL
+                      </span>
+                    </div>
                   </div>
 
-                  <h3 className="mt-4 text-[2rem] leading-[1.05] text-[#23262e]">2) $88 one time fee + $2/mth</h3>
-                  <p className="mt-3 max-w-[250px] text-[0.9rem] leading-[1.55] text-[#8a8f9d]">
-                    (billed annually) Unlimited changes &amp; digital memorandum in will.
+                  <div className="pb-4">
+                    <div>
+                      <p className="text-[25px] font-semibold text-[#1d1f26]">Unlimited Legacy</p>
+                      {/* <span className="inline-flex items-center gap-1 text-[0.7rem] text-[#2ea0ff]">
+                        <Infinity className="h-3 w-3" />
+                        Unlimited updates
+                      </span> */}
+                    </div>
+                    <p className="text-[0.95rem] font-semibold text-[#1d1f26]">
+                      <span className="text-[64px] font-bold">$88</span> one time fee + <span className="font-bold">$2</span>/mth (billed annually)
+                    </p>
+                  </div>
+
+                  <ul className="mt-4 space-y-3">
+                    {unlimitedFeatures.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckIcon />
+                        <span className="text-[0.85rem] leading-[1.45] text-[#4a525f]">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                
+
+                  <p className="mt-4 text-[0.78rem] leading-[1.5] text-[#687080]">
+                    First year includes one-time fee + annual subscription. Cancel anytime.
                   </p>
-
-                  <div className="mt-6 flex items-end gap-2">
-                    <p className="text-[2.4rem] leading-none text-[#191c23]">SGD 2</p>
-                    <p className="pb-1 text-[0.78rem] text-[#80848f]">/ mth (billed annually)</p>
-                  </div>
-
-                  <div className="mt-6 space-y-3 text-[0.84rem] leading-[1.45] text-[#2a2f36]">
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Unlimited changes for life.</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Digital Asset Memorandum included in your will.</p>
-                    <p className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 flex-none" /> Final intentions and continued updates for your legacy.</p>
-                  </div>
 
                   <button
                     type="button"
                     onClick={handleCheckout}
                     disabled={isLoading}
-                    className="mt-6 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="mt-5 w-full rounded-[2px] bg-gradient-to-r from-[#151d2d] to-[#0d1320] px-6 py-3 text-[0.98rem] font-semibold text-white shadow-[0_10px_22px_rgba(18,24,38,0.18)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isLoading ? 'Redirecting...' : 'Choose this option'}
+                    {isLoading ? 'Redirecting...' : 'Subscribe Now'}
                   </button>
                 </div>
               )}
+
+              {errorMessage && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[0.85rem] text-red-600">
+                  {errorMessage}
+                </div>
+              )}
+
+              <p className="mt-4 text-center text-[0.7rem] text-[#687080]">
+                All transactions are secured and encrypted by Stripe
+              </p>
             </div>
           </aside>
         </div>
