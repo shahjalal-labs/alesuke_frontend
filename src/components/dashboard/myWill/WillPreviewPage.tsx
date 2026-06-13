@@ -3,12 +3,15 @@
 import type { ComponentType, ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
-import { ChevronDown, CheckCircle2, Lock, PenLine, Shield, Users2, Wallet, Wrench } from 'lucide-react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { ChevronDown, CheckCircle2, Lock, PenLine, Shield, Users2, Wallet, Download } from 'lucide-react'
 
 import logo from '@/assets/logo.png'
 import { useGetWillDetailsQuery } from '@/redux/api/profileApi'
 import DigitalAssetPdfPreview from './DigitalAssetPdfPreview'
+
+// Add html2pdf dependency
+import html2pdf from 'html2pdf.js'
 
 type FamilyMember = {
   id: string
@@ -149,24 +152,24 @@ function PdfPageFrame({
   pageNumber,
   totalPages,
   title,
-  blurred,
   children,
 }: {
   pageNumber: number
   totalPages: number
   title: string
-  blurred?: boolean
   children: ReactNode
 }) {
   return (
-    <article className={`relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10 ${blurred ? 'overflow-hidden' : ''}`}>
-      {blurred ? <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-[6px]" aria-hidden="true" /> : null}
+    <div 
+      className="relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10" 
+      style={{ pageBreakAfter: 'always' }}
+    >
       <div className="pl-4">
         <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[25px]">{title}</p>
         <div className="mt-3 h-[2px] bg-[#c35b43]" />
       </div>
 
-      <div className={`mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550] ${blurred ? 'blur-sm' : ''}`}>{children}</div>
+      <div className="mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">{children}</div>
 
       <div className="mt-10 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]">
         <div className="flex items-center justify-between gap-4">
@@ -174,7 +177,7 @@ function PdfPageFrame({
           <span>Page {pageNumber} of {totalPages}</span>
         </div>
       </div>
-    </article>
+    </div>
   )
 }
 
@@ -217,14 +220,19 @@ function getGiftTypeDisplay(giftType?: string | null): string {
 
 // Helper to get ID/NRIC display (placeholder for now)
 function getBeneficiaryId(recipientName?: string | null): string {
-  // In a real implementation, this would come from the member's ID data
-  // For now, return a placeholder
   return `(${recipientName?.replace(/\s/g, '').substring(0, 8) || 'ID'})`
 }
 
 export default function WillPreviewPage() {
   const { data: response, isLoading } = useGetWillDetailsQuery(undefined)
   const dashboard = (response?.data ?? {}) as WillDetailsResponse
+  const [isDownloading, setIsDownloading] = useState(false)
+  const pdfContentRef = useRef<HTMLDivElement>(null)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const [activeStep, setActiveStep] = useState<string>('children')
 
@@ -251,10 +259,68 @@ export default function WillPreviewPage() {
   const primaryExecutor = executors[0]?.person?.fullName ?? 'Not selected'
   const backupExecutor = executors[0]?.backupPerson?.fullName ?? 'Not selected'
   const familyNames = family.map((member) => member.fullName).filter(Boolean) as string[]
-  const firstDistributions = estateDistributions.slice(0, 3)
   const firstPetCaretaker = petCaretakers[0]?.caretaker?.fullName ?? backupExecutor
   const firstPetName = petCaretakers[0]?.pet?.fullName ?? familyNames[0] ?? 'Companion animal'
   const totalPages = 9
+
+  const handleDownloadPDF = async () => {
+    if (!pdfContentRef.current || !isClient) return
+    
+    setIsDownloading(true)
+    
+    try {
+      const element = pdfContentRef.current
+      
+      // Create a clone of the content to avoid affecting the displayed view
+      const cloneContainer = document.createElement('div')
+      cloneContainer.style.position = 'absolute'
+      cloneContainer.style.top = '-9999px'
+      cloneContainer.style.left = '-9999px'
+      cloneContainer.style.width = '720px' // Match max-w-[720px]
+      cloneContainer.style.backgroundColor = '#fbf4ed'
+      cloneContainer.style.padding = '20px'
+      
+      // Clone the content
+      const originalContent = element.cloneNode(true) as HTMLDivElement
+      cloneContainer.appendChild(originalContent)
+      document.body.appendChild(cloneContainer)
+      
+      // Ensure all pages have proper page breaks
+      const pages = cloneContainer.querySelectorAll('[style*="pageBreakAfter: always"]')
+      pages.forEach(page => {
+        (page as HTMLElement).style.pageBreakAfter = 'always'
+      })
+      
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `Will_${userName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          letterRendering: true, 
+          useCORS: true,
+          logging: false,
+          windowWidth: 720,
+          windowHeight: 1050
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        },
+        pagebreak: { mode: ['css', 'legacy'] }
+      }
+      
+      await html2pdf().set(opt).from(cloneContainer).save()
+      
+      // Clean up
+      document.body.removeChild(cloneContainer)
+    } catch (error) {
+      console.error('PDF generation failed:', error)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
   
   const documentPages = useMemo(
     () => [
@@ -267,7 +333,7 @@ export default function WillPreviewPage() {
             <h3 className="mt-4 max-w-[560px] text-[2.2rem] font-semibold uppercase leading-[1.06] tracking-[0.04em] text-[#23262e] lg:text-[3rem]">
               <Highlight>{userName}</Highlight>
             </h3>
-            <p className="mt-6 text-[0.92rem] uppercase tracking-[0.22em] text-[#b06248]">Created on 8th May 2026</p>
+            <p className="mt-6 text-[0.92rem] uppercase tracking-[0.22em] text-[#b06248]">Created on {new Date().toLocaleDateString()}</p>
             <p className="mt-4 max-w-[430px] text-[0.84rem] leading-[1.55] text-[#8b8a85]">
               Document framework created using Will&amp;Way. This document does not constitute formal legal advice.
             </p>
@@ -585,7 +651,6 @@ export default function WillPreviewPage() {
                 </div>
               ))
             ) : (
-              // Default fallback messages if no personal messages exist
               <>
                 <div className="space-y-2">
                   <p>
@@ -620,7 +685,6 @@ export default function WillPreviewPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Financial Gifts */}
                       {financialGifts.slice(0, 3).map((gift, idx) => (
                         <tr key={gift.id} className={idx > 0 ? 'border-t border-[#e1d7cb]' : ''}>
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{formatGiftDisplay(gift)}</td>
@@ -631,7 +695,6 @@ export default function WillPreviewPage() {
                         </tr>
                       ))}
                       
-                      {/* Property Gifts */}
                       {propertyGifts.slice(0, 2).map((gift, idx) => (
                         <tr key={gift.id} className="border-t border-[#e1d7cb]">
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">{formatGiftDisplay(gift)}</td>
@@ -642,7 +705,6 @@ export default function WillPreviewPage() {
                         </tr>
                       ))}
                       
-                      {/* Fallback if no gifts */}
                       {gifts.length === 0 && (
                         <tr>
                           <td className="px-4 py-3 text-[0.82rem] text-[#414957]">No assets added</td>
@@ -656,7 +718,6 @@ export default function WillPreviewPage() {
               </div>
             </div>
 
-            {/* Footer */}
             <p className="pt-3 text-center text-[0.78rem] uppercase tracking-[0.08em] text-[#8c8072]">
               MANAGED VIA THE WILL &amp; WAY PLATFORM — END OF PORTFOLIO DRAFT
             </p>
@@ -686,15 +747,6 @@ export default function WillPreviewPage() {
       userName,
     ]
   )
-
-  const allComplete = [
-    family.length > 0,
-    executors.length > 0,
-    estateDistributions.length > 0,
-    gifts.length > 0,
-    Boolean(dashboard.petCaretakers?.length),
-    financialAssets.length > 0 || properties.length > 0 || loans.length > 0,
-  ].every(Boolean)
 
   const nextSteps = [
     {
@@ -728,12 +780,6 @@ export default function WillPreviewPage() {
       icon: CheckCircle2,
       description: 'Review and revise your plan as your family and assets change over time.',
     },
-    // {
-    //   id: 'money-back',
-    //   title: '30-day money-back guarantee',
-    //   icon: Wrench,
-    //   description: 'If you are not satisfied, the service provides a simple satisfaction window for your purchase.',
-    // },
     {
       id: 'pets',
       title: 'Caretakers for your pets',
@@ -790,9 +836,25 @@ export default function WillPreviewPage() {
                 <div>
                   <p className="text-[0.76rem] uppercase tracking-[0.22em] text-[#8a8378]">PDF Preview</p>
                   <h2 className="mt-2 text-[1.25rem] font-semibold text-[#241f1a]">Will pages from your live dashboard</h2>
+                  <p className="text-[0.7rem] text-[#8a8378] mt-1">All {totalPages} pages included</p>
                 </div>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-4 py-2 text-[0.85rem] font-medium text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)] transition-all hover:bg-[#2a3548] disabled:opacity-50"
+                >
+                  <Download className="h-4 w-4" />
+                  {isDownloading ? 'Generating PDF...' : 'Download All Pages'}
+                </button>
               </div>
-              <div className="max-h-[calc(100vh-220px)] space-y-5 overflow-auto pr-2">
+              <div 
+                ref={pdfContentRef} 
+                className="max-h-[calc(100vh-220px)] space-y-5 overflow-auto pr-2"
+                style={{ 
+                  backgroundColor: '#fbf4ed',
+                  padding: '20px'
+                }}
+              >
                 {documentPages.map((page) => (
                   <PdfPageFrame
                     key={page.pageNumber}
@@ -851,16 +913,6 @@ export default function WillPreviewPage() {
                   />
                 ))}
               </div>
-            </div>
-
-            <div className="flex justify-end">
-              {allComplete ? (
-                <Link href="/will" className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-6 py-3 text-[0.98rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]">
-                  Continue
-                </Link>
-              ) : (
-                <span className="text-[0.95rem] text-[#6f7685]">Complete all sections to continue.</span>
-              )}
             </div>
           </aside>
         </div>
