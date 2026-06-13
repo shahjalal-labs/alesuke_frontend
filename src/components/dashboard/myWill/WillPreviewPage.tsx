@@ -290,7 +290,7 @@ export default function WillPreviewPage() {
         page.className = page.className.replace('shadow-[0_18px_40px_rgba(17,24,39,0.08)]', '').replace('ring-1', '').replace('ring-[#ebdfd2]', '')
       })
 
-      const opt = {
+      const opt: any = {
         margin: [0, 0, 0, 0],
         filename: `Will_${userName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
@@ -314,11 +314,11 @@ export default function WillPreviewPage() {
       // Render each page individually and explicitly add it as a new PDF page
       for (let i = 0; i < pages.length; i++) {
         if (i === 0) {
-          worker = worker.from(pages[i]).toPdf()
+          worker = worker.from(pages[i] as HTMLElement).toPdf()
         } else {
-          worker = worker.get('pdf').then((pdf: any) => {
+          worker = (worker.get('pdf').then((pdf: any) => {
             pdf.addPage()
-          }).from(pages[i]).toContainer().toCanvas().toPdf()
+          }) as any).from(pages[i] as HTMLElement).toContainer().toCanvas().toPdf()
         }
       }
 

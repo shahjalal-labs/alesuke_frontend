@@ -25,7 +25,7 @@ function DigitalAssetPdfPreview() {
       const width = element.offsetWidth;
       const height = element.offsetHeight + 40; // Add slight padding to the bottom
 
-      const opt = {
+      const opt: any = {
         margin: [0, 0, 0, 0],
         filename: `Digital_Asset_Memorandum_${userData?.fullName?.replace(/\s/g, '_') || 'User'}_${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
