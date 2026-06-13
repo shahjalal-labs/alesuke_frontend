@@ -12,7 +12,7 @@ export default function Hero() {
         preload="auto"
         aria-hidden="true"
       >
-        <source src="/forestVideo.mp4" type="video/mp4" />
+        <source src="https://api.zenexcloud.com/emdadullah/uploads/1781314957442-gy0omz42b47.mp4" type="video/mp4" />
       </video>
 
       <div className="absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_72%_50%,rgba(139,115,85,0.24)_0%,transparent_55%),radial-gradient(ellipse_at_25%_80%,rgba(26,48,40,0.55)_0%,transparent_60%),linear-gradient(to_right,rgba(10,18,14,0.84)_0%,rgba(10,18,14,0.62)_44%,rgba(10,18,14,0.16)_100%)]" />

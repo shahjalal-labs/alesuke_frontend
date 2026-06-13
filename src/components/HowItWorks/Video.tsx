@@ -29,7 +29,7 @@ export default function Video() {
         {/* video fills container via absolute positioning */}
         <video
           ref={videoRef}
-          src="https://api.zenexcloud.com/emdadullah/uploads/1779691729631-1ea7o0tj6i6.mp4"
+          src="https://api.zenexcloud.com/emdadullah/uploads/1781314834683-v8vupzktkc.mp4"
           poster="/posterImage.png"
           className="absolute left-0 top-0 h-full w-full object-cover z-0"
           onClick={togglePlay}
