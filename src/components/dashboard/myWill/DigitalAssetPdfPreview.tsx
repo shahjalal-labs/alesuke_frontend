@@ -75,8 +75,8 @@ function DigitalAssetPdfPreview() {
           </div>
           <p className="text-gray-700 leading-relaxed">
             I, <span className="font-medium">{userData?.fullName || '[Full Name]'}</span>, 
-            NRIC/Passport No: <span className="font-medium">{userData?.addresses?.[0]?.postCode || '[NRIC/Passport No]'}</span>, 
-            hereby authorize my appointed Executor(s) as named in my Will (my &quot;Digital Representative&quot;) 
+            NRIC/Passport No: <span className="font-medium">{userData?.nricPassportNo || 'N/A'}</span>, 
+            here by authorize my appointed Executor(s) as named in my Will (my &quot;Digital Representative&quot;) 
             to access, manage, and close the accounts listed herein.
           </p>
         </div>
