@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useGetAllAssetsQuery } from '@/redux/api/assetsApi';
 import { ReactNode } from 'react';
+import { useGetWillDetailsQuery } from '@/redux/api/profileApi';
 
 // Helper function to get icon based on asset type
 function getAssetIcon(type: string): ReactNode {
@@ -72,6 +73,10 @@ function getAssetIcon(type: string): ReactNode {
             );
         case 'PROPERTY':
         case 'REAL_ESTATE':
+        case 'RESIDENTIAL':
+        case 'COMMERCIAL':
+        case 'LAND':
+        case 'INDUSTRIAL':
             return (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 9L12 3L21 9V20H3V9Z" stroke="#8b7d73" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -104,7 +109,7 @@ function formatDate(dateString?: string | null): string | null {
 function AssetCard({ asset }: { asset: any }) {
     const typeLabel = getTypeLabel(asset.type);
     const Icon = getAssetIcon(asset.type);
-    const hasTags = asset.isJointlyOwned || asset.isNominated;
+    const hasTags = asset.isJointlyOwned || asset.isNominated || asset.isJointProperty;
 
     // Determine primary display title
     let title = '';
@@ -112,6 +117,11 @@ function AssetCard({ asset }: { asset: any }) {
     else if (asset.accountNumber) title = asset.accountNumber;
     else if (asset.policyNumber) title = `Policy: ${asset.policyNumber}`;
     else if (asset.companyName) title = asset.companyName;
+    else if (asset.streetAddress) title = asset.streetAddress;
+    else if (asset.type === 'RESIDENTIAL') title = 'Residential Property';
+    else if (asset.type === 'COMMERCIAL') title = 'Commercial Property';
+    else if (asset.type === 'LAND') title = 'Land';
+    else if (asset.type === 'INDUSTRIAL') title = 'Industrial Property';
     else title = typeLabel;
 
     // Secondary info line
@@ -123,7 +133,14 @@ function AssetCard({ asset }: { asset: any }) {
         secondaryInfo = `Account: ${asset.accountNumber}`;
     } else if (asset.type === 'INVESTMENT_ACCOUNT' && asset.companyName) {
         secondaryInfo = `Holding: ${asset.companyName}`;
+    } else if (asset.type === 'RESIDENTIAL' || asset.type === 'COMMERCIAL' || asset.type === 'LAND' || asset.type === 'INDUSTRIAL') {
+        if (asset.unitNumber) secondaryInfo = `Unit: ${asset.unitNumber}`;
+        if (asset.postcode) secondaryInfo += ` • Postcode: ${asset.postcode}`;
+        if (asset.country) secondaryInfo += ` • ${asset.country}`;
     }
+
+    // Get the value to display (approximateValue for financial, estimatedValue for properties)
+    const displayValue = asset.approximateValue ?? asset.estimatedValue ?? asset.faceValue;
 
     return (
         <div className="group rounded-xl border border-[#ece8e2] bg-white p-5 transition-all duration-200 hover:shadow-md">
@@ -137,16 +154,10 @@ function AssetCard({ asset }: { asset: any }) {
                             <span className="text-xs font-medium uppercase tracking-wide text-[#b0a69b]">{typeLabel}</span>
                             <h4 className="mt-0.5 text-lg font-semibold text-[#1a1a1a]">{title}</h4>
                         </div>
-                        {asset.approximateValue != null && (
+                        {displayValue != null && (
                             <div className="text-right">
                                 <span className="text-sm text-[#8b7d73]">Estimated Value</span>
-                                <p className="text-xl font-bold text-[#192233]">{formatCurrency(asset.approximateValue)}</p>
-                            </div>
-                        )}
-                        {asset.faceValue != null && asset.type === 'INSURANCE_PLAN' && (
-                            <div className="text-right">
-                                <span className="text-sm text-[#8b7d73]">Face Value</span>
-                                <p className="text-xl font-bold text-[#192233]">{formatCurrency(asset.faceValue)}</p>
+                                <p className="text-xl font-bold text-[#192233]">{formatCurrency(displayValue)}</p>
                             </div>
                         )}
                     </div>
@@ -171,6 +182,15 @@ function AssetCard({ asset }: { asset: any }) {
                                         <path d="M18 8H6L7 18H17L18 8Z" />
                                     </svg>
                                     Nominated
+                                </span>
+                            )}
+                            {asset.isJointProperty && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-[#eef6f9] px-3 py-1 text-xs text-[#5b6b72]">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                    Joint Property
                                 </span>
                             )}
                         </div>
@@ -200,6 +220,14 @@ function getTypeLabel(type?: string): string {
         case 'PROPERTY':
         case 'REAL_ESTATE':
             return 'Property';
+        case 'RESIDENTIAL':
+            return 'Residential Property';
+        case 'COMMERCIAL':
+            return 'Commercial Property';
+        case 'LAND':
+            return 'Land';
+        case 'INDUSTRIAL':
+            return 'Industrial Property';
         default:
             return type?.replace('_', ' ') ?? 'Asset';
     }
@@ -207,11 +235,21 @@ function getTypeLabel(type?: string): string {
 
 export default function AssetVault() {
     const { data, isLoading, isFetching, error } = useGetAllAssetsQuery(undefined);
+    const { data: willDetails } = useGetWillDetailsQuery(undefined);
     const assets = data?.data ?? [];
+
+    // Get properties from will details if available
+    const willProperties = willDetails?.data?.assets?.properties ?? [];
+    
+    // Combine assets from both sources for properties
+    const allProperties = [
+        ...assets.filter((a: any) => ['PROPERTY', 'REAL_ESTATE'].includes(a.type)),
+        ...willProperties
+    ];
 
     // Separate assets by category
     const financeAssets = assets.filter((a: any) => !['PROPERTY', 'REAL_ESTATE'].includes(a.type));
-    const propertyAssets = assets.filter((a: any) => ['PROPERTY', 'REAL_ESTATE'].includes(a.type));
+    const propertyAssets = allProperties;
 
     const Section = ({ title, description, assets, emptyMessage }: { title: string; description: string; assets: any[]; emptyMessage: string }) => (
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm transition-all">
@@ -227,8 +265,8 @@ export default function AssetVault() {
                     </div>
                 ) : assets.length ? (
                     <div className="space-y-4">
-                        {assets.map((asset: any) => (
-                            <AssetCard key={asset.id} asset={asset} />
+                        {assets.map((asset: any, index: number) => (
+                            <AssetCard key={asset.id || index} asset={asset} />
                         ))}
                     </div>
                 ) : (
@@ -255,11 +293,33 @@ export default function AssetVault() {
         );
     }
 
+    // Calculate totals from summary if available
+    const summary = willDetails?.data?.summary;
+    const totalPropertiesValue = summary?.totalProperties ?? propertyAssets.reduce((sum: number, p: any) => sum + (p.estimatedValue || 0), 0);
+    const totalFinancialValue = summary?.totalFinancial ?? financeAssets.reduce((sum: number, f: any) => sum + (f.approximateValue || f.faceValue || 0), 0);
+    const netWorth = summary?.netWorth ?? (totalFinancialValue + totalPropertiesValue);
+
     return (
         <section className="w-full px-8 py-8">
             <div className="mb-12">
                 <h1 className="mb-3 text-6xl font-semibold italic tracking-tight text-[#192233]">Asset Vault</h1>
                 <p className="text-xl text-[#8b7d73]">All your assets, organised in one place.</p>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="rounded-2xl bg-gradient-to-br from-[#192233] to-[#2a3a5c] p-6 text-white shadow-lg">
+                    <p className="text-sm font-medium uppercase tracking-wide text-white/70">Total Financial Assets</p>
+                    <p className="mt-2 text-3xl font-bold">{formatCurrency(totalFinancialValue)}</p>
+                </div>
+                <div className="rounded-2xl bg-gradient-to-br from-[#2d5a4c] to-[#3d7a66] p-6 text-white shadow-lg">
+                    <p className="text-sm font-medium uppercase tracking-wide text-white/70">Total Properties Value</p>
+                    <p className="mt-2 text-3xl font-bold">{formatCurrency(totalPropertiesValue)}</p>
+                </div>
+                <div className="rounded-2xl bg-gradient-to-br from-[#8b5d3c] to-[#b07d5a] p-6 text-white shadow-lg">
+                    <p className="text-sm font-medium uppercase tracking-wide text-white/70">Net Worth</p>
+                    <p className="mt-2 text-3xl font-bold">{formatCurrency(netWorth)}</p>
+                </div>
             </div>
 
             <div className="space-y-10">
