@@ -142,7 +142,7 @@ export default function Header() {
               className="fixed inset-0 "
               onClick={() => setMenuOpen(false)}
             />
-            <div className="mobile-menu fixed left-0 right-0 top-[68px] z-[100] max-h-[calc(100vh-68px)] overflow-y-auto border-t border-[#f0efed] bg-[#FFF8F3CC] backdrop-blur-md p-5 shadow-lg">
+            <div className="mobile-menu fixed left-0 right-0 top-[68px] z-[100] max-h-[calc(100vh-68px)] overflow-y-auto border-t border-[#f0efed] bg-[#FFF8F3CC]/95 backdrop-blur-md p-5 shadow-lg">
               <div className="flex flex-col p-5">
                 {isLoggedIn ? (
                   <>
@@ -158,11 +158,11 @@ export default function Header() {
                     </div>
 
                     {/* Navigation Links */}
-                    <div className="space-y-1">
+                    <div className="space-y-4">
                       <Link
                         href="/pricing"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0] border bordersecon"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0] hover:border-none border border-black/50"
                       >
                         Pricing
                       </Link>
@@ -170,7 +170,7 @@ export default function Header() {
                       <Link
                         href="/my-will"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0]"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0] hover:border-none border border-black/50"
                       >
                         <FileText className="h-5 w-5 text-[#8b7d73]" />
                         My Will
