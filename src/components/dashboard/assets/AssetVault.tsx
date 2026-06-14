@@ -300,7 +300,7 @@ export default function AssetVault() {
     const netWorth = summary?.netWorth ?? (totalFinancialValue + totalPropertiesValue);
 
     return (
-        <section className="w-full px-8 py-8">
+        <section className="w-full px-4 py-8">
             <div className="mb-12">
                 <h1 className="mb-3 text-6xl font-semibold italic tracking-tight text-[#192233]">Asset Vault</h1>
                 <p className="text-xl text-[#8b7d73]">All your assets, organised in one place.</p>

@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: Props) {
             <Menu className="h-5 w-5" />
           </button>
 
-          <Link href="/will" className="inline-flex items-center">
+          <Link href="/" className="inline-flex items-center">
             <Image src={logo} alt="Will & Way" className="h-auto w-[140px]" priority />
           </Link>
         </div>

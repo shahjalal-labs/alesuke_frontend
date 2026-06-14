@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 
 import logo from "@/assets/logo.png";
+import { CrossIcon, X } from "lucide-react";
 
 type SidebarProps = {
   onNavigate?: () => void;
@@ -66,13 +67,19 @@ export default function Sidebar({ onNavigate, mobile = false }: SidebarProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <Link
-        href="/will"
+     <div className="flex items-center justify-between">
+       <Link
+        href="/"
         onClick={onNavigate}
         className={mobile ? "mb-6 inline-flex items-center" : "mb-6 inline-flex items-center pl-5"}
       >
-        <Image src={logo} alt="Will & Way" className={mobile ? "h-auto w-[170px]" : "h-auto w-[210px]"} priority />
+        <Image src={logo} alt="Will & Way" className={mobile ? "h-auto w-[150px]" : "h-auto w-[210px]"} priority />
       </Link>
+
+      <button onClick={onNavigate} className="visible rounded-[4px] p-1 text-[#162030] transition hover:bg-white/70 hover:text-[#162030] lg:hidden">
+        <X/>
+      </button>
+     </div>
 
       <div className="flex min-h-0 flex-1 flex-col rounded-[8px] border border-[#e8ddd0] bg-[#f2e5d8] px-3 py-4">
         <div className="mb-4 border-b border-[#1b2333]/20 px-1 pb-4 pt-2">
