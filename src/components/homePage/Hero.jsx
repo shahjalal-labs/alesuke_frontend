@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Cookies from "js-cookie";
 
 export default function Hero() {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -13,6 +14,8 @@ export default function Hero() {
       setIsVideoPlaying(true);
     }
   }, [isVideoLoaded, isVideoPlaying]);
+
+  const token = Cookies.get("accessToken");
 
   return (
     <section className="relative flex min-h-screen items-center overflow-hidden bg-[#1a3028]">
@@ -65,7 +68,7 @@ export default function Hero() {
         </p>
 
         <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Link href="/login">
+          <Link href={`${token ? "/will" : "/login"}`}>
             <button className="rounded-md bg-gradient-to-l from-[#1D2736] to-[#081220] px-10 py-4 text-[1rem] font-medium tracking-[0.02em] text-[#f5f0e8] shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition-colors duration-200 hover:bg-[#22342d] font-sans">
               Write a will online
             </button>

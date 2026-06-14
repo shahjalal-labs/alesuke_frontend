@@ -16,8 +16,15 @@ function DigitalAssetPdfPreview() {
   const [isDownloading, setIsDownloading] = useState(false);
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
+  // Determine access based on subscription
+  const subscriptionType = userData?.subscriptionType;
+  const subscriptionTier = userData?.subscriptionTier;
+
+  // Show content and download button only for PREMIUM users OR users with SUBSCRIPTION type
+  const hasAccess = subscriptionTier === 'PREMIUM' || subscriptionType === 'SUBSCRIPTION' || subscriptionType == "ONE_TIME";
+
   const handleDownloadPDF = async () => {
-    if (!pdfContentRef.current) return;
+    if (!hasAccess || !pdfContentRef.current) return;
     setIsDownloading(true);
     const element = pdfContentRef.current;
 
@@ -97,11 +104,10 @@ function DigitalAssetPdfPreview() {
 
   return (
     <div className="space-y-6">
-
-
       <div className="rounded-[28px] border border-[#e4d8cb] bg-[#efe7db] p-4 shadow-[0_20px_50px_rgba(17,24,39,0.06)] mt-10 relative">
-        <div className="flex items-center justify-end">
-          {!!userData?.subscriptionType && (
+        {/* Download Button - Only show for users with access */}
+        {hasAccess && (
+          <div className="flex items-center justify-end">
             <button
               onClick={handleDownloadPDF}
               disabled={isDownloading}
@@ -114,20 +120,24 @@ function DigitalAssetPdfPreview() {
               )}
               {isDownloading ? 'Generating PDF...' : 'Download PDF'}
             </button>
-          )}
-        </div>
-        
-        {(!userData?.subscriptionType) && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-[10px] rounded-[28px] mt-[60px]">
+          </div>
+        )}
+
+        {/* Lock Overlay for users without access (FREE tier or ONE_TIME payment users) */}
+        {!hasAccess && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-[6px] rounded-[28px]">
             <div className="bg-white/95 px-8 py-6 rounded-2xl shadow-xl border border-gray-100 text-center max-w-sm">
               <Lock className="w-10 h-10 text-[#c35b43] mx-auto mb-3" />
               <h3 className="text-xl font-bold text-gray-900">Premium Feature</h3>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">Upgrade to Premium to view and download your Digital Asset Memorandum.</p>
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                Upgrade to Premium to view and download your Digital Asset Memorandum.
+              </p>
             </div>
           </div>
         )}
 
-        <div className={`max-w-4xl mx-auto bg-white shadow-lg my-8 ${(!userData?.subscriptionTier || userData?.subscriptionTier === 'FREE') ? 'pointer-events-none select-none blur-[4px]' : ''}`}>
+        {/* PDF Content - Blurred for users without access */}
+        <div className={`max-w-4xl mx-auto bg-white shadow-lg my-8 ${!hasAccess ? 'pointer-events-none select-none blur-[4px]' : ''}`}>
           {/* Main Container */}
           <div ref={pdfContentRef} className="p-8 md:p-12 bg-white">
             {/* Title */}
@@ -147,7 +157,7 @@ function DigitalAssetPdfPreview() {
               <p className="text-gray-700 leading-relaxed">
                 I, <span className="font-medium">{userData?.fullName || '[Full Name]'}</span>,
                 NRIC/Passport No: <span className="font-medium">{userData?.nricPassportNo || 'N/A'}</span>,
-                here by authorize my appointed Executor(s) as named in my Will (my &quot;Digital Representative&quot;)
+                hereby authorize my appointed Executor(s) as named in my Will (my &quot;Digital Representative&quot;)
                 to access, manage, and close the accounts listed herein.
               </p>
             </div>
