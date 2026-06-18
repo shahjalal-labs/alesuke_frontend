@@ -387,9 +387,9 @@ export default function Account() {
             {selectedFinancialAccountGift ? (
               <div className="mb-4 rounded-[6px] border border-[#d7d7d7] bg-white px-4 py-4 text-[0.92rem] text-[#52606f] shadow-[0_1px_0_rgba(17,24,39,0.02)] md:px-5">
                 <div className="font-semibold text-[#1d2430]">Selected financial account gift</div>
-                <div className="mt-1 text-[0.84rem] text-[#7b8594]">
+                {/* <div className="mt-1 text-[0.84rem] text-[#7b8594]">
                   Asset ID: {selectedFinancialAccountGift.assetId ?? selectedFinancialAccountGift.asset?.id ?? 'N/A'}
-                </div>
+                </div> */}
                 <div className="mt-1 text-[0.84rem] text-[#7b8594]">
                   Account:{' '}
                   {selectedAsset ? getAssetTitle(selectedAsset) : selectedFinancialAccountGift.asset ? getAssetTitle(selectedFinancialAccountGift.asset) : 'N/A'}
