@@ -18,6 +18,12 @@ type FamilyMember = {
   id: string
   fullName?: string | null
   relationType?: string | null
+  typeOfIdentifier?: string | null
+  identifierValue?: string | null
+  dateOfBirth?: string | null
+  governmentIssuedId?: boolean | null
+  petType?: string | null
+  petDescription?: string | null
 }
 
 type ExecutorRecord = {
@@ -223,6 +229,49 @@ function getBeneficiaryId(recipientName?: string | null): string {
   return `(${recipientName?.replace(/\s/g, '').substring(0, 8) || 'ID'})`
 }
 
+// Helper function to format relation phrase
+function getRelationPhrase(member: FamilyMember): string {
+  const rel = member.relationType
+  if (rel === 'SPOUSE') return 'My legal spouse is '
+  if (rel === 'PARTNER') return 'My partner is '
+  if (rel === 'CHILD') return 'My child is '
+  if (rel === 'PET') {
+    const petType = member.petType || 'companion animal'
+    return `My pet (${petType}) is `
+  }
+  return 'My family member is '
+}
+
+// Helper to format ID display for family members
+function getFamilyMemberIdDisplay(member: FamilyMember): string {
+  const hasId = member.governmentIssuedId && member.identifierValue
+  const rawType = member.typeOfIdentifier || 'NRIC_OR_FIN'
+  let typeLabel = 'NRIC'
+  if (rawType === 'PASSPORT') typeLabel = 'Passport'
+  else if (rawType === 'FOREIGN_ID') typeLabel = 'Foreign ID'
+
+  return ` (${typeLabel}: ${hasId ? member.identifierValue : 'N/A'})`
+}
+
+// Helper to format Date of Birth
+function formatDateOfBirth(dobString?: string | null): string {
+  if (!dobString) return ''
+  try {
+    const date = new Date(dobString)
+    if (Number.isNaN(date.getTime())) return ''
+    const day = date.getUTCDate()
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    const month = months[date.getUTCMonth()]
+    const year = date.getUTCFullYear()
+    return `, born on ${day} ${month} ${year}`
+  } catch (error) {
+    return ''
+  }
+}
+
 export default function WillPreviewPage() {
   const { data: response, isLoading } = useGetWillDetailsQuery(undefined)
   const dashboard = (response?.data ?? {}) as WillDetailsResponse
@@ -388,24 +437,27 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+
       {
-        pageTitle: 'Essential Singapore Statutory Principles',
+        pageTitle: 'Essential Singapore Statutory Principles & ACKNOWLEDGMENTS',
         pageNumber: 3,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3" style={{ pageBreakInside: 'avoid' }}>
               <p>
-                <strong>Legal Parameters:</strong> Understanding the operation of non-estate assets and life events under the Wills Act (Cap. 352).
+                <strong>Legal Parameters:</strong> Understanding the operation of non-estate assets and life events under the Wills Act (Cap. 352) of Singapore.
               </p>
             </div>
             <p>
-              2.1 Impact of Subsequent Marriage: If your civil status changes, the highlighted testator reference remains <Highlight>{userName}</Highlight>.
+              2.1 Declaration of Contemplation and Effect of Marriage: I, <Highlight>{userName}</Highlight>, declare that this Will is made with the explicit awareness of statutory rules governing civil status changes. Pursuant to Section 13 of the Wills Act (Cap. 352), I acknowledge that any subsequent marriage entered into by me will automatically revoke this Will unless explicitly declared herein to be made in contemplation of such marriage.
             </p>
             <p>
-              2.2 The Principle of Joint Survivorship: Real property or bank holdings registered under a joint framework are handled separately from the yellow-marked family response.
+              2.2 Operation of the Principle of Joint Survivorship:
+              I explicitly acknowledge and direct that any real estate interests, immovable property, bank accounts, or financial holdings registered under a joint tenancy or joint framework at the time of my death shall be handled outside the terms of this Will. Such holdings shall pass automatically to the surviving joint tenant by operation of law under the principle of survivorship and are excluded from my residuary estate.
             </p>
             <p>
-              2.3 Separation of Central Provident Fund (CPF): Your CPF savings are strictly isolated from estate distribution under this will.
+              2.3 Statutory Separation of Central Provident Fund (CPF):
+              I recognize that my Central Provident Fund (CPF) savings, including balances in my Ordinary, Special, Medisave, and Retirement Accounts, are strictly isolated from estate distribution under this Will by virtue of Singapore statutory law. I acknowledge that such fund balances must be distributed solely in accordance with a valid CPF Nomination made separately with the CPF Board.
             </p>
           </div>
         ),
@@ -421,19 +473,26 @@ export default function WillPreviewPage() {
               </p>
             </div>
             <p>
-              3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN, declare this instrument to be my definitive Last Will and Testament.
+              3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN, presently domiciled at <Highlight>{userData?.addresses?.[0]?.streetAddress || 'N/A'}, {userData?.addresses[0]?.unitNumber || 'N/A'}, {userData?.addresses[0]?.postCode || 'N/A'}</Highlight> being of sound mind and acting free from external coercion, declare this instrument to be my definitive Last Will and Testament. I hereby revoke all previous testamentary documents, codicils, and acts executed by me concerning assets within Singapore.
             </p>
             <p>
-              3.2 I formally declare that my immediate family structure comprises the following individuals:
+              3.2 I formally declare that my immediate family consists of the following individuals:
             </p>
             <ul className="space-y-3 pl-5">
               {family.length ? (
-                family.map((member, index) => (
-                  <li key={member.id ?? `${member.fullName ?? 'member'}-${index}`} className="list-disc">
-                    My family member is <Highlight>{member.fullName ?? 'Unnamed family member'}</Highlight>
-                    {member.relationType ? ` (${member.relationType})` : ''}.
-                  </li>
-                ))
+                family.map((member, index) => {
+                  const relationPhrase = getRelationPhrase(member)
+                  const idDisplay = getFamilyMemberIdDisplay(member)
+                  const dobDisplay = formatDateOfBirth(member.dateOfBirth)
+                  return (
+                    <li key={member.id ?? `${member.fullName ?? 'member'}-${index}`} className="list-disc">
+                      {relationPhrase}
+                      <Highlight>{member.fullName ?? 'Unnamed family member'}</Highlight>
+                      {idDisplay}
+                      {dobDisplay}.
+                    </li>
+                  )
+                })
               ) : (
                 <li className="list-disc">No family members added yet.</li>
               )}
@@ -455,7 +514,7 @@ export default function WillPreviewPage() {
               </p>
             </div>
             <p>
-              4.1 Fiduciary Appointment: I nominate <Highlight>{primaryExecutor}</Highlight> to act as the sole Executor and Trustee of this my Will.
+              4.1 Fiduciary Appointment: I appoint <Highlight>{primaryExecutor}</Highlight> to act as the sole Executor and Trustee of this my Will.
             </p>
             <p>
               4.2 Minority Guardianship Mandate: In the event that my children are below the age of twenty-one, I appoint <Highlight>{backupExecutor}</Highlight> as the backup guardian.
@@ -577,7 +636,7 @@ export default function WillPreviewPage() {
         ),
       },
       {
-        pageTitle: 'Apportionment of Residuary Estate & Legal Defenses',
+        pageTitle: 'Appointment of Residuary Estate & Legal Defenses',
         pageNumber: 7,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
@@ -587,13 +646,29 @@ export default function WillPreviewPage() {
               </p>
             </div>
             <p>
-              6.1 Residuary Allocations: All remaining capital, real estate interests, and investments not specifically named elsewhere shall be settled and distributed among the following survivors:
+              6.1 Residuary Allocations: All remaining capital, real estate interests, and investments not specifically named elsewhere shall be settled and distributed among the following survivors, subject to the condition that if any beneficiary named below predeceases me, their share shall pass to the Backup Distributee as defined below. My Executors shall determine the status of each beneficiary at the time of distribution.
+            </p>
+            <p>
+              If they survive me, the primary distribution shall be:
             </p>
             <ul className="space-y-3 pl-5">
               {estateDistributions.length ? (
                 estateDistributions.map((distribution) => (
                   <li key={distribution.id} className="list-disc">
                     Allocation to <Highlight>{distribution.person?.fullName ?? 'Not selected'}</Highlight> with a <Highlight>{formatPercent(distribution.percentage)}</Highlight> share.
+                    <ul className="mt-1 pl-6 list-disc">
+                      {distribution.backupDistributors && distribution.backupDistributors.length > 0 ? (
+                        distribution.backupDistributors.map((backup, bIdx) => (
+                          <li key={backup.person?.id || bIdx}>
+                            If they predecease me, to <Highlight>{backup.person?.fullName || 'N/A'}</Highlight>.
+                          </li>
+                        ))
+                      ) : (
+                        <li>
+                          If they predecease me, to <Highlight>N/A</Highlight>.
+                        </li>
+                      )}
+                    </ul>
                   </li>
                 ))
               ) : (
@@ -601,7 +676,7 @@ export default function WillPreviewPage() {
               )}
             </ul>
             <p>
-              6.2 Severability Clause: If any clause is found invalid, the remaining instrument and highlighted beneficiary data will remain intact.
+              <strong>6.2 Severability and Validity:</strong> If any clause, provision, or part of this Will is determined by a court of competent jurisdiction to be invalid, illegal, or unenforceable, such determination shall not affect the validity of the rest of this Will. All other sections of this Instrument and the defined beneficiary data shall remain in full force and effect. The remaining provisions of this Will shall be construed and enforced as if such invalid, illegal, or unenforceable provision were not contained herein.
             </p>
             <p>
               6.3 Final Binding Declaration: I sign this document openly in the presence of my witnesses.
