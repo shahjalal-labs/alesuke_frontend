@@ -8,8 +8,8 @@ import Swal from "sweetalert2";
 
 import AddAccountModal, { type AccountType } from "@/components/ui/AddAccountModal";
 import { useAddAssetsMutation, useDeleteAssetsMutation, useEditAssetsMutation, useGetAllAssetsQuery } from "@/redux/api/assetsApi";
-import { useAddGiftMutation, useGetGiftsTypeQuery } from "@/redux/api/giftApi";
-import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
+import { useGetGiftsTypeQuery } from "@/redux/api/giftApi";
+// import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
 import { useRouter } from "next/navigation";
 
 type AssetType =

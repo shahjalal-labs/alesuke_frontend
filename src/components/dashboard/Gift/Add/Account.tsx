@@ -97,7 +97,7 @@ function normalizeAssets(response: unknown): AssetRecord[] {
     results?: unknown
   }
 
-  const direct = candidate.data ?? candidate.assets ?? candidate.items ?? candidate.results
+  const direct = candidate.data ?? candidate.assets ?? candidate.items ?? candidate.results 
 
   if (Array.isArray(direct)) {
     return direct as AssetRecord[]
