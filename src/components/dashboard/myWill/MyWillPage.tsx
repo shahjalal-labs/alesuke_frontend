@@ -627,7 +627,7 @@ export default function MyWillPage() {
                         <div className="mt-4 border-t border-[#ece8e2] pt-4">
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[#8c8072]">
-                              Backup distributors
+                             Backup Distributees
                             </p>
                             <span className="text-[0.78rem] text-[#7a8190]">
                               {backupMembers.length ? `${backupMembers.length} selected` : "None selected"}
@@ -642,7 +642,7 @@ export default function MyWillPage() {
                             </div>
                           ) : (
                             <p className="rounded-[8px] bg-white px-3 py-3 text-[0.92rem] text-[#6f7685]">
-                              No backup distributors have been added for this distribution.
+                              No backup distributees have been added for this distribution.
                             </p>
                           )}
                         </div>
