@@ -871,12 +871,7 @@ export default function WillPreviewPage() {
       icon: Shield,
       description: 'Your will can be used as part of a valid estate planning process in Singapore when properly executed.',
     },
-    {
-      id: 'support',
-      title: 'Continued support after purchase',
-      icon: CheckCircle2,
-      description: 'Review and revise your plan as your family and assets change over time.',
-    },
+    
     {
       id: 'pets',
       title: 'Caretakers for your pets',
