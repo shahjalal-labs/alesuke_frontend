@@ -62,6 +62,7 @@ export default function MaritalStatus() {
       ...profileSetup,
       maritalStatus: apiMaritalStatus,
     };
+    console.log("final profile data", finalProfileData)
 
     const formData = new FormData();
     formData.append(
@@ -71,6 +72,7 @@ export default function MaritalStatus() {
         nickname: finalProfileData.nickname,
         religion: finalProfileData.religion,
         maritalStatus: finalProfileData.maritalStatus,
+        nid: finalProfileData.nric,
       })
     );
 

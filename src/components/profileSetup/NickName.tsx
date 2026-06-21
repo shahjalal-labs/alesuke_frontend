@@ -17,7 +17,7 @@ export default function NickName() {
 
   const handleNext = () => {
     dispatch(setNickname(nickName.trim()));
-    router.push("/profile-setup/marital-status");
+    router.push("/profile-setup/nric"); // Changed from marital-status to nric
   };
 
   return (
@@ -33,13 +33,13 @@ export default function NickName() {
       }
       description={
         <span>
-          We’ll use your preferred name here to keep things friendly, saving the full legal
+          We'll use your preferred name here to keep things friendly, saving the full legal
           name for the official paperwork
         </span>
       }
       backHref="/profile-setup/name"
-      nextHref="/profile-setup/marital-status"
-      nextDisabled={!nickName.trim()}
+      nextHref="/profile-setup/nric" // Changed from marital-status to nric
+      nextDisabled={false}
       onNext={handleNext}
     >
       <div className="rounded-[10px] bg-[#f3e6d7] px-5 py-6 sm:px-8 sm:py-8">

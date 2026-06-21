@@ -73,6 +73,7 @@ type PetCaretakerRecord = {
 type WillDetailsResponse = {
   user?: {
     name?: string | null
+    nid?: string | null
   }
   family?: FamilyMember[]
   executors?: ExecutorRecord[]
@@ -307,6 +308,7 @@ export default function WillPreviewPage() {
   const personalMessages = gifts.filter(g => g.description && g.description.trim().length > 0)
 
   const userName = dashboard.user?.name ?? 'Your will'
+  const userNRIC = dashboard.user?.nid ?? 'N/A'
   const primaryExecutor = executors[0]?.person?.fullName ?? 'Not selected'
   const backupExecutor = executors[0]?.backupPerson?.fullName ?? 'Not selected'
   const familyNames = family.map((member) => member.fullName).filter(Boolean) as string[]
@@ -473,7 +475,7 @@ export default function WillPreviewPage() {
               </p>
             </div>
             <p>
-              3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN, presently domiciled at <Highlight>{userData?.addresses?.[0]?.streetAddress || 'N/A'}, {userData?.addresses[0]?.unitNumber || 'N/A'}, {userData?.addresses[0]?.postCode || 'N/A'}</Highlight> being of sound mind and acting free from external coercion, declare this instrument to be my definitive Last Will and Testament. I hereby revoke all previous testamentary documents, codicils, and acts executed by me concerning assets within Singapore.
+              3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN: <Highlight>{userNRIC || 'N/A'}</Highlight>, presently domiciled at <Highlight>{userData?.addresses?.[0]?.streetAddress || 'N/A'}, {userData?.addresses[0]?.unitNumber || 'N/A'}, {userData?.addresses[0]?.postCode || 'N/A'}</Highlight> being of sound mind and acting free from external coercion, declare this instrument to be my definitive Last Will and Testament. I hereby revoke all previous testamentary documents, codicils, and acts executed by me concerning assets within Singapore.
             </p>
             <p>
               3.2 I formally declare that my immediate family consists of the following individuals:

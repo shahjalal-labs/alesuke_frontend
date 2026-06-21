@@ -10,6 +10,7 @@ export interface ProfileSetupState {
   religion: ReligionChoice;
   fullName: string;
   nickname: string;
+  nric: string; // Added NRIC field
   maritalStatus: MaritalStatusChoice;
 }
 
@@ -19,6 +20,7 @@ const initialState: ProfileSetupState = {
   religion: null,
   fullName: "",
   nickname: "",
+  nric: "", // Initialize NRIC
   maritalStatus: null,
 };
 
@@ -41,6 +43,9 @@ const profileSetupSlice = createSlice({
     setNickname(state, action: PayloadAction<string>) {
       state.nickname = action.payload;
     },
+    setNRIC(state, action: PayloadAction<string>) { // Added setNRIC reducer
+      state.nric = action.payload;
+    },
     setMaritalStatus(state, action: PayloadAction<Exclude<MaritalStatusChoice, null>>) {
       state.maritalStatus = action.payload;
     },
@@ -56,6 +61,7 @@ export const {
   setReligion,
   setFullName,
   setNickname,
+  setNRIC, // Export the new action
   setMaritalStatus,
   resetProfileSetup,
 } = profileSetupSlice.actions;
