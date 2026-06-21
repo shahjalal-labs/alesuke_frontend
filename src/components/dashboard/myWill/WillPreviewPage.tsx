@@ -737,10 +737,10 @@ export default function WillPreviewPage() {
 
             {/* Personal Messages from Gifts */}
             {personalMessages.length > 0 ? (
-              personalMessages.map((gift) => (
+              personalMessages.map((gift, index) => (
                 <div key={gift.id} className="space-y-2">
                   <p>
-                    <strong>Private Memorandum to <Highlight>{gift.recipientName}</Highlight> {getBeneficiaryId(gift.itemName || "N/A")}:</strong>
+                    <strong>Private Memorandum {index + 1} to <Highlight>{gift.recipientName}</Highlight>:</strong>
                   </p>
                   <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
                     "{gift.description}"
@@ -751,7 +751,7 @@ export default function WillPreviewPage() {
               <>
                 <div className="space-y-2">
                   <p>
-                    <strong>Private Memorandum to <Highlight>{familyNames[0] || primaryExecutor}</Highlight> {getBeneficiaryId(familyNames[0] || primaryExecutor)}:</strong>
+                    <strong>Private Memorandum to <Highlight>{familyNames[0] || primaryExecutor}</Highlight>:</strong>
                   </p>
                   <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
                     "Dear recipient, please find an appropriate buyer for my business, should you be able to liquidate. My wish is to leave 20% of its nett sale proceeds to you and remaining 80% divided equally between my children. I kindly entrust you to do this for me."
@@ -759,7 +759,7 @@ export default function WillPreviewPage() {
                 </div>
                 <div className="space-y-2">
                   <p>
-                    <strong>Private Memorandum to <Highlight>{familyNames[1] || backupExecutor}</Highlight> {getBeneficiaryId(familyNames[1] || backupExecutor)}:</strong>
+                    <strong>Private Memorandum to <Highlight>{familyNames[1] || backupExecutor}</Highlight>:</strong>
                   </p>
                   <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
                     "Dear recipient, This plan is able to be transferred. I hope for this plan to be transferred to you so that you can enjoy the monthly dividends forward."
@@ -842,6 +842,8 @@ export default function WillPreviewPage() {
       properties.length,
       propertyGifts,
       userName,
+      userNRIC,
+      userData,
     ]
   )
 
