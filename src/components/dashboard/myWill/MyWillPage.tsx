@@ -38,6 +38,30 @@ type GiftRecord = {
   giftType?: string | null;
   amount?: number | null;
   description?: string | null;
+  itemName?: string | null;
+  asset?: {
+    id: string;
+    type?: string | null;
+    institutionName?: string | null;
+    accountNumber?: string | null;
+    policyNumber?: string | null;
+    approximateValue?: number | null;
+    faceValue?: number | null;
+    coverType?: string | null;
+    maturityDate?: string | null;
+    companyName?: string | null;
+    description?: string | null;
+  } | null;
+  property?: {
+    id: string;
+    type?: string | null;
+    streetAddress?: string | null;
+    unitNumber?: string | null;
+    postcode?: string | null;
+    country?: string | null;
+    estimatedValue?: number | null;
+    isJointProperty?: boolean;
+  } | null;
 };
 
 type PetCaretakerRecord = {
@@ -655,7 +679,7 @@ export default function MyWillPage() {
               )}
             </SectionShell>
 
-            {/* Gifts Section */}
+            {/* Gifts Section - Responsive 2 columns */}
             <SectionShell
               title="Gifts"
               completed={hasGiftsData}
@@ -687,48 +711,191 @@ export default function MyWillPage() {
             >
               {canAccessOtherSections ? (
                 gifts.length > 0 ? (
-                  <div className="space-y-3">
-                    {gifts.map((gift) => {
-                      const GiftIcon = getGiftIcon(gift.giftType);
-                      const giftTypeLabel = getGiftTypeLabel(gift.giftType);
-                      const giftValue = getGiftValueDisplay(gift);
+                  <div className="space-y-4">
+                    {/* Gift Cards Grid - 2 columns on md/lg, 1 column on mobile */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+                      {gifts.map((gift) => {
+                        const GiftIcon = getGiftIcon(gift.giftType);
+                        const giftTypeLabel = getGiftTypeLabel(gift.giftType);
+                        let giftValue = getGiftValueDisplay(gift);
+                        
+                        // If it's a financial account, get detailed info
+                        let financialDetails = null;
+                        if (gift.giftType === "FINANCIAL_ACCOUNT" && gift.asset) {
+                          const asset = gift.asset;
+                          financialDetails = (
+                            <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
+                              {asset.type && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Type:</span>
+                                  <span className="truncate">{asset.type.replace(/_/g, ' ')}</span>
+                                </div>
+                              )}
+                              {asset.institutionName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Institution:</span>
+                                  <span className="truncate">{asset.institutionName}</span>
+                                </div>
+                              )}
+                              {(asset.accountNumber || asset.policyNumber) && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">
+                                    {asset.accountNumber ? 'Account:' : 'Policy:'}
+                                  </span>
+                                  <span className="truncate font-mono text-xs">
+                                    {asset.accountNumber || asset.policyNumber}
+                                  </span>
+                                </div>
+                              )}
+                              {(asset.approximateValue || asset.faceValue) && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Value:</span>
+                                  <span className="font-semibold text-[#2b221a]">
+                                    {formatMoney(asset.approximateValue || asset.faceValue)}
+                                  </span>
+                                </div>
+                              )}
+                              {asset.coverType && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Cover:</span>
+                                  <span className="truncate">{asset.coverType.replace(/_/g, ' ')}</span>
+                                </div>
+                              )}
+                              {asset.description && (
+                                <div className="flex items-start gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Note:</span>
+                                  <span className="truncate">{asset.description}</span>
+                                </div>
+                              )}
+                              {gift.description && !asset.description && (
+                                <div className="flex items-start gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Note:</span>
+                                  <span className="truncate">{gift.description}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        
+                        // For PROPERTY gifts, show property details
+                        let propertyDetails = null;
+                        if (gift.giftType === "PROPERTY" && gift.property) {
+                          const property = gift.property;
+                          propertyDetails = (
+                            <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
+                              {property.type && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Type:</span>
+                                  <span className="truncate">{property.type.replace(/_/g, ' ')}</span>
+                                </div>
+                              )}
+                              {property.streetAddress && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Address:</span>
+                                  <span className="truncate">{property.streetAddress}</span>
+                                </div>
+                              )}
+                              {property.estimatedValue && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Value:</span>
+                                  <span className="font-semibold text-[#2b221a]">
+                                    {formatMoney(property.estimatedValue)}
+                                  </span>
+                                </div>
+                              )}
+                              {property.isJointProperty && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Joint:</span>
+                                  <span className="text-emerald-600">✓</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
 
-                      return (
-                        <div
-                          key={gift.id}
-                          className="flex flex-col gap-3 rounded-[10px] border border-[#ece8e2] bg-[#fcfaf7] p-4 transition-all hover:shadow-sm"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex min-w-0 flex-1 items-start gap-3">
-                              <span className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                        // For ITEM gifts
+                        let itemDetails = null;
+                        if (gift.giftType === "ITEM" && gift.itemName) {
+                          itemDetails = (
+                            <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
+                              {gift.itemName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Item:</span>
+                                  <span className="truncate">{gift.itemName}</span>
+                                </div>
+                              )}
+                              {gift.description && (
+                                <div className="flex items-start gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Description:</span>
+                                  <span className="truncate">{gift.description}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        // For COLLECTION gifts
+                        let collectionDetails = null;
+                        if (gift.giftType === "COLLECTION") {
+                          collectionDetails = (
+                            <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
+                              {gift.itemName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Item:</span>
+                                  <span className="truncate">{gift.itemName}</span>
+                                </div>
+                              )}
+                              {gift.description && (
+                                <div className="flex items-start gap-1.5">
+                                  <span className="font-medium text-[#5a4e42]">Description:</span>
+                                  <span className="truncate">{gift.description}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={gift.id}
+                            className="flex flex-col rounded-[10px] border border-[#ece8e2] bg-[#fcfaf7] p-4 transition-all hover:shadow-sm hover:border-[#d5c9bc]"
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
                                 <GiftIcon className="h-5 w-5" />
                               </span>
                               <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-baseline gap-2">
-                                  <p className="truncate text-[1rem] font-medium text-[#2b221a] sm:text-[1.05rem]">
+                                <div className="flex flex-wrap items-baseline gap-1.5">
+                                  <p className="truncate text-[0.95rem] font-medium text-[#2b221a] sm:text-[1rem]">
                                     {gift.recipientName ?? "Recipient"}
                                   </p>
-                                  <span className="inline-flex rounded-full bg-[#e8e0d6] px-2 py-0.5 text-[0.7rem] font-medium uppercase tracking-wide text-[#5a4e42]">
+                                  <span className="inline-flex shrink-0 rounded-full bg-[#e8e0d6] px-2 py-0.5 text-[0.6rem] font-medium uppercase tracking-wide text-[#5a4e42]">
                                     {giftTypeLabel}
                                   </span>
                                 </div>
-                                <p className="mt-1 break-words text-[0.9rem] leading-[1.45] text-[#6f7685] sm:text-[0.95rem]">
+                                <p className="mt-1 truncate text-[0.85rem] leading-[1.4] text-[#6f7685] sm:text-[0.9rem]">
                                   {giftValue}
                                 </p>
+                                
+                                {/* Show financial details if available */}
+                                {financialDetails}
+                                
+                                {/* Show property details if available */}
+                                {propertyDetails}
+                                
+                                {/* Show item details if available */}
+                                {itemDetails}
+                                
+                                {/* Show collection details if available */}
+                                {collectionDetails}
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                     
                     {/* Summary row for gifts count */}
-                    <div className="mt-3 rounded-[8px] bg-[#f4f0ea] px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[0.85rem] font-medium text-[#5a4e42]">Total Gifts</span>
-                        <span className="text-[0.85rem] font-semibold text-[#2b221a]">{gifts.length} item{gifts.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
