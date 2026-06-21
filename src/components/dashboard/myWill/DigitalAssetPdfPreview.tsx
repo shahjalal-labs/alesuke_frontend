@@ -156,7 +156,7 @@ function DigitalAssetPdfPreview() {
               </div>
               <p className="text-gray-700 leading-relaxed">
                 I, <span className="font-medium">{userData?.fullName || '[Full Name]'}</span>,
-                NRIC/Passport No: <span className="font-medium">{userData?.nricPassportNo || 'N/A'}</span>,
+                NRIC/FIN No: <span className="font-medium">{userData?.nid || 'N/A'}</span>,
                 hereby authorize my appointed Executor(s) as named in my Will (my &quot;Digital Representative&quot;)
                 to access, manage, and close the accounts listed herein.
               </p>
@@ -355,15 +355,32 @@ function DigitalAssetPdfPreview() {
                 purpose of settling my affairs, as permitted under the fiduciary duties of an Executor.
               </p>
 
-              {/* Signature Section */}
-              <div className="grid grid-cols-2 gap-8 mt-8">
+              {/* Signature Section - Two columns with 3 witnesses */}
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6 mt-8">
+                {/* Testator Signature */}
                 <div>
-                  <p className="text-gray-700 mb-2">Signature of Testator</p>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Testator</p>
                   <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
                   <p className="text-sm text-gray-500 mt-1">Date: _______________</p>
                 </div>
+                
+                {/* Witness 1 */}
                 <div>
-                  <p className="text-gray-700 mb-2">Signature of Witness</p>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Witness 1</p>
+                  <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
+                  <p className="text-sm text-gray-500 mt-1">Name: _______________</p>
+                </div>
+                
+                {/* Witness 2 */}
+                <div>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Witness 2</p>
+                  <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
+                  <p className="text-sm text-gray-500 mt-1">Name: _______________</p>
+                </div>
+                
+                {/* Witness 3 */}
+                <div>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Witness 3</p>
                   <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
                   <p className="text-sm text-gray-500 mt-1">Name: _______________</p>
                 </div>
