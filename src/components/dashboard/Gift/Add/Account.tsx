@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Banknote, Building2, Shield, Wallet, Briefcase, Landmark, Coins, Home } from 'lucide-react'
 import { toast } from 'sonner'
 import GiftAddTemplate from './GiftAddTemplate'
 import AddAccountModal, { type AccountType } from '@/components/ui/AddAccountModal'
@@ -33,6 +33,13 @@ type AssetRecord = {
   faceValue?: number | null
   isJointlyOwned?: boolean | null
   isNominated?: boolean | null
+  // Property fields
+  country?: string | null
+  streetAddress?: string | null
+  unitNumber?: string | null
+  postcode?: string | null
+  estimatedValue?: number | null
+  isJointProperty?: boolean | null
 }
 
 type MemberRecord = {
@@ -59,8 +66,6 @@ type FinancialAccountGiftRecord = {
 const addOptions: Array<{ id: AccountType; label: string }> = [
   { id: 'bank', label: 'Add Bank Account' },
   { id: 'investment', label: 'Add Investment Account' },
-  // { id: 'business', label: 'Add Business Interest' },
-  // { id: 'retirement', label: 'Add Supplememtary Retirement Scheme (SRS)' },
   { id: 'insurance', label: 'Add Insurance Plan' },
   { id: 'safe', label: 'Add Safe deposit box' },
   { id: 'crypto', label: 'Add Crypto' },
@@ -124,11 +129,41 @@ function formatAssetType(type?: string) {
     .replace(/\b\w/g, (character) => character.toUpperCase())
 }
 
+function getAssetIcon(type?: string) {
+  if (!type) return Banknote
+  
+  const assetType = type.toUpperCase()
+  
+  if (assetType.includes('BANK') || assetType === 'BANK_ACCOUNT') return Building2
+  if (assetType.includes('INVESTMENT')) return Briefcase
+  if (assetType.includes('INSURANCE')) return Shield
+  if (assetType.includes('CRYPTO')) return Coins
+  if (assetType.includes('SAFE')) return Wallet
+  if (assetType.includes('PROPERTY')) return Home
+  if (assetType.includes('BUSINESS')) return Landmark
+  
+  return Banknote
+}
+
 function getAssetTitle(asset: AssetRecord) {
+  // For property assets, show the address
+  if (asset.streetAddress) {
+    return asset.streetAddress
+  }
+  
   return asset.institutionName || asset.companyName || asset.description || asset.accountNumber || asset.policyNumber || 'Asset'
 }
 
 function getAssetSubtitle(asset: AssetRecord) {
+  // For property assets, show unit and postcode
+  if (asset.streetAddress) {
+    const parts = []
+    if (asset.unitNumber) parts.push(`Unit ${asset.unitNumber}`)
+    if (asset.postcode) parts.push(`Postcode: ${asset.postcode}`)
+    if (asset.country) parts.push(asset.country)
+    return parts.join(' • ') || 'Property'
+  }
+  
   if (asset.accountNumber && asset.institutionName) {
     return `${asset.institutionName} • ${asset.accountNumber}`
   }
@@ -141,6 +176,11 @@ function getAssetSubtitle(asset: AssetRecord) {
 }
 
 function getAssetValue(asset: AssetRecord) {
+  // For property assets, show estimated value
+  if (asset.estimatedValue !== undefined && asset.estimatedValue !== null) {
+    return `S$ ${asset.estimatedValue.toLocaleString()}`
+  }
+  
   const value = asset.faceValue ?? asset.approximateValue
 
   if (typeof value === 'number') {
@@ -148,6 +188,83 @@ function getAssetValue(asset: AssetRecord) {
   }
 
   return 'S$ 0'
+}
+
+function getAssetDetails(asset: AssetRecord) {
+  const details: Array<{ label: string; value: string | number | boolean | null | undefined }> = []
+  
+  // Common details
+  if (asset.institutionName) {
+    details.push({ label: 'Institution', value: asset.institutionName })
+  }
+  
+  if (asset.companyName) {
+    details.push({ label: 'Company', value: asset.companyName })
+  }
+  
+  if (asset.accountNumber) {
+    details.push({ label: 'Account Number', value: asset.accountNumber })
+  }
+  
+  if (asset.policyNumber) {
+    details.push({ label: 'Policy Number', value: asset.policyNumber })
+  }
+  
+  if (asset.coverType) {
+    details.push({ label: 'Cover Type', value: asset.coverType.replace(/_/g, ' ') })
+  }
+  
+  if (asset.maturityDate) {
+    details.push({ label: 'Maturity Date', value: new Date(asset.maturityDate).toLocaleDateString() })
+  }
+  
+  if (asset.approximateValue !== undefined && asset.approximateValue !== null) {
+    details.push({ label: 'Approximate Value', value: `S$ ${asset.approximateValue.toLocaleString()}` })
+  }
+  
+  if (asset.faceValue !== undefined && asset.faceValue !== null) {
+    details.push({ label: 'Face Value', value: `S$ ${asset.faceValue.toLocaleString()}` })
+  }
+  
+  if (asset.estimatedValue !== undefined && asset.estimatedValue !== null) {
+    details.push({ label: 'Estimated Value', value: `S$ ${asset.estimatedValue.toLocaleString()}` })
+  }
+  
+  if (asset.description) {
+    details.push({ label: 'Description', value: asset.description })
+  }
+  
+  // Property-specific details
+  if (asset.streetAddress) {
+    details.push({ label: 'Street Address', value: asset.streetAddress })
+  }
+  
+  if (asset.unitNumber) {
+    details.push({ label: 'Unit Number', value: asset.unitNumber })
+  }
+  
+  if (asset.postcode) {
+    details.push({ label: 'Postcode', value: asset.postcode })
+  }
+  
+  if (asset.country) {
+    details.push({ label: 'Country', value: asset.country })
+  }
+  
+  // Property status
+  if (asset.isJointProperty !== undefined && asset.isJointProperty !== null) {
+    details.push({ label: 'Joint Property', value: asset.isJointProperty ? 'Yes' : 'No' })
+  }
+  
+  if (asset.isJointlyOwned !== undefined && asset.isJointlyOwned !== null) {
+    details.push({ label: 'Jointly Owned', value: asset.isJointlyOwned ? 'Yes' : 'No' })
+  }
+  
+  if (asset.isNominated !== undefined && asset.isNominated !== null) {
+    details.push({ label: 'Nominated', value: asset.isNominated ? 'Yes' : 'No' })
+  }
+  
+  return details
 }
 
 export default function Account() {
@@ -166,7 +283,7 @@ export default function Account() {
   const [selectedAssetId, setSelectedAssetId] = useState<string | number | null>(null)
   const [deletingId, setDeletingId] = useState<string | number | null>(null)
   const [submittingGift, setSubmittingGift] = useState(false)
-  const [personalMessage, setPersonalMessage] = useState('') // State for personal message
+  const [personalMessage, setPersonalMessage] = useState('')
 
   const recipientRows = useMemo(() => {
     return (members as MemberRecord[]).map((member, index) => ({
@@ -211,7 +328,6 @@ export default function Account() {
 
     setSelectedRecipientIds(savedRecipientIds)
     
-    // Load saved personal message if it exists
     if (selectedFinancialAccountGift?.description) {
       setPersonalMessage(selectedFinancialAccountGift.description)
     } else {
@@ -345,7 +461,7 @@ export default function Account() {
         giftType: 'FINANCIAL_ACCOUNT',
         recipients: selectedRecipientIds.map((peopleId) => ({ peopleId: String(peopleId) })),
         assetId: String(selectedAssetId),
-        description: personalMessage || '', // Include the personal message
+        description: personalMessage || '',
       }
 
       if (editingGiftId && selectedFinancialAccountGift?.id) {
@@ -377,8 +493,8 @@ export default function Account() {
         onRecipientToggle={toggleRecipient}
         messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."
         messagePlaceholder="Write your personal message here..."
-        messageValue={personalMessage} // Pass personal message value
-        onMessageChange={setPersonalMessage} // Handle message changes
+        messageValue={personalMessage}
+        onMessageChange={setPersonalMessage}
         nextLabel={submittingGift ? 'Saving...' : editingGiftId ? 'Update gift' : 'Save & continue'}
         onNext={handleSaveGift}
         nextDisabled={submittingGift || !selectedRecipientIds.length || selectedAssetId == null}
@@ -387,9 +503,6 @@ export default function Account() {
             {selectedFinancialAccountGift ? (
               <div className="mb-4 rounded-[6px] border border-[#d7d7d7] bg-white px-4 py-4 text-[0.92rem] text-[#52606f] shadow-[0_1px_0_rgba(17,24,39,0.02)] md:px-5">
                 <div className="font-semibold text-[#1d2430]">Selected financial account gift</div>
-                {/* <div className="mt-1 text-[0.84rem] text-[#7b8594]">
-                  Asset ID: {selectedFinancialAccountGift.assetId ?? selectedFinancialAccountGift.asset?.id ?? 'N/A'}
-                </div> */}
                 <div className="mt-1 text-[0.84rem] text-[#7b8594]">
                   Account:{' '}
                   {selectedAsset ? getAssetTitle(selectedAsset) : selectedFinancialAccountGift.asset ? getAssetTitle(selectedFinancialAccountGift.asset) : 'N/A'}
@@ -418,6 +531,11 @@ export default function Account() {
                   {savedAssets.map((asset, index) => {
                     const isLast = index === savedAssets.length - 1
                     const isSelected = selectedAssetId === asset.id
+                    const AssetIcon = getAssetIcon(asset.type)
+                    const assetDetails = getAssetDetails(asset)
+                    const title = getAssetTitle(asset)
+                    const subtitle = getAssetSubtitle(asset)
+                    const value = getAssetValue(asset)
 
                     return (
                       <div
@@ -431,56 +549,78 @@ export default function Account() {
                             handleSelectAsset(asset.id)
                           }
                         }}
-                        className={`flex w-full items-center gap-4 rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow cursor-pointer ${
+                        className={`flex w-full flex-col rounded-[6px] bg-white px-4 py-4 text-left shadow-[0_1px_0_rgba(17,24,39,0.02)] transition-shadow cursor-pointer ${
                           isSelected ? 'ring-2 ring-[#152035] shadow-[0_8px_24px_rgba(17,24,39,0.08)]' : 'hover:shadow-[0_4px_12px_rgba(17,24,39,0.04)]'
                         } ${!isLast ? 'border-b border-[#ece3d6]' : ''}`}
                       >
-                        <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-[#d8d8d8] bg-[#f9fbfc] text-[#27a5f7]">
-                          <span className="text-[1.2rem] leading-none">⌂</span>
-                        </div>
+                        <div className="flex w-full items-start gap-4">
+                          <div className="inline-flex h-12 w-12 flex-none items-center justify-center rounded-full border border-[#d8d8d8] bg-[#f9fbfc] text-[#27a5f7]">
+                            <AssetIcon className="h-5 w-5" />
+                          </div>
 
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[0.78rem] text-[#8c8f98] md:text-[0.82rem]">{formatAssetType(asset.type)}</p>
-                          <h3 className="truncate text-[1rem] font-semibold leading-[1.15] text-[#0f3b3b] md:text-[1.06rem]">
-                            {getAssetTitle(asset)}
-                          </h3>
-                          <p className="text-[0.92rem] font-semibold leading-[1.2] text-[#0f3b3b] md:text-[0.98rem]">
-                            {getAssetSubtitle(asset)}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {asset.isNominated ? (
-                              <span className="inline-flex items-center rounded-[2px] border border-[#d8d8d8] bg-[#fcfbf8] px-2 py-1 text-[0.72rem] text-[#3b3b3b]">
-                                This asset is nominated
-                              </span>
-                            ) : null}
-                            {asset.isJointlyOwned ? (
-                              <span className="inline-flex items-center rounded-[2px] border border-[#d8d8d8] bg-[#fcfbf8] px-2 py-1 text-[0.72rem] text-[#3b3b3b]">
-                                Jointly owned
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[0.78rem] text-[#8c8f98] md:text-[0.82rem]">{formatAssetType(asset.type)}</p>
+                            <h3 className="truncate text-[1rem] font-semibold leading-[1.15] text-[#0f3b3b] md:text-[1.06rem]">
+                              {title}
+                            </h3>
+                            {/* <p className="text-[0.92rem] font-semibold leading-[1.2] text-[#0f3b3b] md:text-[0.98rem]">
+                              {subtitle}
+                            </p> */}
+                            
+                            {/* Asset Details */}
+                            {assetDetails.length > 0 && (
+                              <div className="mt-3 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                                {assetDetails.map((detail, idx) => (
+                                  <div key={idx} className="flex items-center gap-1.5 text-[0.8rem] text-[#6f7685]">
+                                    <span className="font-medium text-[#5a4e42]">{detail.label}:</span>
+                                    <span className="truncate">{String(detail.value)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {asset.isNominated ? (
+                                <span className="inline-flex items-center rounded-[2px] border border-[#d8d8d8] bg-[#fcfbf8] px-2 py-1 text-[0.72rem] text-[#3b3b3b]">
+                                  This asset is nominated
+                                </span>
+                              ) : null}
+                              {asset.isJointlyOwned ? (
+                                <span className="inline-flex items-center rounded-[2px] border border-[#d8d8d8] bg-[#fcfbf8] px-2 py-1 text-[0.72rem] text-[#3b3b3b]">
+                                  Jointly owned
+                                </span>
+                              ) : null}
+                              {asset.isJointProperty ? (
+                                <span className="inline-flex items-center rounded-[2px] border border-[#d8d8d8] bg-[#fcfbf8] px-2 py-1 text-[0.72rem] text-[#3b3b3b]">
+                                  Joint Property
+                                </span>
+                              ) : null}
+                            </div>
+                            
+                            <p className="mt-2 text-[0.95rem] font-semibold leading-[1.2] text-[#0f3b3b] md:text-[1rem]">
+                              {value}
+                            </p>
+                            
+                            {isSelected ? (
+                              <span className="mt-2 inline-flex rounded-full bg-[#152035] px-3 py-1 text-[0.75rem] font-medium text-white">
+                                Selected account
                               </span>
                             ) : null}
                           </div>
-                          <p className="mt-2 text-[0.95rem] font-semibold leading-[1.2] text-[#0f3b3b] md:text-[1rem]">
-                            {getAssetValue(asset)}
-                          </p>
-                          {isSelected ? (
-                            <span className="mt-2 inline-flex rounded-full bg-[#152035] px-3 py-1 text-[0.75rem] font-medium text-white">
-                              Selected account
-                            </span>
-                          ) : null}
-                        </div>
 
-                        <button
-                          type="button"
-                          aria-label="Delete account"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            handleDeleteAsset(asset.id)
-                          }}
-                          disabled={deletingId === asset.id}
-                          className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-[#c34141] transition-colors hover:bg-[#feecec] disabled:opacity-60"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                          <button
+                            type="button"
+                            aria-label="Delete account"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleDeleteAsset(asset.id)
+                            }}
+                            disabled={deletingId === asset.id}
+                            className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full text-[#c34141] transition-colors hover:bg-[#feecec] disabled:opacity-60"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     )
                   })}
