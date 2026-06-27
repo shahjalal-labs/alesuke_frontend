@@ -18,7 +18,7 @@ const unlimitedFeatures = [
   "Comprehensive last will and final intentions",
   "Time & Value. Get your will in 15 mins that traditional firms provide in 15 days",
   "Final intentions – you last words of love",
-  "Unlimited changes for life",
+  "Unlimited revision for life",
   "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grabunlimited, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
 ];
 

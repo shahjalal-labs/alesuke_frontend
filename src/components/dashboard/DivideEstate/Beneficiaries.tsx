@@ -17,8 +17,6 @@ import {
   Panel,
   PersonRow,
   SectionEyebrow,
-  // TipButton,
-  // TipCallout,
 } from "./DivideEstateShell";
 
 import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
@@ -33,6 +31,34 @@ type MemberRecord = {
 
 type DistributionRecord = {
   peopleId?: string | null;
+  backupDistributors?: Array<{
+    person?: {
+      id?: string;
+      fullName?: string;
+    };
+  }>;
+};
+
+// Helper function to get display label for relation type
+const getRelationLabel = (relationType?: string | null): string => {
+  const relationMap: Record<string, string> = {
+    'SPOUSE': 'Spouse',
+    'PARTNER': 'Partner',
+    'CHILD': 'Child',
+    'FRIEND': 'Friend',
+    'SISTER': 'Sister',
+    'BROTHER': 'Brother',
+    'COUSIN': 'Cousin',
+    'FATHER': 'Father',
+    'MOTHER': 'Mother',
+    'SIBLING': 'Sibling',
+    'GRANDPARENT': 'Grandparent',
+    'PARENT': 'Parent',
+    'NEPHEW': 'Nephew',
+    'OTHER': 'Other',
+    'PET': 'Pet',
+  };
+  return relationMap[relationType || ''] || relationType || 'Family Member';
 };
 
 function Beneficiaries() {
@@ -49,23 +75,50 @@ function Beneficiaries() {
     setMounted(true);
   }, []);
 
+  // Filter out PET type members - they should NOT show in beneficiaries
   const beneficiaryMembers = useMemo(() => {
     return (members as MemberRecord[]).filter(
       (member) => member.relationType !== "PET"
     );
   }, [members]);
 
+  // Get saved distribution member IDs (primary beneficiaries)
   const savedDistributionMemberIds = useMemo(() => {
-    return (((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[])
+    const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
+    return distributions
       .map((distribution) => distribution.peopleId)
       .filter((peopleId): peopleId is string => Boolean(peopleId));
   }, [distributionResponse]);
 
+  // Get backup distribution member IDs (people who appear as backup)
+  const backupDistributionMemberIds = useMemo(() => {
+    const distributions = ((distributionResponse as { data?: DistributionRecord[] } | undefined)?.data ?? []) as DistributionRecord[];
+    const backupIds: string[] = [];
+    distributions.forEach((distribution) => {
+      if (distribution.backupDistributors) {
+        distribution.backupDistributors.forEach((backup) => {
+          if (backup.person?.id) {
+            backupIds.push(backup.person.id);
+          }
+        });
+      }
+    });
+    return backupIds;
+  }, [distributionResponse]);
+
+  // Combine all saved IDs (primary + backup)
+  const allSavedMemberIds = useMemo(() => {
+    const combined = [...savedDistributionMemberIds, ...backupDistributionMemberIds];
+    // Remove duplicates
+    return [...new Set(combined)];
+  }, [savedDistributionMemberIds, backupDistributionMemberIds]);
+
+  // Set selected members based on saved data - FIXED to run when data is loaded
   useEffect(() => {
-    if (savedDistributionMemberIds.length) {
-      setSelectedMemberIds(savedDistributionMemberIds);
+    if (allSavedMemberIds.length > 0) {
+      setSelectedMemberIds(allSavedMemberIds);
     }
-  }, [savedDistributionMemberIds]);
+  }, [allSavedMemberIds]);
 
   const toggleMember = (memberId: string) => {
     setSelectedMemberIds((current) =>
@@ -119,16 +172,17 @@ function Beneficiaries() {
               <div className="space-y-3">
                 {beneficiaryMembers.length ? (
                   <div className="space-y-3">
-                    {beneficiaryMembers.map((member, index) => {
+                    {beneficiaryMembers.map((member) => {
                       const isAdultBeneficiary = member.relationType === "SPOUSE" || member.relationType === "PARTNER";
                       const selected = selectedMemberIds.includes(member.id);
+                      const relationLabel = getRelationLabel(member.relationType);
 
                       return (
                         <PersonRow
                           key={member.id}
                           icon={isAdultBeneficiary ? <Heart className="h-4.5 w-4.5 fill-current" /> : <UserRound className="h-4.5 w-4.5" />}
-                          title={member.fullName ?? `Beneficiary ${index + 1}`}
-                          subtitle={member.relationType === "SPOUSE" ? "Spouse" : member.relationType === "PARTNER" ? "Partner" : "Child"}
+                          title={member.fullName ?? "Unnamed"}
+                          subtitle={relationLabel}
                           selected={selected}
                           onClick={() => toggleMember(member.id)}
                           trailing={!selected ? (
@@ -152,18 +206,6 @@ function Beneficiaries() {
             </div>
           )}
         </Panel>
-
-        {/* <div className="space-y-4 border-l-2 border-[#90d8ef] pl-4">
-          <div className="inline-flex items-center gap-2 text-[0.92rem] font-medium text-[#55c4e9]">
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-[#90d8ef] text-[0.68rem]">i</span>
-            Tip
-          </div>
-          <BodyCopy className="text-[#748192]">
-            You can edit the details of your family, your pets and people in your will in your Address book.
-          </BodyCopy>
-          <BodyCopy className="text-[#748192]">Any new people you add will also be added to your Address book.</BodyCopy>
-          <TipButton>View my address book</TipButton>
-        </div> */}
 
         <FooterActions
           previousHref="/will/divide-estate/partner"

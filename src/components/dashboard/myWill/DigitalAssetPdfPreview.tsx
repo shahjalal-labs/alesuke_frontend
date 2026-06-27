@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useGetDigitalAssetsQuery } from '@/redux/api/assetsApi';
-import { useGetMeDataQuery } from '@/redux/api/authApi';
-import React, { useRef, useState } from 'react';
-import { Download, Loader2, Lock } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
+import { useGetDigitalAssetsQuery } from "@/redux/api/assetsApi";
+import { useGetMeDataQuery } from "@/redux/api/authApi";
+import React, { useRef, useState } from "react";
+import { Download, Loader2, Lock } from "lucide-react";
+import html2pdf from "html2pdf.js";
 
 function DigitalAssetPdfPreview() {
   const { data: getMeUserData } = useGetMeDataQuery(undefined);
@@ -21,7 +21,10 @@ function DigitalAssetPdfPreview() {
   const subscriptionTier = userData?.subscriptionTier;
 
   // Show content and download button only for PREMIUM users OR users with SUBSCRIPTION type
-  const hasAccess = subscriptionTier === 'PREMIUM' || subscriptionType === 'SUBSCRIPTION' || subscriptionType == "ONE_TIME";
+  const hasAccess =
+    subscriptionTier === "PREMIUM" ||
+    subscriptionType === "SUBSCRIPTION" ||
+    subscriptionType == "ONE_TIME";
 
   const handleDownloadPDF = async () => {
     if (!hasAccess || !pdfContentRef.current) return;
@@ -34,8 +37,8 @@ function DigitalAssetPdfPreview() {
 
       const opt: any = {
         margin: [0, 0, 0, 0],
-        filename: `Digital_Asset_Memorandum_${userData?.fullName?.replace(/\s/g, '_') || 'User'}_${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        filename: `Digital_Asset_Memorandum_${userData?.fullName?.replace(/\s/g, "_") || "User"}_${new Date().toISOString().split("T")[0]}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
         html2canvas: {
           scale: 2,
           useCORS: true,
@@ -43,15 +46,15 @@ function DigitalAssetPdfPreview() {
           windowWidth: width,
         },
         jsPDF: {
-          unit: 'px',
+          unit: "px",
           format: [width, height],
-          orientation: 'portrait'
-        }
+          orientation: "portrait",
+        },
       };
 
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
-      console.error('PDF generation failed:', error);
+      console.error("PDF generation failed:", error);
     } finally {
       setIsDownloading(false);
     }
@@ -60,40 +63,40 @@ function DigitalAssetPdfPreview() {
   // Helper function to check if any asset is selected in a category
   const hasAnyAsset = (assets: string[]) => {
     if (!assetsData) return false;
-    return assets.some(asset => assetsData[asset] === true);
+    return assets.some((asset) => assetsData[asset] === true);
   };
 
   // Get selected platforms for display
   const getSelectedPlatforms = (platforms: { key: string; name: string }[]) => {
     if (!assetsData) return [];
     return platforms
-      .filter(platform => assetsData[platform.key] === true)
-      .map(platform => platform.name);
+      .filter((platform) => assetsData[platform.key] === true)
+      .map((platform) => platform.name);
   };
 
   const videoStreamingPlatforms = [
-    { key: 'hasNetflix', name: 'Netflix' },
-    { key: 'hasDisneyPlus', name: 'Disney+' },
-    { key: 'hasPrimeVideo', name: 'Prime Video' },
-    { key: 'hasViu', name: 'Viu' },
-    { key: 'hasAppleTVPlus', name: 'Apple TV+' },
+    { key: "hasNetflix", name: "Netflix" },
+    { key: "hasDisneyPlus", name: "Disney+" },
+    { key: "hasPrimeVideo", name: "Prime Video" },
+    { key: "hasViu", name: "Viu" },
+    { key: "hasAppleTVPlus", name: "Apple TV+" },
   ];
 
   const musicPlatforms = [
-    { key: 'hasSpotify', name: 'Spotify' },
-    { key: 'hasYouTubePremium', name: 'YouTube Premium' },
-    { key: 'hasAudible', name: 'Audible' },
+    { key: "hasSpotify", name: "Spotify" },
+    { key: "hasYouTubePremium", name: "YouTube Premium" },
+    { key: "hasAudible", name: "Audible" },
   ];
 
   const cloudPlatforms = [
-    { key: 'hasICloud', name: 'iCloud' },
-    { key: 'hasGoogleDrive', name: 'Google Drive' },
-    { key: 'hasOneDrive', name: 'OneDrive' },
+    { key: "hasICloud", name: "iCloud" },
+    { key: "hasGoogleDrive", name: "Google Drive" },
+    { key: "hasOneDrive", name: "OneDrive" },
   ];
 
   const foodPlatforms = [
-    { key: 'hasGrab', name: 'Grab' },
-    { key: 'hasFoodpanda', name: 'Foodpanda' },
+    { key: "hasGrab", name: "Grab" },
+    { key: "hasFoodpanda", name: "Foodpanda" },
   ];
 
   const selectedVideoStreaming = getSelectedPlatforms(videoStreamingPlatforms);
@@ -118,7 +121,7 @@ function DigitalAssetPdfPreview() {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+              {isDownloading ? "Generating PDF..." : "Download PDF"}
             </button>
           </div>
         )}
@@ -128,16 +131,21 @@ function DigitalAssetPdfPreview() {
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10 backdrop-blur-[6px] rounded-[28px]">
             <div className="bg-white/95 px-8 py-6 rounded-2xl shadow-xl border border-gray-100 text-center max-w-sm">
               <Lock className="w-10 h-10 text-[#c35b43] mx-auto mb-3" />
-              <h3 className="text-xl font-bold text-gray-900">Premium Feature</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                Premium Feature
+              </h3>
               <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                Upgrade to Premium to view and download your Digital Asset Memorandum.
+                Upgrade to Premium to view and download your Digital Asset
+                Memorandum.
               </p>
             </div>
           </div>
         )}
 
         {/* PDF Content - Blurred for users without access */}
-        <div className={`max-w-4xl mx-auto bg-white shadow-lg my-8 ${!hasAccess ? 'pointer-events-none select-none blur-[4px]' : ''}`}>
+        <div
+          className={`max-w-4xl mx-auto bg-white shadow-lg my-8 ${!hasAccess ? "pointer-events-none select-none blur-[4px]" : ""}`}
+        >
           {/* Main Container */}
           <div ref={pdfContentRef} className="p-8 md:p-12 bg-white">
             {/* Title */}
@@ -155,10 +163,15 @@ function DigitalAssetPdfPreview() {
                 </h2>
               </div>
               <p className="text-gray-700 leading-relaxed">
-                I, <span className="font-medium">{userData?.fullName || '[Full Name]'}</span>,
-                NRIC/FIN No: <span className="font-medium">{userData?.nid || 'N/A'}</span>,
-                hereby authorize my appointed Executor(s) as named in my Will (my &quot;Digital Representative&quot;)
-                to access, manage, and close the accounts listed herein.
+                I,{" "}
+                <span className="font-medium">
+                  {userData?.fullName || "[Full Name]"}
+                </span>
+                , NRIC/FIN No:{" "}
+                <span className="font-medium">{userData?.nid || "N/A"}</span>,
+                hereby authorize my appointed Executor(s) as named in my Will
+                (my &quot;Digital Representative&quot;) to access, manage, and
+                close the accounts listed herein.
               </p>
             </div>
 
@@ -192,7 +205,7 @@ function DigitalAssetPdfPreview() {
                     <td className="border border-gray-300 px-4 py-3 text-gray-700">
                       {selectedVideoStreaming.length > 0 ? (
                         <ul className="list-disc list-inside">
-                          {selectedVideoStreaming.map(platform => (
+                          {selectedVideoStreaming.map((platform) => (
                             <li key={platform}>{platform}</li>
                           ))}
                         </ul>
@@ -211,7 +224,7 @@ function DigitalAssetPdfPreview() {
                     <td className="border border-gray-300 px-4 py-3 text-gray-700">
                       {selectedMusic.length > 0 ? (
                         <ul className="list-disc list-inside">
-                          {selectedMusic.map(platform => (
+                          {selectedMusic.map((platform) => (
                             <li key={platform}>{platform}</li>
                           ))}
                         </ul>
@@ -257,7 +270,7 @@ function DigitalAssetPdfPreview() {
                     <td className="border border-gray-300 px-4 py-3 text-gray-700">
                       {selectedCloud.length > 0 ? (
                         <ul className="list-disc list-inside">
-                          {selectedCloud.map(platform => (
+                          {selectedCloud.map((platform) => (
                             <li key={platform}>{platform}</li>
                           ))}
                         </ul>
@@ -266,7 +279,8 @@ function DigitalAssetPdfPreview() {
                       )}
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-gray-700">
-                      Download personal photos/documents for heirs, then wipe data.
+                      Download personal photos/documents for heirs, then wipe
+                      data.
                     </td>
                   </tr>
                 </tbody>
@@ -303,7 +317,7 @@ function DigitalAssetPdfPreview() {
                     <td className="border border-gray-300 px-4 py-3 text-gray-700">
                       {selectedFood.length > 0 ? (
                         <ul className="list-disc list-inside">
-                          {selectedFood.map(platform => (
+                          {selectedFood.map((platform) => (
                             <li key={platform}>{platform}</li>
                           ))}
                         </ul>
@@ -334,7 +348,8 @@ function DigitalAssetPdfPreview() {
                       )}
                     </td>
                     <td className="border border-gray-300 px-4 py-3 text-gray-700">
-                      Close open positions (e.g. Options); liquidate and transfer to Estate Account.
+                      Close open positions (e.g. Options); liquidate and
+                      transfer to Estate Account.
                     </td>
                   </tr>
                 </tbody>
@@ -349,47 +364,58 @@ function DigitalAssetPdfPreview() {
                 </h2>
               </div>
               <p className="text-gray-700 leading-relaxed mb-6">
-                To any Service Provider, Custodian, or Data Controller: I hereby waive any &quot;Non-Transferability&quot;
-                or &quot;Right of Survivorship&quot; clauses in your Terms of Service in favor of my Estate.
-                I direct you to provide my Digital Representative with access to my data for the limited
-                purpose of settling my affairs, as permitted under the fiduciary duties of an Executor.
+                To any Service Provider, Custodian, or Data Controller: I hereby
+                waive any &quot;Non-Transferability&quot; or &quot;Right of
+                Survivorship&quot; clauses in your Terms of Service in favor of
+                my Estate. I direct you to provide my Digital Representative
+                with access to my data for the limited purpose of settling my
+                affairs, as permitted under the fiduciary duties of an Executor.
               </p>
+
+              <div>
+                <div>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">
+                    Signature of Testator
+                  </p>
+                  <div className="border-b border-gray-400 w-full pt-8 mb-1"></div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Date: _______________
+                  </p>
+                </div>
+              </div>
 
               {/* Signature Section - Two columns with 3 witnesses */}
               <div className="grid grid-cols-2 gap-x-8 gap-y-6 mt-8">
                 {/* Testator Signature */}
-                <div>
-                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Testator</p>
-                  <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
-                  <p className="text-sm text-gray-500 mt-1">Date: _______________</p>
-                </div>
-                
+
                 {/* Witness 1 */}
                 <div>
-                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Witness 1</p>
-                  <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
-                  <p className="text-sm text-gray-500 mt-1">Name: _______________</p>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">
+                    Signature of Witness 1
+                  </p>
+                  <div className="border-b border-gray-400 w-full pt-8 mb-1"></div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Date: _______________
+                  </p>
                 </div>
-                
+
                 {/* Witness 2 */}
                 <div>
-                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Witness 2</p>
-                  <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
-                  <p className="text-sm text-gray-500 mt-1">Name: _______________</p>
-                </div>
-                
-                {/* Witness 3 */}
-                <div>
-                  <p className="text-gray-700 mb-2 font-medium text-sm">Signature of Witness 3</p>
-                  <div className="border-b border-gray-400 w-full mt-6 mb-1"></div>
-                  <p className="text-sm text-gray-500 mt-1">Name: _______________</p>
+                  <p className="text-gray-700 mb-2 font-medium text-sm">
+                    Signature of Witness 2
+                  </p>
+                  <div className="border-b border-gray-400 w-full pt-8 mb-1"></div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Date: _______________
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Footer */}
             <div className="text-center text-xs text-gray-400 mt-8 pt-4 border-t border-gray-200">
-              Digital Asset Memorandum - Generated on {new Date().toLocaleDateString()}
+              Digital Asset Memorandum - Generated on{" "}
+              {new Date().toLocaleDateString()}
             </div>
           </div>
         </div>

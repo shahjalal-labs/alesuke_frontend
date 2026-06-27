@@ -3,7 +3,19 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Heart, PencilLine, PawPrint, UserRound, UsersRound, Banknote, House, BriefcaseBusiness, Gift, Globe } from "lucide-react";
+import {
+  CheckCircle,
+  Heart,
+  PencilLine,
+  PawPrint,
+  UserRound,
+  UsersRound,
+  Banknote,
+  House,
+  BriefcaseBusiness,
+  Gift,
+  Globe,
+} from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 import { useGetMeDataQuery } from "@/redux/api/authApi";
@@ -122,12 +134,39 @@ type DigitalAssetsResponse = {
   brokerageDetails?: string | null;
 };
 
+// Helper function to get relation label
+function getRelationLabel(relationType?: string | null): string {
+  const relationMap: Record<string, string> = {
+    SPOUSE: "Spouse",
+    PARTNER: "Partner",
+    CHILD: "Child",
+    FRIEND: "Friend",
+    SISTER: "Sister",
+    BROTHER: "Brother",
+    COUSIN: "Cousin",
+    FATHER: "Father",
+    MOTHER: "Mother",
+    SIBLING: "Sibling",
+    GRANDPARENT: "Grandparent",
+    PARENT: "Parent",
+    NEPHEW: "Nephew",
+    OTHER: "Other",
+    PET: "Pet",
+  };
+  return relationMap[relationType || ""] || relationType || "Member";
+}
+
 function getMemberBadge(member: FamilyMember) {
   if (member.relationType === "PET") return { label: "Pet", icon: PawPrint };
-  if (member.relationType === "CHILD") return { label: "Child", icon: UserRound };
-  if (member.relationType === "SPOUSE") return { label: "Spouse", icon: UsersRound };
-  if (member.relationType === "PARTNER") return { label: "Partner", icon: UsersRound };
-  return { label: "Member", icon: UserRound };
+  if (member.relationType === "CHILD")
+    return { label: "Child", icon: UserRound };
+  if (member.relationType === "SPOUSE")
+    return { label: "Spouse", icon: UsersRound };
+  if (member.relationType === "PARTNER")
+    return { label: "Partner", icon: UsersRound };
+  // Map other relation types
+  const label = getRelationLabel(member.relationType);
+  return { label, icon: UserRound };
 }
 
 function getExecutorIcon(relationType?: string | null) {
@@ -145,7 +184,10 @@ function PrerequisiteMessage() {
   return (
     <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
       Complete{" "}
-      <Link href="/will/you-and-your-family/marital-status" className="text-sky-500 underline-offset-2 hover:underline">
+      <Link
+        href="/will/you-and-your-family/marital-status"
+        className="text-sky-500 underline-offset-2 hover:underline"
+      >
         You and your family
       </Link>{" "}
       first
@@ -169,14 +211,18 @@ function SectionShell({
   return (
     <section className="rounded-[3px] border border-dashed border-[#dfcfbf] bg-[#F6ECE2] p-4 sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-4 px-2">
-        <h2 className="text-[1.05rem] font-medium text-[#2b221a] sm:text-[1.1rem]">{title}</h2>
+        <h2 className="text-[1.05rem] font-medium text-[#2b221a] sm:text-[1.1rem]">
+          {title}
+        </h2>
         {completed ? (
           <span className="inline-flex items-center gap-2 rounded px-3 py-1 text-[0.9rem] font-medium text-emerald-700 bg-emerald-100">
             <CheckCircle className="h-4 w-4 text-emerald-700" />
             Completed
           </span>
         ) : (
-          <div className="text-[0.95rem] text-[#2f241c]">Takes about {time}</div>
+          <div className="text-[0.95rem] text-[#2f241c]">
+            Takes about {time}
+          </div>
         )}
       </div>
 
@@ -199,10 +245,18 @@ function SummaryRow({
 }) {
   return (
     <div className="flex items-center gap-3 py-3">
-      <p className="min-w-0 shrink-0 text-[0.98rem] text-[#4b5361] sm:text-[1.05rem]">{label}</p>
+      <p className="min-w-0 shrink-0 text-[0.98rem] text-[#4b5361] sm:text-[1.05rem]">
+        {label}
+      </p>
       <div className="h-px flex-1 bg-[#cfd5de]" />
-      {value ? <p className="shrink-0 text-[0.98rem] text-[#4b5361] sm:text-[1.05rem]">{value}</p> : null}
-      {icons ? <div className="flex shrink-0 items-center gap-1">{icons}</div> : null}
+      {value ? (
+        <p className="shrink-0 text-[0.98rem] text-[#4b5361] sm:text-[1.05rem]">
+          {value}
+        </p>
+      ) : null}
+      {icons ? (
+        <div className="flex shrink-0 items-center gap-1">{icons}</div>
+      ) : null}
     </div>
   );
 }
@@ -226,7 +280,9 @@ function PersonBubble({
           {member?.fullName ?? fallback}
         </p>
         <p className="mt-1 text-[0.94rem] leading-[1.35] text-[#767e8c] sm:text-[1rem]">
-          {member?.relationType ?? "Not selected"}
+          {member?.relationType
+            ? getRelationLabel(member.relationType)
+            : "Not selected"}
         </p>
       </div>
     </div>
@@ -234,7 +290,9 @@ function PersonBubble({
 }
 
 function DistributionPeopleBadge({ member }: { member?: FamilyMember | null }) {
-  const badge = member ? getMemberBadge(member) : { label: "Member", icon: UserRound };
+  const badge = member
+    ? getMemberBadge(member)
+    : { label: "Member", icon: UserRound };
   const BadgeIcon = badge.icon;
 
   return (
@@ -246,7 +304,9 @@ function DistributionPeopleBadge({ member }: { member?: FamilyMember | null }) {
         <p className="truncate text-[0.92rem] font-medium text-[#2b221a] sm:text-[0.98rem]">
           {member?.fullName ?? "Not selected"}
         </p>
-        <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
+        <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">
+          {badge.label}
+        </p>
       </div>
     </div>
   );
@@ -284,9 +344,11 @@ function getGiftValueDisplay(gift: GiftRecord) {
 }
 
 // Helper function to get digital assets count
-function getDigitalAssetsCount(digitalAssets: DigitalAssetsResponse | null | undefined): number {
+function getDigitalAssetsCount(
+  digitalAssets: DigitalAssetsResponse | null | undefined,
+): number {
   if (!digitalAssets) return 0;
-  
+
   const platforms = [
     digitalAssets.hasNetflix,
     digitalAssets.hasDisneyPlus,
@@ -303,49 +365,59 @@ function getDigitalAssetsCount(digitalAssets: DigitalAssetsResponse | null | und
     digitalAssets.hasFoodpanda,
     digitalAssets.hasBrokerageETF,
   ];
-  
+
   return platforms.filter(Boolean).length;
 }
 
 // Helper function to get platform names
-function getPlatformNames(digitalAssets: DigitalAssetsResponse | null | undefined): string[] {
+function getPlatformNames(
+  digitalAssets: DigitalAssetsResponse | null | undefined,
+): string[] {
   if (!digitalAssets) return [];
-  
+
   const platforms: { key: keyof DigitalAssetsResponse; name: string }[] = [
-    { key: 'hasNetflix', name: 'Netflix' },
-    { key: 'hasDisneyPlus', name: 'Disney+' },
-    { key: 'hasPrimeVideo', name: 'Prime Video' },
-    { key: 'hasViu', name: 'Viu' },
-    { key: 'hasAppleTVPlus', name: 'Apple TV+' },
-    { key: 'hasSpotify', name: 'Spotify' },
-    { key: 'hasYouTubePremium', name: 'YouTube Premium' },
-    { key: 'hasAudible', name: 'Audible' },
-    { key: 'hasICloud', name: 'iCloud' },
-    { key: 'hasGoogleDrive', name: 'Google Drive' },
-    { key: 'hasOneDrive', name: 'OneDrive' },
-    { key: 'hasGrab', name: 'Grab' },
-    { key: 'hasFoodpanda', name: 'Foodpanda' },
-    { key: 'hasBrokerageETF', name: 'Brokerage/ETF' },
+    { key: "hasNetflix", name: "Netflix" },
+    { key: "hasDisneyPlus", name: "Disney+" },
+    { key: "hasPrimeVideo", name: "Prime Video" },
+    { key: "hasViu", name: "Viu" },
+    { key: "hasAppleTVPlus", name: "Apple TV+" },
+    { key: "hasSpotify", name: "Spotify" },
+    { key: "hasYouTubePremium", name: "YouTube Premium" },
+    { key: "hasAudible", name: "Audible" },
+    { key: "hasICloud", name: "iCloud" },
+    { key: "hasGoogleDrive", name: "Google Drive" },
+    { key: "hasOneDrive", name: "OneDrive" },
+    { key: "hasGrab", name: "Grab" },
+    { key: "hasFoodpanda", name: "Foodpanda" },
+    { key: "hasBrokerageETF", name: "Brokerage/ETF" },
   ];
-  
+
   return platforms
-    .filter(p => digitalAssets[p.key] === true)
-    .map(p => p.name);
+    .filter((p) => digitalAssets[p.key] === true)
+    .map((p) => p.name);
 }
 
 export default function MyWillPage() {
   const router = useRouter();
-  const { data: willResponse, isLoading, refetch: refetchWillDetails } = useGetWillDetailsQuery(undefined);
+  const {
+    data: willResponse,
+    isLoading,
+    refetch: refetchWillDetails,
+  } = useGetWillDetailsQuery(undefined);
   const { data: getMeData, refetch: refetchMeData } = useGetMeDataQuery({});
-  const { data: digitalAssetsResponse, refetch: refetchDigitalAssets } = useGetDigitalAssetsQuery({});
-  
-  const dashboardResponse = willResponse as { data?: WillDetailsResponse } | undefined;
+  const { data: digitalAssetsResponse, refetch: refetchDigitalAssets } =
+    useGetDigitalAssetsQuery({});
+
+  const dashboardResponse = willResponse as
+    | { data?: WillDetailsResponse }
+    | undefined;
   const dashboard = (dashboardResponse?.data ?? {}) as WillDetailsResponse;
   const userData = (getMeData?.data ?? {}) as GetMeResponse;
-  const digitalAssets = (digitalAssetsResponse?.data ?? null) as DigitalAssetsResponse | null;
-  
+  const digitalAssets = (digitalAssetsResponse?.data ??
+    null) as DigitalAssetsResponse | null;
+
   const isHydrating = isLoading && !dashboardResponse?.data;
-  
+
   // Use ref to track if initial mount has happened
   const hasMounted = useRef(false);
 
@@ -365,22 +437,27 @@ export default function MyWillPage() {
     }
 
     // Listen for popstate events (browser back/forward)
-    window.addEventListener('popstate', handleRouteChange);
-    
+    window.addEventListener("popstate", handleRouteChange);
+
     // Listen for page visibility changes (when tab becomes active again)
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         handleRouteChange();
       }
     };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('popstate', handleRouteChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener("popstate", handleRouteChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [refetchWillDetails, refetchMeData, refetchDigitalAssets, dashboardResponse?.data]);
+  }, [
+    refetchWillDetails,
+    refetchMeData,
+    refetchDigitalAssets,
+    dashboardResponse?.data,
+  ]);
 
   const userName = dashboard.user?.name ?? userData.fullName ?? "User";
   const family = dashboard.family ?? [];
@@ -394,21 +471,35 @@ export default function MyWillPage() {
 
   // Modified logic for family completion
   const hasAddress = (userData.addresses ?? []).length > 0;
-  const isSingle = dashboard.user?.maritalStatus === "SINGLE" || userData.maritalStatus === "SINGLE";
+  const isSingle =
+    dashboard.user?.maritalStatus === "SINGLE" ||
+    userData.maritalStatus === "SINGLE";
   const hasFamilyMembers = family.length > 0;
-  
+
   // Family flow is complete if:
   // 1. User has address AND (is single OR has family members)
   // OR
   // 2. User is not single and has family members
   const hasFamilyData = hasAddress && (isSingle || hasFamilyMembers);
-  
+
   const hasExecutorData = executors.length > 0;
   const hasEstateDistributionData = estateDistributions.length > 0;
   const hasGiftsData = gifts.length > 0;
-  const hasPetCaretakerData = petCaretakers.length > 0;
-  const hasAssetsData = financialAssets.length > 0 || properties.length > 0 || loans.length > 0;
-  const hasDigitalAssetsData = !!(digitalAssets && getDigitalAssetsCount(digitalAssets) > 0);
+  
+  // UPDATED: Pet caretaker logic
+  // Check if there are any pets in the family
+  const hasPets = family.some((member) => member.relationType === "PET");
+  
+  // Pet caretaker is complete if:
+  // 1. There are no pets (no action needed) - OR -
+  // 2. There are pets AND caretakers have been assigned
+  const hasPetCaretakerData = !hasPets || petCaretakers.length > 0;
+  
+  const hasAssetsData =
+    financialAssets.length > 0 || properties.length > 0 || loans.length > 0;
+  const hasDigitalAssetsData = !!(
+    digitalAssets && getDigitalAssetsCount(digitalAssets) > 0
+  );
 
   const sectionStates = [
     hasFamilyData,
@@ -421,11 +512,15 @@ export default function MyWillPage() {
   ];
 
   const completedSections = sectionStates.filter(Boolean).length;
-  const completionPercent = Math.round((completedSections / sectionStates.length) * 100);
+  const completionPercent = Math.round(
+    (completedSections / sectionStates.length) * 100,
+  );
   const allComplete = sectionStates.every(Boolean);
   const canAccessOtherSections = hasFamilyData;
 
-  const familySummary = family.filter((member) => ["SPOUSE", "PARTNER", "CHILD", "PET"].includes(member.relationType ?? ""));
+  const familySummary = family.filter((member) =>
+    ["SPOUSE", "PARTNER", "CHILD", "PET"].includes(member.relationType ?? ""),
+  );
   const primaryExecutor = executors[0]?.person ?? null;
   const backupExecutor = executors[0]?.backupPerson ?? null;
   const previewHref = "/will/preview";
@@ -437,6 +532,13 @@ export default function MyWillPage() {
   const handleNavigation = (href: string) => {
     router.push(href);
   };
+
+  // Get pet names for display
+  const petNames = family
+    .filter((member) => member.relationType === "PET")
+    .map((pet) => pet.fullName)
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="w-full">
@@ -452,8 +554,18 @@ export default function MyWillPage() {
           }}
           className="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1"
         >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            className="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
           Refresh
         </button>
@@ -462,10 +574,18 @@ export default function MyWillPage() {
       <div className="mb-6 rounded-[3px] border border-[#eadfcf] bg-[#F6ECE2] px-4 py-4 sm:px-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[0.86rem] uppercase tracking-[0.12em] text-[#8c8072]">Progress</p>
-            <h2 className="mt-1 text-[1.15rem] font-medium text-[#2b221a] sm:text-[1.2rem]">Your will is {completionPercent}% complete</h2>
+            <p className="text-[0.86rem] uppercase tracking-[0.12em] text-[#8c8072]">
+              Progress
+            </p>
+            <h2 className="mt-1 text-[1.15rem] font-medium text-[#2b221a] sm:text-[1.2rem]">
+              Your will is {completionPercent}% complete
+            </h2>
           </div>
-          <div className="text-right text-[0.95rem] text-[#2f241c]">{allComplete ? "All sections complete" : `${completedSections}/7 complete`}</div>
+          <div className="text-right text-[0.95rem] text-[#2f241c]">
+            {allComplete
+              ? "All sections complete"
+              : `${completedSections}/7 complete`}
+          </div>
         </div>
       </div>
 
@@ -480,7 +600,9 @@ export default function MyWillPage() {
                 <Link
                   href="/will/you-and-your-family/marital-status"
                   className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                  onClick={() => handleNavigation("/will/you-and-your-family/marital-status")}
+                  onClick={() =>
+                    handleNavigation("/will/you-and-your-family/marital-status")
+                  }
                 >
                   <PencilLine className="h-4 w-4" />
                   Edit
@@ -489,7 +611,9 @@ export default function MyWillPage() {
                 <Link
                   href="/will/you-and-your-family/marital-status"
                   className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                  onClick={() => handleNavigation("/will/you-and-your-family/marital-status")}
+                  onClick={() =>
+                    handleNavigation("/will/you-and-your-family/marital-status")
+                  }
                 >
                   Add you and your family
                 </Link>
@@ -504,8 +628,10 @@ export default function MyWillPage() {
             </div>
           ) : hasFamilyData ? (
             <div className="space-y-4">
-              <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">About You and Your Loved Ones</p>
-              
+              <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                About You and Your Loved Ones
+              </p>
+
               {/* Show single user info when applicable */}
               {showSingleUserOnly ? (
                 <div className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
@@ -513,8 +639,12 @@ export default function MyWillPage() {
                     <UserRound className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{userName}</p>
-                    <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">Single</p>
+                    <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">
+                      {userName}
+                    </p>
+                    <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">
+                      Single
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -524,13 +654,20 @@ export default function MyWillPage() {
                     const BadgeIcon = badge.icon;
 
                     return (
-                      <div key={member.id} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3">
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] px-3 py-3"
+                      >
                         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4e8da] text-[#223048]">
                           <BadgeIcon className="h-4 w-4" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{member.fullName}</p>
-                          <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">{badge.label}</p>
+                          <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">
+                            {member.fullName}
+                          </p>
+                          <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">
+                            {badge.label}
+                          </p>
                         </div>
                       </div>
                     );
@@ -554,7 +691,9 @@ export default function MyWillPage() {
                       <Link
                         href="/will/executor/get-started"
                         className="inline-flex items-center justify-center rounded-[3px] bg-[#172031] px-7 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        onClick={() => handleNavigation("/will/executor/get-started")}
+                        onClick={() =>
+                          handleNavigation("/will/executor/get-started")
+                        }
                       >
                         Edit
                       </Link>
@@ -562,7 +701,9 @@ export default function MyWillPage() {
                       <Link
                         href="/will/executor/get-started"
                         className="inline-flex items-center rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        onClick={() => handleNavigation("/will/executor/get-started")}
+                        onClick={() =>
+                          handleNavigation("/will/executor/get-started")
+                        }
                       >
                         Pick an executor
                       </Link>
@@ -575,8 +716,14 @@ export default function MyWillPage() {
                 hasExecutorData ? (
                   <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <PersonBubble member={primaryExecutor} fallback="Not selected" />
-                      <PersonBubble member={backupExecutor} fallback="Not selected" />
+                      <PersonBubble
+                        member={primaryExecutor}
+                        fallback="Not selected"
+                      />
+                      <PersonBubble
+                        member={backupExecutor}
+                        fallback="Not selected"
+                      />
                     </div>
                   </div>
                 ) : (
@@ -600,7 +747,9 @@ export default function MyWillPage() {
                       <Link
                         href="/will/divide-estate/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        onClick={() => handleNavigation("/will/divide-estate/intro")}
+                        onClick={() =>
+                          handleNavigation("/will/divide-estate/intro")
+                        }
                       >
                         <PencilLine className="h-4 w-4" />
                         Edit
@@ -609,7 +758,9 @@ export default function MyWillPage() {
                       <Link
                         href="/will/divide-estate/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        onClick={() => handleNavigation("/will/divide-estate/intro")}
+                        onClick={() =>
+                          handleNavigation("/will/divide-estate/intro")
+                        }
                       >
                         Distribute your estate
                       </Link>
@@ -635,38 +786,56 @@ export default function MyWillPage() {
                             </span>
                             <div className="min-w-0">
                               <p className="truncate text-[0.98rem] font-medium text-[#2b221a] sm:text-[1.05rem]">
-                                {distribution.person?.fullName ?? "Not selected"}
+                                {distribution.person?.fullName ??
+                                  "Not selected"}
                               </p>
                               <p className="mt-1 text-[0.82rem] uppercase tracking-[0.12em] text-[#8c8072]">
-                                Estate distribution
+                                {distribution.person?.relationType
+                                  ? getRelationLabel(
+                                      distribution.person.relationType,
+                                    )
+                                  : "Estate distribution"}
                               </p>
                             </div>
                           </div>
 
                           <div className="inline-flex items-center self-start rounded-full bg-[#f4e8da] px-3 py-1 text-[0.84rem] font-medium text-[#2b221a] sm:self-center">
-                            {Math.round(Number(distribution.percentage ?? 0) / 5) * 5} %
+                            {Math.round(
+                              Number(distribution.percentage ?? 0) / 5,
+                            ) * 5}{" "}
+                            %
                           </div>
                         </div>
 
                         <div className="mt-4 border-t border-[#ece8e2] pt-4">
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <p className="text-[0.82rem] font-semibold uppercase tracking-[0.12em] text-[#8c8072]">
-                             Backup Distributees
+                              Backup Distributees
                             </p>
                             <span className="text-[0.78rem] text-[#7a8190]">
-                              {backupMembers.length ? `${backupMembers.length} selected` : "None selected"}
+                              {backupMembers.length
+                                ? `${backupMembers.length} selected`
+                                : "None selected"}
                             </span>
                           </div>
 
                           {backupMembers.length ? (
                             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                               {backupMembers.map((backup) => (
-                                <DistributionPeopleBadge key={backup.id ?? backup.person?.id ?? `${distribution.id}-backup`} member={backup.person ?? null} />
+                                <DistributionPeopleBadge
+                                  key={
+                                    backup.id ??
+                                    backup.person?.id ??
+                                    `${distribution.id}-backup`
+                                  }
+                                  member={backup.person ?? null}
+                                />
                               ))}
                             </div>
                           ) : (
                             <p className="rounded-[8px] bg-white px-3 py-3 text-[0.92rem] text-[#6f7685]">
-                              No backup distributees have been added for this distribution.
+                              No backup distributees have been added for this
+                              distribution.
                             </p>
                           )}
                         </div>
@@ -718,29 +887,42 @@ export default function MyWillPage() {
                         const GiftIcon = getGiftIcon(gift.giftType);
                         const giftTypeLabel = getGiftTypeLabel(gift.giftType);
                         let giftValue = getGiftValueDisplay(gift);
-                        
+
                         // If it's a financial account, get detailed info
                         let financialDetails = null;
-                        if (gift.giftType === "FINANCIAL_ACCOUNT" && gift.asset) {
+                        if (
+                          gift.giftType === "FINANCIAL_ACCOUNT" &&
+                          gift.asset
+                        ) {
                           const asset = gift.asset;
                           financialDetails = (
                             <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
                               {asset.type && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Type:</span>
-                                  <span className="truncate">{asset.type.replace(/_/g, ' ')}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Type:
+                                  </span>
+                                  <span className="truncate">
+                                    {asset.type.replace(/_/g, " ")}
+                                  </span>
                                 </div>
                               )}
                               {asset.institutionName && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Institution:</span>
-                                  <span className="truncate">{asset.institutionName}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Institution:
+                                  </span>
+                                  <span className="truncate">
+                                    {asset.institutionName}
+                                  </span>
                                 </div>
                               )}
                               {(asset.accountNumber || asset.policyNumber) && (
                                 <div className="flex items-center gap-1.5">
                                   <span className="font-medium text-[#5a4e42]">
-                                    {asset.accountNumber ? 'Account:' : 'Policy:'}
+                                    {asset.accountNumber
+                                      ? "Account:"
+                                      : "Policy:"}
                                   </span>
                                   <span className="truncate font-mono text-xs">
                                     {asset.accountNumber || asset.policyNumber}
@@ -749,34 +931,50 @@ export default function MyWillPage() {
                               )}
                               {(asset.approximateValue || asset.faceValue) && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Value:</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Value:
+                                  </span>
                                   <span className="font-semibold text-[#2b221a]">
-                                    {formatMoney(asset.approximateValue || asset.faceValue)}
+                                    {formatMoney(
+                                      asset.approximateValue || asset.faceValue,
+                                    )}
                                   </span>
                                 </div>
                               )}
                               {asset.coverType && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Cover:</span>
-                                  <span className="truncate">{asset.coverType.replace(/_/g, ' ')}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Cover:
+                                  </span>
+                                  <span className="truncate">
+                                    {asset.coverType.replace(/_/g, " ")}
+                                  </span>
                                 </div>
                               )}
                               {asset.description && (
                                 <div className="flex items-start gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Note:</span>
-                                  <span className="truncate">{asset.description}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Note:
+                                  </span>
+                                  <span className="truncate">
+                                    {asset.description}
+                                  </span>
                                 </div>
                               )}
                               {gift.description && !asset.description && (
                                 <div className="flex items-start gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Note:</span>
-                                  <span className="truncate">{gift.description}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Note:
+                                  </span>
+                                  <span className="truncate">
+                                    {gift.description}
+                                  </span>
                                 </div>
                               )}
                             </div>
                           );
                         }
-                        
+
                         // For PROPERTY gifts, show property details
                         let propertyDetails = null;
                         if (gift.giftType === "PROPERTY" && gift.property) {
@@ -785,19 +983,29 @@ export default function MyWillPage() {
                             <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
                               {property.type && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Type:</span>
-                                  <span className="truncate">{property.type.replace(/_/g, ' ')}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Type:
+                                  </span>
+                                  <span className="truncate">
+                                    {property.type.replace(/_/g, " ")}
+                                  </span>
                                 </div>
                               )}
                               {property.streetAddress && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Address:</span>
-                                  <span className="truncate">{property.streetAddress}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Address:
+                                  </span>
+                                  <span className="truncate">
+                                    {property.streetAddress}
+                                  </span>
                                 </div>
                               )}
                               {property.estimatedValue && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Value:</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Value:
+                                  </span>
                                   <span className="font-semibold text-[#2b221a]">
                                     {formatMoney(property.estimatedValue)}
                                   </span>
@@ -805,7 +1013,9 @@ export default function MyWillPage() {
                               )}
                               {property.isJointProperty && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Joint:</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Joint:
+                                  </span>
                                   <span className="text-emerald-600">✓</span>
                                 </div>
                               )}
@@ -820,14 +1030,22 @@ export default function MyWillPage() {
                             <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
                               {gift.itemName && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Item:</span>
-                                  <span className="truncate">{gift.itemName}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Item:
+                                  </span>
+                                  <span className="truncate">
+                                    {gift.itemName}
+                                  </span>
                                 </div>
                               )}
                               {gift.description && (
                                 <div className="flex items-start gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Description:</span>
-                                  <span className="truncate">{gift.description}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Description:
+                                  </span>
+                                  <span className="truncate">
+                                    {gift.description}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -841,14 +1059,22 @@ export default function MyWillPage() {
                             <div className="mt-2 space-y-1 border-t border-[#f0ece6] pt-2 text-[0.8rem] text-[#6f7685]">
                               {gift.itemName && (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Item:</span>
-                                  <span className="truncate">{gift.itemName}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Item:
+                                  </span>
+                                  <span className="truncate">
+                                    {gift.itemName}
+                                  </span>
                                 </div>
                               )}
                               {gift.description && (
                                 <div className="flex items-start gap-1.5">
-                                  <span className="font-medium text-[#5a4e42]">Description:</span>
-                                  <span className="truncate">{gift.description}</span>
+                                  <span className="font-medium text-[#5a4e42]">
+                                    Description:
+                                  </span>
+                                  <span className="truncate">
+                                    {gift.description}
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -876,16 +1102,16 @@ export default function MyWillPage() {
                                 <p className="mt-1 truncate text-[0.85rem] leading-[1.4] text-[#6f7685] sm:text-[0.9rem]">
                                   {giftValue}
                                 </p>
-                                
+
                                 {/* Show financial details if available */}
                                 {financialDetails}
-                                
+
                                 {/* Show property details if available */}
                                 {propertyDetails}
-                                
+
                                 {/* Show item details if available */}
                                 {itemDetails}
-                                
+
                                 {/* Show collection details if available */}
                                 {collectionDetails}
                               </div>
@@ -894,12 +1120,13 @@ export default function MyWillPage() {
                         );
                       })}
                     </div>
-                    
+
                     {/* Summary row for gifts count */}
                   </div>
                 ) : (
                   <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
-                    No gifts have been added yet. Add specific gifts to leave to your loved ones.
+                    No gifts have been added yet. Add specific gifts to leave to
+                    your loved ones.
                   </p>
                 )
               ) : (
@@ -918,7 +1145,9 @@ export default function MyWillPage() {
                       <Link
                         href="/will/caretakers-of-pets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        onClick={() => handleNavigation("/will/caretakers-of-pets/intro")}
+                        onClick={() =>
+                          handleNavigation("/will/caretakers-of-pets/intro")
+                        }
                       >
                         <PencilLine className="h-4 w-4" />
                         Edit
@@ -927,7 +1156,9 @@ export default function MyWillPage() {
                       <Link
                         href="/will/caretakers-of-pets/intro"
                         className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                        onClick={() => handleNavigation("/will/caretakers-of-pets/intro")}
+                        onClick={() =>
+                          handleNavigation("/will/caretakers-of-pets/intro")
+                        }
                       >
                         Add caretaker for pets
                       </Link>
@@ -937,20 +1168,47 @@ export default function MyWillPage() {
               }
             >
               {canAccessOtherSections ? (
-                <div className="space-y-1">
-                  {petCaretakers.map((record) => (
-                    <SummaryRow
-                      key={record.id}
-                      label={record.pet?.fullName ?? "Pet"}
-                      value={record.caretaker?.fullName ?? "Not selected"}
-                      icons={
-                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                          <PawPrint className="h-4 w-4" />
-                        </span>
-                      }
-                    />
-                  ))}
-                </div>
+                hasPets ? (
+                  petCaretakers.length > 0 ? (
+                    <div className="space-y-1">
+                      {petCaretakers.map((record) => (
+                        <SummaryRow
+                          key={record.id}
+                          label={record.pet?.fullName ?? "Pet"}
+                          value={record.caretaker?.fullName ?? "Not selected"}
+                          icons={
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                              <PawPrint className="h-4 w-4" />
+                            </span>
+                          }
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
+                        You have pets in your family. Please add a caretaker for:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {family
+                          .filter((member) => member.relationType === "PET")
+                          .map((pet) => (
+                            <span
+                              key={pet.id}
+                              className="inline-flex items-center gap-2 rounded-full bg-[#f5eadd] px-3 py-1.5 text-[0.85rem] text-[#2b221a]"
+                            >
+                              <PawPrint className="h-3.5 w-3.5" />
+                              {pet.fullName}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <p className="text-[0.95rem] leading-[1.45] text-[#6f7685] sm:text-[1rem]">
+                    No pets added to your family.
+                  </p>
+                )
               ) : (
                 <PrerequisiteMessage />
               )}
@@ -1072,21 +1330,30 @@ export default function MyWillPage() {
                         Digital Subscriptions & Accounts
                       </p>
                     </div>
-                    
+
                     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                      {getPlatformNames(digitalAssets).map((platform, index) => (
-                        <div key={index} className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] bg-[#fcfaf7] px-3 py-3">
-                          <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
-                            <CheckCircle className="h-4 w-4 text-emerald-600" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">{platform}</p>
-                            <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">Digital Account</p>
+                      {getPlatformNames(digitalAssets).map(
+                        (platform, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] bg-[#fcfaf7] px-3 py-3"
+                          >
+                            <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[#f5eadd] text-[#172031]">
+                              <CheckCircle className="h-4 w-4 text-emerald-600" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">
+                                {platform}
+                              </p>
+                              <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">
+                                Digital Account
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ),
+                      )}
                     </div>
-                    
+
                     {digitalAssets?.brokerageDetails && (
                       <div className="mt-3 rounded-[8px] bg-[#f4f0ea] px-4 py-3">
                         <div className="flex items-center justify-between">
@@ -1095,8 +1362,12 @@ export default function MyWillPage() {
                               <BriefcaseBusiness className="h-4 w-4" />
                             </span>
                             <div>
-                              <p className="text-[0.85rem] font-medium text-[#5a4e42]">Brokerage/ETF Details</p>
-                              <p className="text-[0.9rem] text-[#2b221a]">{digitalAssets.brokerageDetails}</p>
+                              <p className="text-[0.85rem] font-medium text-[#5a4e42]">
+                                Brokerage/ETF Details
+                              </p>
+                              <p className="text-[0.9rem] text-[#2b221a]">
+                                {digitalAssets.brokerageDetails}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -1110,7 +1381,8 @@ export default function MyWillPage() {
                         <Globe className="h-4 w-4" />
                       </span>
                       <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
-                        Add your digital subscriptions and accounts to ensure your loved ones can access or close them.
+                        Add your digital subscriptions and accounts to ensure
+                        your loved ones can access or close them.
                       </p>
                     </div>
                   </div>
