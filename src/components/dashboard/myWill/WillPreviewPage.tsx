@@ -515,13 +515,6 @@ export default function WillPreviewPage() {
         pageNumber: 2,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3">
-              <p>
-                <strong>Action Required:</strong> Follow these precise
-                compliance measures to guarantee the legal enforceability of
-                this portfolio under Singapore jurisdiction.
-              </p>
-            </div>
             <p>
               1.1 Document Verification &amp; Physical Binding: Prior to
               signature, thoroughly review all clauses. Any updated highlight
@@ -545,16 +538,6 @@ export default function WillPreviewPage() {
         pageNumber: 3,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Legal Parameters:</strong> Understanding the operation
-                of non-estate assets and life events under the Wills Act (Cap.
-                352) of Singapore.
-              </p>
-            </div>
             <p>
               2.1 Declaration of Contemplation and Effect of Marriage: I,{" "}
               <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN:{" "}
@@ -592,16 +575,6 @@ export default function WillPreviewPage() {
         pageNumber: 4,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Purpose:</strong> Explicitly establishes the identity of
-                the testator, status of immediate kin, and revokes prior legal
-                instruments.
-              </p>
-            </div>
             <p>
               3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore
               NRIC/FIN: <Highlight>{userNRIC || "N/A"}</Highlight>, presently
@@ -677,15 +650,6 @@ export default function WillPreviewPage() {
         pageNumber: 5,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Purpose:</strong> Designates fiduciary representatives
-                to manage the estate liquidation and care for minor dependents.
-              </p>
-            </div>
             <p>
               4.1 Fiduciary Appointment: I appoint{" "}
               <Highlight>{primaryExecutor}</Highlight> to act as the sole
@@ -709,16 +673,6 @@ export default function WillPreviewPage() {
         pageNumber: 6,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Purpose:</strong> Specific gifts and asset allocations
-                to named beneficiaries.
-              </p>
-            </div>
-
             {/* Cash Gifts */}
             {cashGifts.length > 0 && (
               <div>
@@ -908,16 +862,6 @@ export default function WillPreviewPage() {
         pageNumber: 7,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Purpose:</strong> Dictates the definitive split of all
-                remaining assets and introduces structural legal protection
-                clauses.
-              </p>
-            </div>
             <p>
               6.1 Residuary Allocations: All remaining capital, real estate
               interests, and investments not specifically named elsewhere shall
@@ -990,15 +934,6 @@ export default function WillPreviewPage() {
         pageNumber: 8,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Action:</strong> To be signed only when both witnesses
-                are physically looking at your hand affixing the mark.
-              </p>
-            </div>
             <p>
               In witness whereof, I have set my hand to this my Last Will on
               this <Highlight>________</Highlight> day of{" "}
@@ -1039,37 +974,24 @@ export default function WillPreviewPage() {
         pageNumber: 9,
         body: (
           <div className="space-y-5 text-[0.94rem] leading-[1.75] text-[#3f4550]">
-            <div
-              className="rounded-[4px] border-l-[4px] border-[#c35b43] bg-[#f9f8f5] px-4 py-3"
-              style={{ pageBreakInside: "avoid" }}
-            >
-              <p>
-                <strong>Directives:</strong> I instruct my executor to deliver
-                these messages to my intended beneficiaries, either
-                electronically or in hard copy. They should not be shared with
-                anyone other than the recipient, and should be excluded from
-                public availability.
-              </p>
-            </div>
-
             {/* Personal Messages from Gifts */}
             {memoGifts.length > 0 ? (
               memoGifts.map((gift, index) => {
                 const memoText = gift.personalMessage || gift.description || "";
 
                 return (
-                <div key={gift.id} className="space-y-2">
-                  <p>
-                    <strong>
-                      Private Memorandum {index + 1} to{" "}
-                      <Highlight>{gift.recipientName}</Highlight>:
-                    </strong>
-                  </p>
-                  <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
-                    "{memoText}"
-                  </p>
-                </div>
-              );
+                  <div key={gift.id} className="space-y-2">
+                    <p>
+                      <strong>
+                        Private Memorandum {index + 1} to{" "}
+                        <Highlight>{gift.recipientName}</Highlight>:
+                      </strong>
+                    </p>
+                    <p className="border-l-2 border-[#c35b43]/30 pl-4 font-medium italic text-[#2f2d24]">
+                      "{memoText}"
+                    </p>
+                  </div>
+                );
               })
             ) : (
               <>
