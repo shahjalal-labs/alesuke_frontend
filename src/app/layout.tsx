@@ -3,7 +3,7 @@ import "./globals.css";
 // import logo from "@/assets/logo.svg"
 // import logo from "@/assets/Logo.png";
 
-import ReduxProvider from "@/redux/ReduxProvider";
+// import ReduxProvider from "@/redux/ReduxProvider";
 import { Toaster } from "sonner";
 import { Providers } from "./providers/providers";
 import { AuthSync } from "@/components/auth/AuthSync";
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body>
         {/* <NavBar /> */}
         <Providers>
           {" "}

@@ -76,7 +76,7 @@ function getMemberIcon(relationType?: string | null) {
 export default function ChooseExecutor() {
   const router = useRouter();
   const { data: allMembers = [], isLoading } = useGetAllMemberListQuery(undefined);
-  const { data: willResponse } = useGetWillQuery(undefined);
+  const { data: willResponse, refetch: refetchWill } = useGetWillQuery(undefined);
   const members = useMemo(
     () => (allMembers as MemberRecord[]).filter((member) => member.relationType !== "PET"),
     [allMembers]
@@ -106,22 +106,11 @@ export default function ChooseExecutor() {
   const backupOptions = members.filter((member) => member.id !== primaryId && member.id !== backupId);
 
   useEffect(() => {
-    if (savedPrimaryId) {
-      setPrimaryExecutorId(savedPrimaryId);
-      setBackupExecutorId(savedBackupId);
-      setActiveExecutorId(savedExecutorId);
-      setIsBackupListOpen(false);
-      return;
-    }
-
-    if (primaryExecutorId) {
-      setIsBackupListOpen(false);
-      return;
-    }
-
-    setBackupExecutorId(null);
+    setPrimaryExecutorId(savedPrimaryId);
+    setBackupExecutorId(savedBackupId);
+    setActiveExecutorId(savedExecutorId);
     setIsBackupListOpen(false);
-  }, [primaryExecutorId, savedBackupId, savedPrimaryId]);
+  }, [savedBackupId, savedExecutorId, savedPrimaryId]);
 
   useEffect(() => {
     if (!backupExecutorId && savedBackupId) {
@@ -172,6 +161,7 @@ export default function ChooseExecutor() {
       await removeBackupExecutor(backupExecutor.id).unwrap();
       setBackupExecutorId(null);
       setIsBackupListOpen(false);
+      await refetchWill();
       toast.success("Backup executor removed.");
     } catch (error: any) {
       toast.error(getApiErrorMessage(error));
@@ -190,6 +180,7 @@ export default function ChooseExecutor() {
       setBackupExecutorId(null);
       setActiveExecutorId(null);
       setIsBackupListOpen(false);
+      await refetchWill();
       toast.success("Primary executor removed.");
     } catch (error: any) {
       toast.error(getApiErrorMessage(error));
