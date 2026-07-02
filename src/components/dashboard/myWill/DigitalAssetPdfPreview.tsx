@@ -78,7 +78,7 @@ function DigitalAssetPdfPreview() {
     { key: "hasNetflix", name: "Netflix" },
     { key: "hasDisneyPlus", name: "Disney+" },
     { key: "hasPrimeVideo", name: "Prime Video" },
-    { key: "hasViu", name: "Viu" },
+    { key: "hasViu", name: "Dropbox" },
     { key: "hasAppleTVPlus", name: "Apple TV+" },
   ];
 
