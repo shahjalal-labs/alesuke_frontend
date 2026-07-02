@@ -41,6 +41,7 @@ type PropertyGiftRecord = {
   id?: string
   giftType?: 'PROPERTY'
   propertyId?: string | null
+  description?: string | null
   recipients?: Array<{
     peopleID?: string | null
     recipient?: {
@@ -58,6 +59,7 @@ type PropertyGiftPayload = {
   giftType: 'PROPERTY'
   recipients: Array<{ peopleId: string }>
   propertyId: string
+  description?: string
 }
 
 const propertyOptions: Array<{ id: PropertyType; label: string }> = [
@@ -80,6 +82,7 @@ export default function Property() {
   const dispatch = useDispatch<AppDispatch>()
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<Array<string | number>>([])
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null)
+  const [personalMessage, setPersonalMessage] = useState('')
   const [submittingGift, setSubmittingGift] = useState(false)
 
   useEffect(() => {
@@ -114,6 +117,7 @@ export default function Property() {
     }
 
     setSelectedPropertyId(existingGift.propertyId ?? existingGift.property?.id ?? null)
+    setPersonalMessage(existingGift.description ?? '')
     setSelectedRecipientIds(
       (existingGift.recipients ?? [])
         .map((recipient) => recipient.peopleID ?? recipient.recipient?.id ?? '')
@@ -175,6 +179,7 @@ export default function Property() {
       giftType: 'PROPERTY',
       recipients: recipientPayload,
       propertyId: selectedPropertyId,
+      description: personalMessage || '',
     }
 
     setSubmittingGift(true)
@@ -222,13 +227,15 @@ export default function Property() {
         selectedRecipientIds={selectedRecipientIds}
         onRecipientToggle={toggleRecipient}
         messageHelp="This is where you can tell them more about the gift, why you're leaving it to them or what you want them to do with it. Please note, they will not be legally obliged to carry out your wishes."
-        messagePlaceholder=""
+        messagePlaceholder="Write your personal message here..."
+        messageValue={personalMessage}
+        onMessageChange={setPersonalMessage}
         nextLabel={submittingGift ? 'Saving...' : editingGiftId ? 'Update gift' : 'Save & continue'}
         onNext={handleSaveGift}
         nextDisabled={submittingGift}
         customMiddle={
           <>
-           <h3 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem] mb-4">Choose a property</h3>
+            <h3 className="mb-4 text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem]">Choose a property</h3>
             {savedProperties.length ? (
               <div className="mb-6 overflow-hidden rounded-[4px] border border-[#d7d7d7] bg-secondary shadow-[0_1px_0_rgba(17,24,39,0.02)] p-4 space-y-4">
                 {savedProperties.map((property, index) => {

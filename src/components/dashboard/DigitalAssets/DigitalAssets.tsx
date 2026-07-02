@@ -68,7 +68,7 @@ const initialCategories: ServiceCategory[] = [
       { id: 'icloud', name: 'iCloud', checked: false, apiKey: 'hasICloud' }, // Changed
       { id: 'gdrive', name: 'Google Drive', checked: false, apiKey: 'hasGoogleDrive' },
       { id: 'onedrive', name: 'One Drive', checked: false, apiKey: 'hasOneDrive' },
-      { id: 'viu-cloud', name: 'Viu', checked: false, apiKey: 'hasViu' },
+      { id: 'viu-cloud', name: 'Dropbox', checked: false, apiKey: 'hasViu' },
     ],
   },
   {

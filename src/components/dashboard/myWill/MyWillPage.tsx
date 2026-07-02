@@ -379,7 +379,7 @@ function getPlatformNames(
     { key: "hasNetflix", name: "Netflix" },
     { key: "hasDisneyPlus", name: "Disney+" },
     { key: "hasPrimeVideo", name: "Prime Video" },
-    { key: "hasViu", name: "Viu" },
+    { key: "hasViu", name: "Dropbox" },
     { key: "hasAppleTVPlus", name: "Apple TV+" },
     { key: "hasSpotify", name: "Spotify" },
     { key: "hasYouTubePremium", name: "YouTube Premium" },

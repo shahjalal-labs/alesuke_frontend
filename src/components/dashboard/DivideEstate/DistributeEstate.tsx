@@ -58,72 +58,12 @@ function distributeIntegerPercentages(count: number): number[] {
   return percentages;
 }
 
-// Initialize allocations with equal integer distribution
-function initializeEqualDistributions(distributions: DistributionRecord[]): EditableDistributionRecord[] {
-  if (!distributions.length) return [];
-  
-  const percentages = distributeIntegerPercentages(distributions.length);
-  
-  return distributions.map((dist, index) => ({
-    ...dist,
-    percentage: percentages[index]
-  }));
-}
-
 function normalizeLoadedAllocations(distributions: DistributionRecord[]): EditableDistributionRecord[] {
   if (!distributions.length) return [];
-  
-  // Check if any percentages are already set
-  const hasPercentages = distributions.some(d => typeof d.percentage === 'number' && d.percentage !== null);
-  
-  if (!hasPercentages) {
-    return initializeEqualDistributions(distributions);
-  }
-  
-  // Load existing percentages and ensure they're integers
-  let loaded = distributions.map(d => ({
+
+  return distributions.map(d => ({
     ...d,
     percentage: Math.round(d.percentage ?? 0)
-  }));
-  
-  // Ensure total is 100%
-  const total = loaded.reduce((sum, d) => sum + d.percentage, 0);
-  if (total !== TOTAL_PERCENT && loaded.length > 0) {
-    // Adjust the first distribution to make total 100%
-    const adjustment = TOTAL_PERCENT - total;
-    loaded = loaded.map((dist, idx) => {
-      if (idx === 0) {
-        return { ...dist, percentage: Math.max(0, dist.percentage + adjustment) };
-      }
-      return dist;
-    });
-  }
-  
-  return loaded;
-}
-
-// Function to rebalance all percentages to integers that sum to 100
-function rebalanceToIntegers(distributions: EditableDistributionRecord[]): EditableDistributionRecord[] {
-  if (!distributions.length) return distributions;
-  
-  const total = distributions.reduce((sum, d) => sum + d.percentage, 0);
-  const count = distributions.length;
-  
-  if (total === TOTAL_PERCENT) {
-    // Already sums to 100, just ensure integers
-    return distributions.map(d => ({
-      ...d,
-      percentage: Math.round(d.percentage)
-    }));
-  }
-  
-  // Redistribute evenly as integers
-  const equalShare = Math.floor(TOTAL_PERCENT / count);
-  const remainder = TOTAL_PERCENT - (equalShare * count);
-  
-  return distributions.map((dist, index) => ({
-    ...dist,
-    percentage: equalShare + (index < remainder ? 1 : 0)
   }));
 }
 
@@ -201,10 +141,9 @@ function DistributeEstate() {
 
   const handlePercentageBlur = (distributionId: string) => {
     setEditingId(null);
-    
-    // Get the current value from temp or from state
+
     let value: number;
-    
+
     if (tempValues[distributionId] !== undefined) {
       value = Number(tempValues[distributionId]);
       if (isNaN(value)) value = 0;
@@ -220,78 +159,13 @@ function DistributeEstate() {
     
     // Round to integer and clamp to valid range
     value = Math.max(0, Math.min(TOTAL_PERCENT, Math.round(value)));
-    
-    // Update and rebalance
+
     setEditableDistributions(current => {
-      // First update the changed value
-      let updated = current.map(dist =>
+      return current.map(dist =>
         dist.id === distributionId
           ? { ...dist, percentage: value }
           : dist
       );
-      
-      // Calculate new total
-      let total = updated.reduce((sum, d) => sum + d.percentage, 0);
-      
-      // If total is not 100, adjust other beneficiaries
-      if (total !== TOTAL_PERCENT && updated.length > 0) {
-        const difference = TOTAL_PERCENT - total;
-        const otherIndices = updated
-          .map((_, idx) => idx)
-          .filter(idx => updated[idx].id !== distributionId);
-        
-        if (otherIndices.length > 0) {
-          // Distribute the difference among other beneficiaries
-          let remainingDiff = difference;
-          
-          for (const idx of otherIndices) {
-            if (remainingDiff === 0) break;
-            
-            const currentOtherValue = updated[idx].percentage;
-            let newOtherValue = currentOtherValue + remainingDiff;
-            
-            // If adjusting a single beneficiary would make it negative or >100, distribute differently
-            if (newOtherValue < 0) {
-              newOtherValue = 0;
-              remainingDiff = currentOtherValue + remainingDiff;
-            } else if (newOtherValue > TOTAL_PERCENT) {
-              newOtherValue = TOTAL_PERCENT;
-              remainingDiff = currentOtherValue + remainingDiff - TOTAL_PERCENT;
-            } else {
-              remainingDiff = 0;
-            }
-            
-            updated[idx] = {
-              ...updated[idx],
-              percentage: Math.round(newOtherValue)
-            };
-          }
-          
-          // Recalculate total after adjustments
-          total = updated.reduce((sum, d) => sum + d.percentage, 0);
-          
-          // If still not 100, force the last one to adjust
-          if (total !== TOTAL_PERCENT && otherIndices.length > 0) {
-            const lastIndex = otherIndices[otherIndices.length - 1];
-            const finalAdjustment = TOTAL_PERCENT - total;
-            updated[lastIndex] = {
-              ...updated[lastIndex],
-              percentage: Math.max(0, Math.min(TOTAL_PERCENT, updated[lastIndex].percentage + finalAdjustment))
-            };
-          }
-        } else if (updated.length === 1) {
-          // Only one beneficiary, force to 100%
-          updated[0] = { ...updated[0], percentage: TOTAL_PERCENT };
-        }
-      }
-      
-      // Ensure all percentages are integers
-      updated = updated.map(dist => ({
-        ...dist,
-        percentage: Math.round(dist.percentage)
-      }));
-      
-      return updated;
     });
   };
 
@@ -299,78 +173,19 @@ function DistributeEstate() {
     setEditableDistributions(current => {
       const target = current.find(d => d.id === distributionId);
       if (!target) return current;
-      
+
       let newValue = target.percentage + direction;
-      
+
       // Clamp to valid range
       newValue = Math.max(0, Math.min(TOTAL_PERCENT, newValue));
-      
+
       if (newValue === target.percentage) return current;
-      
-      // Update the value
-      let updated = current.map(dist =>
+
+      return current.map(dist =>
         dist.id === distributionId
           ? { ...dist, percentage: newValue }
           : dist
       );
-      
-      // Ensure total is 100% by adjusting others
-      let total = updated.reduce((sum, d) => sum + d.percentage, 0);
-      const difference = TOTAL_PERCENT - total;
-      
-      if (difference !== 0) {
-        const otherIndices = updated
-          .map((_, idx) => idx)
-          .filter(idx => updated[idx].id !== distributionId);
-        
-        if (otherIndices.length > 0) {
-          // Distribute difference across others
-          let remainingDiff = difference;
-          
-          for (const idx of otherIndices) {
-            if (remainingDiff === 0) break;
-            
-            const currentOtherValue = updated[idx].percentage;
-            let newOtherValue = currentOtherValue + remainingDiff;
-            
-            if (newOtherValue < 0) {
-              newOtherValue = 0;
-              remainingDiff = currentOtherValue + remainingDiff;
-            } else if (newOtherValue > TOTAL_PERCENT) {
-              newOtherValue = TOTAL_PERCENT;
-              remainingDiff = currentOtherValue + remainingDiff - TOTAL_PERCENT;
-            } else {
-              remainingDiff = 0;
-            }
-            
-            updated[idx] = {
-              ...updated[idx],
-              percentage: Math.round(newOtherValue)
-            };
-          }
-          
-          // Recalculate total
-          total = updated.reduce((sum, d) => sum + d.percentage, 0);
-          
-          // Final adjustment if needed
-          if (total !== TOTAL_PERCENT && otherIndices.length > 0) {
-            const lastIndex = otherIndices[otherIndices.length - 1];
-            const finalAdjustment = TOTAL_PERCENT - total;
-            updated[lastIndex] = {
-              ...updated[lastIndex],
-              percentage: Math.max(0, Math.min(TOTAL_PERCENT, updated[lastIndex].percentage + finalAdjustment))
-            };
-          }
-        }
-      }
-      
-      // Ensure all percentages are integers
-      updated = updated.map(dist => ({
-        ...dist,
-        percentage: Math.round(dist.percentage)
-      }));
-      
-      return updated;
     });
   };
 

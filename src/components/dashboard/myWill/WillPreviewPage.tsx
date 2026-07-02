@@ -372,8 +372,8 @@ export default function WillPreviewPage() {
     (g) => g.giftType === "FINANCIAL_ACCOUNT",
   );
 
-  // Get personal messages from gifts
-  const personalMessages = gifts.filter((gift) => gift.personalMessage);
+  // Get memo text from gifts, supporting both the dedicated field and description fallback.
+  const memoGifts = gifts.filter((gift) => gift.personalMessage || gift.description);
 
   const userName = dashboard.user?.name ?? "Your will";
   const userNRIC = dashboard.user?.nid ?? "N/A";
@@ -533,8 +533,8 @@ export default function WillPreviewPage() {
             </p>
             <p>
               1.3 Affixing Signatures: The testator{" "}
-              <Highlight>{userName}</Highlight> will sign beside the witness
-              sections when the final PDF is issued.
+              <Highlight>{userName}</Highlight> <Highlight>{userNRIC || "N/A"} </Highlight>
+              will sign beside the witness sections when the final PDF is issued.
             </p>
           </div>
         ),
@@ -557,7 +557,8 @@ export default function WillPreviewPage() {
             </div>
             <p>
               2.1 Declaration of Contemplation and Effect of Marriage: I,{" "}
-              <Highlight>{userName}</Highlight>, declare that this Will is made
+              <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN:{" "}
+              <Highlight>{userNRIC || "N/A"}</Highlight>, declare that this Will is made
               with the explicit awareness of statutory rules governing civil
               status changes. Pursuant to Section 13 of the Wills Act (Cap.
               352), I acknowledge that any subsequent marriage entered into by
@@ -804,6 +805,8 @@ export default function WillPreviewPage() {
                       const parts = [];
                       if (property.streetAddress)
                         parts.push(property.streetAddress);
+                      if (property.unitNumber)
+                        parts.push(`Unit #${property.unitNumber}`);
                       if (property.country) parts.push(property.country);
                       if (property.postcode) parts.push(property.postcode);
                       address = parts.join(", ") || "address";
@@ -822,9 +825,6 @@ export default function WillPreviewPage() {
                             {" "}
                             (valued at {formatMoney(property.estimatedValue)})
                           </span>
-                        )}
-                        {property?.unitNumber && (
-                          <span> Unit #{property.unitNumber} </span>
                         )}
                         to <Highlight>{gift.recipientName}</Highlight>.
                       </li>
@@ -1007,6 +1007,9 @@ export default function WillPreviewPage() {
             <p>
               <Highlight>{userName}</Highlight>
             </p>
+            <p>
+              NRIC/FIN: <Highlight>{userNRIC || "N/A"}</Highlight>
+            </p>
             <p className="italic text-[#5f5b55]">
               Acknowledged and signed by the Testator as his final wishes in our
               joint simultaneous presence, whereupon, we, at his request,
@@ -1050,8 +1053,11 @@ export default function WillPreviewPage() {
             </div>
 
             {/* Personal Messages from Gifts */}
-            {personalMessages.length > 0 ? (
-              personalMessages.map((gift, index) => (
+            {memoGifts.length > 0 ? (
+              memoGifts.map((gift, index) => {
+                const memoText = gift.personalMessage || gift.description || "";
+
+                return (
                 <div key={gift.id} className="space-y-2">
                   <p>
                     <strong>
@@ -1060,10 +1066,11 @@ export default function WillPreviewPage() {
                     </strong>
                   </p>
                   <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
-                    "{gift.personalMessage}"
+                    "{memoText}"
                   </p>
                 </div>
-              ))
+              );
+              })
             ) : (
               <>
                 <div className="space-y-2">
@@ -1191,7 +1198,7 @@ export default function WillPreviewPage() {
       firstPetName,
       gifts,
       itemGifts,
-      personalMessages,
+      memoGifts,
       petCaretakers.length,
       primaryExecutor,
       properties.length,
