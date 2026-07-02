@@ -1176,10 +1176,6 @@ export default function WillPreviewPage() {
                 </div>
               </div>
             </div> */}
-
-            <p className="pt-3 text-center text-[0.78rem] uppercase tracking-[0.08em] text-[#8c8072]">
-              MANAGED VIA THE WILL &amp; WAY PLATFORM — END OF PORTFOLIO DRAFT
-            </p>
           </div>
         ),
       },
