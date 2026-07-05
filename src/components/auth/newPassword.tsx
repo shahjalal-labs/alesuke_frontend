@@ -67,7 +67,7 @@ function NewPassword() {
             value={password}
             onChange={(value) => {
               setPassword(value);
-              console.log("new password", value);
+              // console.log("new password", value);
             }}
             showToggle
           />
@@ -80,7 +80,7 @@ function NewPassword() {
             value={confirmPassword}
             onChange={(value) => {
               setConfirmPassword(value);
-              console.log("confirm password", value);
+              // console.log("confirm password", value);
             }}
             showToggle
           />

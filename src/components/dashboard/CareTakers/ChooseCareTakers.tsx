@@ -99,7 +99,7 @@ export default function ChooseCareTakers() {
       toast.success("Caretaker saved.");
       router.push("/will/caretakers-of-pets/complete");
     } catch (error: any) {
-      console.log("Error saving caretaker", error);
+      // console.log("Error saving caretaker", error);
       toast.error( error.data?.message || "Unable to save caretaker.");
     } finally {
       setIsSubmitting(false);

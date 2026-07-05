@@ -53,7 +53,7 @@ export default function FamilyFlowShell({
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const { maritalStatus, haveChildren, havePets } = useSelector((state: any) => state.family);
 
-  console.log("havePets", havePets);
+  // // console.log("havePets", havePets);
   const handleStatus = async () => {
     if (step === 1) {
       if (!maritalStatus) {

@@ -114,7 +114,7 @@ function Verification() {
             value={code}
             onChange={(value) => {
               setCode(value);
-              console.log("reset verification code", value);
+              // console.log("reset verification code", value);
             }}
           />
         </div>

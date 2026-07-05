@@ -67,7 +67,7 @@ function SignUp() {
             value={fullName}
             onChange={(value) => {
               setFullName(value);
-              console.log("sign up full name", value);
+              // console.log("sign up full name", value);
             }}
           />
 
@@ -78,7 +78,7 @@ function SignUp() {
             value={email}
             onChange={(value) => {
               setEmail(value);
-              console.log("sign up email", value);
+              // console.log("sign up email", value);
             }}
           />
 
@@ -90,7 +90,7 @@ function SignUp() {
             value={password}
             onChange={(value) => {
               setPassword(value);
-              console.log("sign up password", value);
+              // console.log("sign up password", value);
             }}
             showToggle
           />

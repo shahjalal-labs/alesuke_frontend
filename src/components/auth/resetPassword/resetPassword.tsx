@@ -48,7 +48,7 @@ function ResetPassword() {
             value={email}
             onChange={(value) => {
               setEmail(value);
-              console.log("reset password email", value);
+              // console.log("reset password email", value);
             }}
           />
 

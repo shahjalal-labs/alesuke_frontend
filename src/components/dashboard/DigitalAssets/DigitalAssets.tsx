@@ -352,7 +352,7 @@ function DigitalAssets() {
       }
       
       // Log the payload for debugging
-      console.log('Saving payload:', JSON.stringify(payload, null, 2))
+      // console.log('Saving payload:', JSON.stringify(payload, null, 2))
       
       // Try different payload structures based on the error
       let result
@@ -361,19 +361,19 @@ function DigitalAssets() {
       try {
         result = await digitalAssetsFn(payload).unwrap()
       } catch (err1: any) {
-        console.log('Attempt 1 failed:', err1?.data)
+        // console.log('Attempt 1 failed:', err1?.data)
         
         // Attempt 2: Wrap in 'data' property
         try {
           result = await digitalAssetsFn({ data: payload }).unwrap()
         } catch (err2: any) {
-          console.log('Attempt 2 failed:', err2?.data)
+          // console.log('Attempt 2 failed:', err2?.data)
           
           // Attempt 3: Wrap in 'digitalAssets' property
           try {
             result = await digitalAssetsFn({ digitalAssets: payload }).unwrap()
           } catch (err3: any) {
-            console.log('Attempt 3 failed:', err3?.data)
+            // console.log('Attempt 3 failed:', err3?.data)
             
             // Attempt 4: Convert to array format (as suggested by error)
             const arrayPayload = Object.entries(payload).map(([key, value]) => ({

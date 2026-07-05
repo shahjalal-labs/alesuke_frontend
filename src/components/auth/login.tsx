@@ -98,7 +98,7 @@ function Login() {
             value={email}
             onChange={(value) => {
               setEmail(value);
-              console.log("login email", value);
+              // console.log("login email", value);
             }}
           />
 
@@ -111,7 +111,7 @@ function Login() {
               value={password}
               onChange={(value) => {
                 setPassword(value);
-                console.log("login password", value);
+                // console.log("login password", value);
               }}
               showToggle
             />

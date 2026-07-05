@@ -35,10 +35,10 @@ export default function YourPetsStep() {
 
 useEffect(() => {
   if (!isLoading && Array.isArray(pets) && pets.length > 0) {
-    console.log("yes");
+    // console.log("yes");
     dispatch(setHavePets(true));
   } else {
-    console.log("no");
+    // console.log("no");
     dispatch(setHavePets(false));
   }
 }, [hasPet, pets, dispatch]);

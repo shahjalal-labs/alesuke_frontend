@@ -310,6 +310,20 @@ function getFamilyMemberIdDisplay(member: FamilyMember): string {
   return ` (${typeLabel}: ${hasId ? member.identifierValue : "N/A"})`;
 }
 
+// Helper to get identifier type display label
+function getIdentifierLabel(typeOfIdentifier?: string | null): string {
+  switch (typeOfIdentifier) {
+    case "NRIC_OR_FIN":
+      return "NRIC/FIN";
+    case "PASSPORT":
+      return "Passport";
+    case "FOREIGN_ID":
+      return "Foreign ID";
+    default:
+      return "ID";
+  }
+}
+
 // Helper to format Date of Birth
 function formatDateOfBirth(dobString?: string | null): string {
   if (!dobString) return "";
@@ -377,8 +391,15 @@ export default function WillPreviewPage() {
 
   const userName = dashboard.user?.name ?? "Your will";
   const userNRIC = dashboard.user?.nid ?? "N/A";
+  
+  // Executor details with identifiers
   const primaryExecutor = executors[0]?.person?.fullName ?? "Not selected";
+  const primaryExecutorId = executors[0]?.person?.identifierValue ?? "N/A";
+  const primaryExecutorIdType = executors[0]?.person?.typeOfIdentifier ?? "NRIC_OR_FIN";
   const backupExecutor = executors[0]?.backupPerson?.fullName ?? "Not selected";
+  const backupExecutorId = executors[0]?.backupPerson?.identifierValue ?? "N/A";
+  const backupExecutorIdType = executors[0]?.backupPerson?.typeOfIdentifier ?? "NRIC_OR_FIN";
+  
   const familyNames = family
     .map((member) => member.fullName)
     .filter(Boolean) as string[];
@@ -639,8 +660,10 @@ export default function WillPreviewPage() {
               )}
             </ul>
             <p>
-              Primary executor: <Highlight>{primaryExecutor}</Highlight>. Backup
-              executor: <Highlight>{backupExecutor}</Highlight>.
+              Primary executor: <Highlight>{primaryExecutor} </Highlight> 
+              ({getIdentifierLabel (primaryExecutorIdType)}: {primaryExecutorId}). 
+              Backup executor: <Highlight>{backupExecutor} </Highlight>
+              ({getIdentifierLabel (backupExecutorIdType)}: {backupExecutorId}).
             </p>
           </div>
         ),
@@ -652,13 +675,15 @@ export default function WillPreviewPage() {
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
               4.1 Fiduciary Appointment: I appoint{" "}
-              <Highlight>{primaryExecutor}</Highlight> to act as the sole
+              <Highlight>{primaryExecutor} </Highlight> 
+              ({getIdentifierLabel(primaryExecutorIdType)}: {primaryExecutorId}) to act as the sole
               Executor and Trustee of this my Will.
             </p>
             <p>
               4.2 Minority Guardianship Mandate: In the event that my children
               are below the age of twenty-one, I appoint{" "}
-              <Highlight>{backupExecutor}</Highlight> as the backup guardian.
+              <Highlight>{backupExecutor} </Highlight>
+              ({getIdentifierLabel(backupExecutorIdType)}: {backupExecutorId}) as the backup guardian.
             </p>
             <p>
               4.3 Financial Indemnification of Caregivers: It is my explicit
@@ -1026,84 +1051,14 @@ export default function WillPreviewPage() {
                 </div>
               </>
             )}
-
-            {/* Informal Portfolio Audit Table */}
-            {/* <div className="pt-3">
-              <p className="font-semibold uppercase tracking-[0.08em] text-[#2d2f35] mb-3">
-                Informal Portfolio Audit
-              </p>
-              <div className="overflow-x-auto">
-                <div className="min-w-full overflow-hidden rounded-[2px] border border-[#e1d7cb]">
-                  <table className="min-w-full border-collapse">
-                    <thead>
-                      <tr className="bg-[#1f2937]">
-                        <th className="px-4 py-3 text-left text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">
-                          ASSET DESCRIPTION
-                        </th>
-                        <th className="px-4 py-3 text-left text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">
-                          ASSET CLASS
-                        </th>
-                        <th className="px-4 py-3 text-left text-[0.78rem] font-semibold uppercase tracking-[0.06em] text-white">
-                          BENEFICIARY ID LINK
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {financialGifts.slice(0, 3).map((gift, idx) => (
-                        <tr
-                          key={gift.id}
-                          className={idx > 0 ? "border-t border-[#e1d7cb]" : ""}
-                        >
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            {formatGiftDisplay(gift)}
-                          </td>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            {getGiftTypeDisplay(gift.giftType)}
-                          </td>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957] text-center">
-                            <Highlight>{gift.recipientName}</Highlight>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {propertyGifts.slice(0, 2).map((gift, idx) => (
-                        <tr key={gift.id} className="border-t border-[#e1d7cb]">
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            {formatGiftDisplay(gift)}
-                          </td>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            {getGiftTypeDisplay(gift.giftType)}
-                          </td>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957] text-center">
-                            <Highlight>{gift.recipientName}</Highlight>
-                          </td>
-                        </tr>
-                      ))}
-
-                      {gifts.length === 0 && (
-                        <tr>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            No assets added
-                          </td>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            -
-                          </td>
-                          <td className="px-4 py-3 text-[0.82rem] text-[#414957]">
-                            -
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div> */}
           </div>
         ),
       },
     ],
     [
       backupExecutor,
+      backupExecutorId,
+      backupExecutorIdType,
       cashGifts,
       collectionGifts,
       dashboard.summary?.netWorth,
@@ -1119,6 +1074,8 @@ export default function WillPreviewPage() {
       memoGifts,
       petCaretakers.length,
       primaryExecutor,
+      primaryExecutorId,
+      primaryExecutorIdType,
       properties.length,
       propertyGifts,
       userName,

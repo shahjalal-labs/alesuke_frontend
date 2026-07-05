@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   CheckCircle,
   Heart,
@@ -399,6 +399,8 @@ function getPlatformNames(
 
 export default function MyWillPage() {
   const router = useRouter();
+  const pathName = usePathname();
+  // console.log("pathname", pathName);
   const {
     data: willResponse,
     isLoading,
@@ -429,6 +431,12 @@ export default function MyWillPage() {
       refetchMeData();
       refetchDigitalAssets();
     };
+
+    if (pathName === "/will") {
+      refetchWillDetails();
+      refetchMeData();
+      refetchDigitalAssets();
+    }
 
     // Only refetch on initial mount if not already loaded
     if (!hasMounted.current && !dashboardResponse?.data) {
@@ -485,16 +493,16 @@ export default function MyWillPage() {
   const hasExecutorData = executors.length > 0;
   const hasEstateDistributionData = estateDistributions.length > 0;
   const hasGiftsData = gifts.length > 0;
-  
+
   // UPDATED: Pet caretaker logic
   // Check if there are any pets in the family
   const hasPets = family.some((member) => member.relationType === "PET");
-  
+
   // Pet caretaker is complete if:
   // 1. There are no pets (no action needed) - OR -
   // 2. There are pets AND caretakers have been assigned
   const hasPetCaretakerData = !hasPets || petCaretakers.length > 0;
-  
+
   const hasAssetsData =
     financialAssets.length > 0 || properties.length > 0 || loans.length > 0;
   const hasDigitalAssetsData = !!(
@@ -1187,7 +1195,8 @@ export default function MyWillPage() {
                   ) : (
                     <div className="space-y-2">
                       <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
-                        You have pets in your family. Please add a caretaker for:
+                        You have pets in your family. Please add a caretaker
+                        for:
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {family

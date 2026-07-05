@@ -133,7 +133,7 @@ function Verification() {
             value={code}
             onChange={(value) => {
               setCode(value);
-              console.log("verification code", value);
+              // console.log("verification code", value);
             }}
           />
         </div>
