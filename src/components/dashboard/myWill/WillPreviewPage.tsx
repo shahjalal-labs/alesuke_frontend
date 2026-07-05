@@ -387,19 +387,23 @@ export default function WillPreviewPage() {
   );
 
   // Get memo text from gifts, supporting both the dedicated field and description fallback.
-  const memoGifts = gifts.filter((gift) => gift.personalMessage || gift.description);
+  const memoGifts = gifts.filter(
+    (gift) => gift.personalMessage || gift.description,
+  );
 
   const userName = dashboard.user?.name ?? "Your will";
   const userNRIC = dashboard.user?.nid ?? "N/A";
-  
+
   // Executor details with identifiers
   const primaryExecutor = executors[0]?.person?.fullName ?? "Not selected";
   const primaryExecutorId = executors[0]?.person?.identifierValue ?? "N/A";
-  const primaryExecutorIdType = executors[0]?.person?.typeOfIdentifier ?? "NRIC_OR_FIN";
+  const primaryExecutorIdType =
+    executors[0]?.person?.typeOfIdentifier ?? "NRIC_OR_FIN";
   const backupExecutor = executors[0]?.backupPerson?.fullName ?? "Not selected";
   const backupExecutorId = executors[0]?.backupPerson?.identifierValue ?? "N/A";
-  const backupExecutorIdType = executors[0]?.backupPerson?.typeOfIdentifier ?? "NRIC_OR_FIN";
-  
+  const backupExecutorIdType =
+    executors[0]?.backupPerson?.typeOfIdentifier ?? "NRIC_OR_FIN";
+
   const familyNames = family
     .map((member) => member.fullName)
     .filter(Boolean) as string[];
@@ -547,8 +551,10 @@ export default function WillPreviewPage() {
             </p>
             <p>
               1.3 Affixing Signatures: The testator{" "}
-              <Highlight>{userName}</Highlight> <Highlight>{userNRIC || "N/A"} </Highlight>
-              will sign beside the witness sections when the final PDF is issued.
+              <Highlight>{userName}</Highlight>{" "}
+              <Highlight>{userNRIC || "N/A"} </Highlight>
+              will sign beside the witness sections when the final PDF is
+              issued.
             </p>
           </div>
         ),
@@ -562,12 +568,12 @@ export default function WillPreviewPage() {
             <p>
               2.1 Declaration of Contemplation and Effect of Marriage: I,{" "}
               <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN:{" "}
-              <Highlight>{userNRIC || "N/A"}</Highlight>, declare that this Will is made
-              with the explicit awareness of statutory rules governing civil
-              status changes. Pursuant to Section 13 of the Wills Act (Cap.
-              352), I acknowledge that any subsequent marriage entered into by
-              me will automatically revoke this Will unless explicitly declared
-              herein to be made in contemplation of such marriage.
+              <Highlight>{userNRIC || "N/A"}</Highlight>, declare that this Will
+              is made with the explicit awareness of statutory rules governing
+              civil status changes. Pursuant to Section 13 of the Wills Act
+              (Cap. 352), I acknowledge that any subsequent marriage entered
+              into by me will automatically revoke this Will unless explicitly
+              declared herein to be made in contemplation of such marriage.
             </p>
             <p>
               2.2 Operation of the Principle of Joint Survivorship: I explicitly
@@ -660,10 +666,10 @@ export default function WillPreviewPage() {
               )}
             </ul>
             <p>
-              Primary executor: <Highlight>{primaryExecutor} </Highlight> 
-              ({getIdentifierLabel (primaryExecutorIdType)}: {primaryExecutorId}). 
-              Backup executor: <Highlight>{backupExecutor} </Highlight>
-              ({getIdentifierLabel (backupExecutorIdType)}: {backupExecutorId}).
+              Primary executor: <Highlight>{primaryExecutor} </Highlight>(
+              {getIdentifierLabel(primaryExecutorIdType)}: {primaryExecutorId}).
+              Backup executor: <Highlight>{backupExecutor} </Highlight>(
+              {getIdentifierLabel(backupExecutorIdType)}: {backupExecutorId}).
             </p>
           </div>
         ),
@@ -675,15 +681,16 @@ export default function WillPreviewPage() {
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
               4.1 Fiduciary Appointment: I appoint{" "}
-              <Highlight>{primaryExecutor} </Highlight> 
-              ({getIdentifierLabel(primaryExecutorIdType)}: {primaryExecutorId}) to act as the sole
-              Executor and Trustee of this my Will.
+              <Highlight>{primaryExecutor} </Highlight>(
+              {getIdentifierLabel(primaryExecutorIdType)}: {primaryExecutorId})
+              to act as the sole Executor and Trustee of this my Will.
             </p>
             <p>
               4.2 Minority Guardianship Mandate: In the event that my children
               are below the age of twenty-one, I appoint{" "}
-              <Highlight>{backupExecutor} </Highlight>
-              ({getIdentifierLabel(backupExecutorIdType)}: {backupExecutorId}) as the backup guardian.
+              <Highlight>{backupExecutor} </Highlight>(
+              {getIdentifierLabel(backupExecutorIdType)}: {backupExecutorId}) as
+              the backup guardian.
             </p>
             <p>
               4.3 Financial Indemnification of Caregivers: It is my explicit
