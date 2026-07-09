@@ -767,7 +767,7 @@ export default function WillPreviewPage() {
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
-              3.1 I, <Highlight>{userName}</Highlight>, bearing Singapore
+              2.1 I, <Highlight>{userName}</Highlight>, bearing Singapore
               NRIC/FIN: <Highlight>{userNRIC || "N/A"}</Highlight>, presently
               domiciled at{" "}
               <Highlight>
@@ -782,7 +782,7 @@ export default function WillPreviewPage() {
               Singapore.
             </p>
             <p>
-              3.2 I formally declare that my immediate family consists of the
+              2.2 I formally declare that my immediate family consists of the
               following individuals:
             </p>
             <ul className="space-y-3 pl-5">
@@ -843,20 +843,20 @@ export default function WillPreviewPage() {
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
-              4.1 Fiduciary Appointment: I appoint{" "}
+              3.1 Fiduciary Appointment: I appoint{" "}
               <Highlight>{primaryExecutor} </Highlight>(
               {getIdentifierLabel(primaryExecutorIdType)}: {primaryExecutorId})
               to act as the sole Executor and Trustee of this my Will.
             </p>
             <p>
-              4.2 Minority Guardianship Mandate: In the event that my children
+              3.2 Minority Guardianship Mandate: In the event that my children
               are below the age of twenty-one, I appoint{" "}
               <Highlight>{backupExecutor} </Highlight>(
               {getIdentifierLabel(backupExecutorIdType)}: {backupExecutorId}) as
               the backup guardian.
             </p>
             <p>
-              4.3 Financial Indemnification of Caregivers: It is my explicit
+              3.3 Financial Indemnification of Caregivers: It is my explicit
               directive that estate resources may support my dependents as
               needed.
             </p>
@@ -871,7 +871,7 @@ export default function WillPreviewPage() {
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             {cashGifts.length > 0 && (
               <div>
-                <p className="font-semibold text-[#2b221a]">5.1 Cash Gifts:</p>
+                <p className="font-semibold text-[#2b221a]">4.1 Cash Gifts:</p>
                 <ul className="mt-2 space-y-2 pl-5">
                   {cashGifts.map((gift) => (
                     <li key={gift.id} className="list-disc">
@@ -893,7 +893,7 @@ export default function WillPreviewPage() {
             {itemGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">
-                  5.2 Specific Items:
+                  4.2 Specific Items:
                 </p>
                 <ul className="mt-2 space-y-2 pl-5">
                   {itemGifts.map((gift) => (
@@ -918,7 +918,7 @@ export default function WillPreviewPage() {
 
             {collectionGifts.length > 0 && (
               <div className="mt-3">
-                <p className="font-semibold text-[#2b221a]">5.3 Collections:</p>
+                <p className="font-semibold text-[#2b221a]">4.3 Collections:</p>
                 <ul className="mt-2 space-y-2 pl-5">
                   {collectionGifts.map((gift) => (
                     <li key={gift.id} className="list-disc">
@@ -940,7 +940,7 @@ export default function WillPreviewPage() {
             {propertyGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">
-                  5.4 Property Gifts:
+                  4.4 Property Gifts:
                 </p>
                 <ul className="mt-2 space-y-2 pl-5">
                   {propertyGifts.map((gift) => {
@@ -982,7 +982,7 @@ export default function WillPreviewPage() {
             {financialGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">
-                  5.5 Financial Accounts:
+                  4.5 Financial Accounts:
                 </p>
                 <ul className="mt-2 space-y-2 pl-5">
                   {financialGifts.map((gift) => {
@@ -1027,7 +1027,7 @@ export default function WillPreviewPage() {
             {petCaretakers.length > 0 && (
               <div className="mt-4 pt-2 border-t border-[#ece8e2]">
                 <p className="font-semibold text-[#2b221a]">
-                  5.6 Companion Animal Legacy:
+                  4.6 Companion Animal Legacy:
                 </p>
                 <p className="mt-2">
                   I entrust my companion animal{" "}
@@ -1046,7 +1046,7 @@ export default function WillPreviewPage() {
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
-              6.1 Residuary Allocations: All remaining capital, real estate
+              5.1 Residuary Allocations: All remaining capital, real estate
               interests, and investments not specifically named elsewhere shall
               be settled and distributed among the following survivors, subject
               to the condition that if any beneficiary named below predeceases
@@ -1095,7 +1095,7 @@ export default function WillPreviewPage() {
               )}
             </ul>
             <p>
-              <strong>6.2 Severability and Validity:</strong> If any clause,
+              <strong>5.2 Severability and Validity:</strong> If any clause,
               provision, or part of this Will is determined by a court of
               competent jurisdiction to be invalid, illegal, or unenforceable,
               such determination shall not affect the validity of the rest of
@@ -1106,7 +1106,7 @@ export default function WillPreviewPage() {
               contained herein.
             </p>
             <p>
-              6.3 Final Binding Declaration: I sign this document openly in the
+              <strong>5.3 Final Binding Declaration:</strong> I sign this document openly in the
               presence of my witnesses.
             </p>
           </div>
