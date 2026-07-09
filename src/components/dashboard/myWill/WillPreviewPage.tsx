@@ -1046,7 +1046,7 @@ export default function WillPreviewPage() {
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
-              5.1 Residuary Allocations: All remaining capital, real estate
+              <strong>5.1 Residuary Allocations:</strong> All remaining capital, real estate
               interests, and investments not specifically named elsewhere shall
               be settled and distributed among the following survivors, subject
               to the condition that if any beneficiary named below predeceases
