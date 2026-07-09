@@ -1,25 +1,25 @@
 "use client";
 
-import type { ComponentType, ReactNode } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useMemo, useState, useRef, useEffect } from "react";
+import html2canvas from "html2canvas";
 import {
   ChevronDown,
+  Download,
   Lock,
   PenLine,
   Shield,
   Users2,
   Wallet,
-  Download,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import type { ComponentType, ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import logo from "@/assets/logo.png";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 import DigitalAssetPdfPreview from "./DigitalAssetPdfPreview";
 
 // Add html2pdf dependency
-import html2pdf from "html2pdf.js";
 import { useGetMeDataQuery } from "@/redux/api/authApi";
 
 type FamilyMember = {
@@ -192,28 +192,27 @@ function PdfPageFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="pdf-page-frame relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-8 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-10">
+    <div className="pdf-page-frame relative mx-auto w-full max-w-[720px] rounded-[2px] bg-white px-6 py-4 shadow-[0_18px_40px_rgba(17,24,39,0.08)] ring-1 ring-[#ebdfd2] lg:px-10 lg:py-6">
       <div className="pl-4" style={{ pageBreakInside: "avoid" }}>
         <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[25px]">
           {title}
         </p>
-
-        {pageNumber === 6 ? "" : <div className="mt-3 h-[2px] bg-[#c35b43]" />}
+        {pageNumber === 7 ? "" : <div className="mt-3 h-[2px] bg-[#c35b43]" />}
       </div>
 
-      <div className="mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">
+      <div className="mt-4 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">
         {children}
       </div>
 
       <div
-        className="mt-10 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]"
+        className="mt-6 border-t border-dashed border-[#ddd5cb] pt-4 text-[0.82rem] text-[#716c65]"
         style={{ pageBreakInside: "avoid" }}
       >
-        <div className="flex items-center justify-between gap-4">
-          <span>
-            Testator Initials: ______ Witness 1: ______ Witness 2: ______
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <span className="whitespace-nowrap">
+            Testator Initials: _______ Witness 1: _______ Witness 2: _______
           </span>
-          <span>
+          <span className="whitespace-nowrap">
             Page {pageNumber} of {totalPages}
           </span>
         </div>
@@ -278,7 +277,6 @@ function getRelationPhrase(member: FamilyMember): string {
   if (rel === "CHILD") return "My child is ";
   if (rel === "PET") {
     const petType = member.petType || "companion animal";
-    // Don't include pet type in the phrase if the fullName already contains it
     return `My pet `;
   }
   return "My family member is ";
@@ -289,11 +287,9 @@ function getPetDisplayName(member: FamilyMember): string {
   const name = member.fullName || "Unnamed pet";
   const petType = member.petType || "";
 
-  // If the name already contains the pet type (e.g., "pet1 the Dog"), just return the name
   if (petType && name.toLowerCase().includes(petType.toLowerCase())) {
     return name;
   }
-  // Otherwise, format as "Name (PetType)"
   if (petType) {
     return `${name} (${petType})`;
   }
@@ -354,8 +350,6 @@ function formatDateOfBirth(dobString?: string | null): string {
   }
 }
 
-// Helper function to get unique beneficiaries from estate distributions and gifts
-
 // Helper function to calculate total wealth from gifts
 function calculateTotalWealth(gifts: GiftRecord[]): number {
   let total = 0;
@@ -374,7 +368,6 @@ function calculateTotalWealth(gifts: GiftRecord[]): number {
         break;
       case "FINANCIAL_ACCOUNT":
         if (gift.asset) {
-          // Use approximateValue or faceValue
           const value =
             gift.asset.approximateValue || gift.asset.faceValue || 0;
           total += value;
@@ -382,8 +375,6 @@ function calculateTotalWealth(gifts: GiftRecord[]): number {
         break;
       case "ITEM":
       case "COLLECTION":
-        // Items and collections don't have monetary values in the current data structure
-        // But we could add a value field later if needed
         break;
       default:
         break;
@@ -420,10 +411,10 @@ export default function WillPreviewPage() {
   // Calculate total wealth from gifts
   const totalWealth = calculateTotalWealth(gifts);
 
-  // Replace the beneficiaryCount calculation with this:
+  // Beneficiary count is the number of estate distributions (primary beneficiaries only)
   const beneficiaryCount = estateDistributions.length;
 
-  // Separate gifts by type for better display on page 6
+  // Separate gifts by type
   const cashGifts = gifts.filter((g) => g.giftType === "CASH");
   const itemGifts = gifts.filter((g) => g.giftType === "ITEM");
   const collectionGifts = gifts.filter((g) => g.giftType === "COLLECTION");
@@ -432,7 +423,7 @@ export default function WillPreviewPage() {
     (g) => g.giftType === "FINANCIAL_ACCOUNT",
   );
 
-  // Get memo text from gifts, supporting both the dedicated field and description fallback.
+  // Get memo text from gifts
   const memoGifts = gifts.filter(
     (gift) => gift.personalMessage || gift.description,
   );
@@ -457,107 +448,148 @@ export default function WillPreviewPage() {
     petCaretakers[0]?.caretaker?.fullName ?? backupExecutor;
   const firstPetName =
     petCaretakers[0]?.pet?.fullName ?? familyNames[0] ?? "Companion animal";
-  const totalPages = 8; // Updated from 9 to 8
+  const totalPages = 9;
 
   const handleDownloadPDF = async () => {
     if (!pdfContentRef.current || !isClient) return;
 
     setIsDownloading(true);
-    const element = pdfContentRef.current;
-    const originalClassName = element.className;
-    const originalBg = element.style.backgroundColor;
-    const originalPadding = element.style.padding;
-
-    // Store original classes of page frames to restore them later
-    const pages = Array.from(element.querySelectorAll(".pdf-page-frame"));
-    const pageOriginalClasses = new Map();
 
     try {
-      // Temporarily remove max-height, overflow, scrollbar spacing, and page gaps
-      element.className = element.className
-        .replace("max-h-[calc(100vh-220px)]", "")
-        .replace("overflow-auto", "")
-        .replace("space-y-5", "")
-        .replace("pr-2", "");
-      element.style.backgroundColor = "transparent";
-      element.style.padding = "0px";
+      // A4 dimensions at 96 dpi: 794 × 1123 px
+      const A4_WIDTH_PX = 794;
+      const A4_HEIGHT_PX = 1123;
+      const SCALE = 2; // retina quality
 
-      // Strip shadows and borders from individual pages for a clean PDF look
-      pages.forEach((page) => {
-        pageOriginalClasses.set(page, page.className);
-        page.className = page.className
-          .replace("shadow-[0_18px_40px_rgba(17,24,39,0.08)]", "")
-          .replace("ring-1", "")
-          .replace("ring-[#ebdfd2]", "");
+      const pageElements =
+        pdfContentRef.current.querySelectorAll(".pdf-page-frame");
+      const pageCount = pageElements.length;
+
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({
+        unit: "px",
+        format: [A4_WIDTH_PX, A4_HEIGHT_PX],
+        orientation: "portrait",
       });
 
-      const opt: any = {
-        margin: [0, 0, 0, 0],
-        filename: `Will_${userName.replace(/\s/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          windowWidth: 720,
-          scrollY: 0,
-        },
-        jsPDF: {
-          unit: "in",
-          format: "a4",
-          orientation: "portrait",
-        },
-        pagebreak: { mode: ["css", "legacy"] },
-      };
+      for (let i = 0; i < pageCount; i++) {
+        const pageElement = pageElements[i] as HTMLElement;
 
-      let worker = html2pdf().set(opt);
+        // Build a fixed-size A4 wrapper so html2canvas captures exactly one page
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "fixed";
+        wrapper.style.left = "-9999px";
+        wrapper.style.top = "0px";
+        wrapper.style.width = `${A4_WIDTH_PX}px`;
+        wrapper.style.height = `${A4_HEIGHT_PX}px`;
+        wrapper.style.overflow = "hidden";
+        wrapper.style.backgroundColor = "#ffffff";
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
 
-      // Render each page individually and explicitly add it as a new PDF page
-      for (let i = 0; i < pages.length; i++) {
-        if (i === 0) {
-          worker = worker.from(pages[i] as HTMLElement).toPdf();
-        } else {
-          worker = (
-            worker.get("pdf").then((pdf: any) => {
-              pdf.addPage();
-            }) as any
-          )
-            .from(pages[i] as HTMLElement)
-            .toContainer()
-            .toCanvas()
-            .toPdf();
+        // Clone page and size it to fill the A4 wrapper
+        const clone = pageElement.cloneNode(true) as HTMLElement;
+        clone.style.cssText = [
+          "display:flex",
+          "flex-direction:column",
+          `width:${A4_WIDTH_PX}px`,
+          `min-height:${A4_HEIGHT_PX}px`,
+          `height:${A4_HEIGHT_PX}px`,
+          "padding:36px 48px 28px 48px",
+          "box-sizing:border-box",
+          "background:#ffffff",
+          "box-shadow:none",
+          "border-radius:0",
+          "border:none",
+          "overflow:hidden",
+          "margin:0",
+          "max-width:unset",
+        ].join(";");
+
+        // Remove title left-padding
+        const titleDiv = clone.querySelector(".pl-4") as HTMLElement | null;
+        if (titleDiv) titleDiv.style.paddingLeft = "0px";
+
+        // Content area: fill available space so footer is pushed to bottom
+        const contentDiv = clone.querySelector(
+          ".space-y-4",
+        ) as HTMLElement | null;
+        if (contentDiv) {
+          contentDiv.style.flex = "1";
+          contentDiv.style.marginTop = "12px";
+          contentDiv.style.overflowY = "hidden";
+        }
+
+        // Footer: always at the bottom, full width, never hidden
+        const footerDiv = clone.querySelector(
+          ".border-t.border-dashed",
+        ) as HTMLElement | null;
+        if (footerDiv) {
+          footerDiv.style.marginTop = "auto";
+          footerDiv.style.paddingTop = "12px";
+          footerDiv.style.flexShrink = "0";
+          footerDiv.style.width = "100%";
+          footerDiv.style.display = "block";
+          footerDiv.style.visibility = "visible";
+
+          // Inner flex row — stretch to full width
+          const footerInner = footerDiv.querySelector(
+            ".flex",
+          ) as HTMLElement | null;
+          if (footerInner) {
+            footerInner.style.display = "flex";
+            footerInner.style.width = "100%";
+            footerInner.style.alignItems = "center";
+            footerInner.style.justifyContent = "space-between";
+            footerInner.style.flexWrap = "nowrap";
+          }
+        }
+
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        try {
+          const canvas = await html2canvas(wrapper, {
+            scale: SCALE,
+            useCORS: true,
+            logging: false,
+            width: A4_WIDTH_PX,
+            height: A4_HEIGHT_PX,
+            backgroundColor: "#ffffff",
+            windowWidth: A4_WIDTH_PX,
+            windowHeight: A4_HEIGHT_PX,
+          });
+
+          if (i > 0) pdf.addPage();
+
+          const imgData = canvas.toDataURL("image/jpeg", 0.97);
+          // Fill the entire A4 page — no margins, no scaling ambiguity
+          pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_PX, A4_HEIGHT_PX);
+        } finally {
+          document.body.removeChild(wrapper);
         }
       }
 
-      await worker.save();
+      pdf.save(
+        `Will_${userName.replace(/\s/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`,
+      );
     } catch (error) {
       console.error("PDF generation failed:", error);
     } finally {
-      // Restore the original scrollable container styles
-      element.className = originalClassName;
-      element.style.backgroundColor = originalBg;
-      element.style.padding = originalPadding;
-
-      // Restore page frame shadows and borders
-      pages.forEach((page) => {
-        if (pageOriginalClasses.has(page)) {
-          page.className = pageOriginalClasses.get(page);
-        }
-      });
-
       setIsDownloading(false);
     }
   };
 
   const documentPages = useMemo(
     () => [
+      // PAGE 1: Instructions & Disclaimer
       {
-        pageTitle: "The Last Will and Testament",
+        pageTitle: "Step-by-Step Instructions",
         pageNumber: 1,
         body: (
-          <div className="flex min-h-[520px] flex-col items-center justify-center text-center">
+          <div className="space-y-4 text-[0.88rem] leading-[1.6] text-[#4a515d]">
             {/* Company Logo */}
-            <div className="mb-4">
+            <div className="flex justify-center mb-4">
               <Image
                 src={logo}
                 alt="Will & Way"
@@ -566,6 +598,108 @@ export default function WillPreviewPage() {
               />
             </div>
 
+            <div>
+              <p className="font-semibold text-[#2b221a] text-[0.92rem]">
+                1. Print & Review
+              </p>
+              <ul className="mt-1 list-disc pl-5 space-y-0.5 text-[#4a515d]">
+                <li>
+                  Please print and read your completed Will carefully. Do not
+                  sign the document unless you completely understand and agree
+                  with everything written inside it.
+                </li>
+                <li>
+                  If you need to make any corrections or updates, you must make
+                  the changes in the system and re-print out a fresh, clean copy
+                  of the final version. Never cross out words or make
+                  handwritten edits on the printed page.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="font-semibold text-[#2b221a] text-[0.92rem]">
+                2. The Attestation Ceremony:
+              </p>
+              <p className="mt-0.5">
+                You must sign this Will in the physical presence of two
+                independent adult witnesses, minimum aged 21 years old.
+              </p>
+
+              <div className="mt-2 space-y-1">
+                <p className="font-medium text-[#2b221a] text-[0.88rem]">
+                  Who You CAN Choose:
+                </p>
+                <ul className="list-disc pl-5 space-y-0.5 text-[#4a515d]">
+                  <li>Friends, colleagues, or neighbors (recommended)</li>
+                  <li>
+                    An Executor only if they do not inherit anything from your
+                    Will
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-2 space-y-1">
+                <p className="font-medium text-[#2b221a] text-[0.88rem]">
+                  Who You CANNOT Choose:
+                </p>
+                <ul className="list-disc pl-5 space-y-0.5 text-[#4a515d]">
+                  <li>Anyone under 21 years old.</li>
+                  <li>Your Beneficiaries (anyone inheriting from the Will)</li>
+                  <li>The Spouses of your Beneficiaries</li>
+                </ul>
+              </div>
+
+              <div className="mt-3 rounded-[6px] border border-[#c35b43]/30 bg-[#fdf6f3] px-3 py-2">
+                <p className="text-[0.8rem] text-[#c35b43]">
+                  ⚠️{" "}
+                  <span className="font-semibold">Critical Legal Warning:</span>{" "}
+                  Under Singapore law, if a beneficiary (or their spouse) signs
+                  as a witness, the Will remains valid, but their entire
+                  inheritance is completely canceled and made void. Always
+                  choose neutral, third-party witnesses.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className="font-semibold text-[#2b221a] text-[0.92rem]">
+                3. Safeguarding Your Will
+              </p>
+              <ul className="mt-1 list-disc pl-5 space-y-0.5 text-[#4a515d]">
+                <li>
+                  Congratulations on completing your legally binding Will!
+                </li>
+                <li>
+                  Store the physical document in a secure, protected location.
+                  Ensure your chosen Executor knows exactly where it is kept so
+                  they can retrieve it.
+                </li>
+              </ul>
+            </div>
+
+            {/* Disclaimer */}
+            <div className="mt-3 border-t border-[#ece8e2] pt-3">
+              <p className="text-[0.55rem] uppercase tracking-[0.08em] text-[#8b8a85] leading-relaxed">
+                This document was generated using Will&Way, an automated
+                self-help digital platform. Will&Way is not a law firm and does
+                not provide legal advice, legal opinions, or specific
+                recommendations. The tools and materials provided here are not a
+                substitute for professional legal counsel. If you have unique or
+                complex circumstances, you should consult a licensed lawyer.
+                Will&Way assumes no liability for how this document is
+                completed, signed, or enforced in court.
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      // PAGE 2: The Last Will and Testament (was page 1)
+      {
+        pageTitle: "The Last Will and Testament",
+        pageNumber: 2,
+        body: (
+          <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
             <p className="text-[0.82rem] uppercase tracking-[0.28em] text-[#8d918d]">
               OF
             </p>
@@ -576,32 +710,6 @@ export default function WillPreviewPage() {
               Created on {new Date().toLocaleDateString()}
             </p>
 
-            {/* Step-by-Step Execution Protocol moved to front */}
-            <div className="mt-6 w-full max-w-[550px] border-t border-[#ece8e2] pt-4 text-left">
-              <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-[#8c8072]">
-                Step-by-Step Execution Protocol
-              </p>
-              <div className="mt-3 space-y-3 text-[0.82rem] leading-[1.6] text-[#4a515d]">
-                <p>
-                  <span className="font-semibold">1.1</span> Document
-                  Verification &amp; Physical Binding: Prior to signature,
-                  thoroughly review all clauses. Any updated highlight should
-                  match the live response from the dashboard.
-                </p>
-                <p>
-                  <span className="font-semibold">1.2</span> The Attestation
-                  Ceremony: You must execute this document in the simultaneous
-                  presence of two independent adult witnesses.
-                </p>
-                <p>
-                  <span className="font-semibold">1.3</span> Affixing
-                  Signatures: The testator <Highlight>{userName}</Highlight>{" "}
-                  <Highlight>{userNRIC || "N/A"}</Highlight> will sign beside
-                  the witness sections when the final PDF is issued.
-                </p>
-              </div>
-            </div>
-
             <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
               <SummaryTile
                 label="Beneficiaries"
@@ -611,28 +719,17 @@ export default function WillPreviewPage() {
               <SummaryTile label="Net worth" value={formatMoney(totalWealth)} />
               <SummaryTile label="Gift entries" value={`${gifts.length}`} />
             </div>
-
-            {/* Small fine print */}
-            <p className="mt-6 text-[0.6rem] uppercase tracking-[0.12em] text-[#8b8a85] max-w-[500px]">
-              This document was generated using Will&Way, an automated self-help
-              digital platform. Will&Way is not a law firm and does not provide
-              legal advice, legal opinions, or specific recommendations. The
-              tools and materials provided here are not a substitute for
-              professional legal counsel. If you have unique or complex
-              circumstances, you should consult a licensed lawyer. Will&Way
-              assumes no liability for how this document is completed, signed,
-              or enforced in court.
-            </p>
           </div>
         ),
       },
+      // PAGE 3: Essential Singapore Statutory Principles (was page 2)
       {
         pageTitle: "Essential Singapore Statutory Principles & ACKNOWLEDGMENTS",
-        pageNumber: 2,
+        pageNumber: 3,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
-              2.1 Declaration of Contemplation and Effect of Marriage: I,{" "}
+              1.1 Declaration of Contemplation and Effect of Marriage: I,{" "}
               <Highlight>{userName}</Highlight>, bearing Singapore NRIC/FIN:{" "}
               <Highlight>{userNRIC || "N/A"}</Highlight>, declare that this Will
               is made with the explicit awareness of statutory rules governing
@@ -642,7 +739,7 @@ export default function WillPreviewPage() {
               declared herein to be made in contemplation of such marriage.
             </p>
             <p>
-              2.2 Operation of the Principle of Joint Survivorship: I explicitly
+              1.2 Operation of the Principle of Joint Survivorship: I explicitly
               acknowledge and direct that any real estate interests, immovable
               property, bank accounts, or financial holdings registered under a
               joint tenancy or joint framework at the time of my death shall be
@@ -652,7 +749,7 @@ export default function WillPreviewPage() {
               residuary estate.
             </p>
             <p>
-              2.3 Statutory Separation of Central Provident Fund (CPF): I
+              1.3 Statutory Separation of Central Provident Fund (CPF): I
               recognize that my Central Provident Fund (CPF) savings, including
               balances in my Ordinary, Special, Medisave, and Retirement
               Accounts, are strictly isolated from estate distribution under
@@ -663,9 +760,10 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+      // PAGE 4: Testamentary Declarations (was page 3)
       {
         pageTitle: "Testamentary Declarations & Family Structure",
-        pageNumber: 3,
+        pageNumber: 4,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -693,7 +791,6 @@ export default function WillPreviewPage() {
                   const relationPhrase = getRelationPhrase(member);
                   const dobDisplay = formatDateOfBirth(member.dateOfBirth);
 
-                  // For PET type, don't show NRIC
                   if (member.relationType === "PET") {
                     const petName = getPetDisplayName(member);
                     return (
@@ -709,7 +806,6 @@ export default function WillPreviewPage() {
                     );
                   }
 
-                  // For other family members, show ID
                   const idDisplay = getFamilyMemberIdDisplay(member);
                   return (
                     <li
@@ -740,9 +836,10 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+      // PAGE 5: Administrative Appointments (was page 4)
       {
         pageTitle: "Administrative Appointments & Minority Guardianship",
-        pageNumber: 4,
+        pageNumber: 5,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -766,12 +863,12 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+      // PAGE 6: Special Bequests (was page 5)
       {
         pageTitle: "Special Bequests & Asset Distribution",
-        pageNumber: 5,
+        pageNumber: 6,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            {/* Cash Gifts */}
             {cashGifts.length > 0 && (
               <div>
                 <p className="font-semibold text-[#2b221a]">5.1 Cash Gifts:</p>
@@ -793,7 +890,6 @@ export default function WillPreviewPage() {
               </div>
             )}
 
-            {/* Item Gifts */}
             {itemGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">
@@ -820,7 +916,6 @@ export default function WillPreviewPage() {
               </div>
             )}
 
-            {/* Collection Gifts */}
             {collectionGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">5.3 Collections:</p>
@@ -842,7 +937,6 @@ export default function WillPreviewPage() {
               </div>
             )}
 
-            {/* Property Gifts */}
             {propertyGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">
@@ -850,7 +944,6 @@ export default function WillPreviewPage() {
                 </p>
                 <ul className="mt-2 space-y-2 pl-5">
                   {propertyGifts.map((gift) => {
-                    // Format the property address properly
                     const property = gift.property;
                     let address = "address";
                     if (property) {
@@ -886,7 +979,6 @@ export default function WillPreviewPage() {
               </div>
             )}
 
-            {/* Financial Account Gifts */}
             {financialGifts.length > 0 && (
               <div className="mt-3">
                 <p className="font-semibold text-[#2b221a]">
@@ -918,12 +1010,6 @@ export default function WillPreviewPage() {
                             "{description}"
                           </span>
                         )}
-                        {gift.description && !gift.asset?.description && (
-                          <span className="italic text-[#6f7685]">
-                            {" "}
-                            {/* "{gift.description} " */}
-                          </span>
-                        )}{" "}
                         to <Highlight>{gift.recipientName}</Highlight>.
                       </li>
                     );
@@ -932,14 +1018,12 @@ export default function WillPreviewPage() {
               </div>
             )}
 
-            {/* No gifts message */}
             {gifts.length === 0 && (
               <p className="italic text-[#6f7685]">
                 No specific gifts have been added to this will.
               </p>
             )}
 
-            {/* Companion Animal Legacy */}
             {petCaretakers.length > 0 && (
               <div className="mt-4 pt-2 border-t border-[#ece8e2]">
                 <p className="font-semibold text-[#2b221a]">
@@ -955,9 +1039,10 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+      // PAGE 7: Residuary Estate (was page 6)
       {
         pageTitle: "",
-        pageNumber: 6,
+        pageNumber: 7,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -1027,9 +1112,10 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+      // PAGE 8: Final Execution Interface (was page 7)
       {
         pageTitle: "Final Execution Interface",
-        pageNumber: 7,
+        pageNumber: 8,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -1067,12 +1153,12 @@ export default function WillPreviewPage() {
           </div>
         ),
       },
+      // PAGE 9: Personal Memos (was page 8)
       {
         pageTitle: "Personal Memos",
-        pageNumber: 8,
+        pageNumber: 9,
         body: (
           <div className="space-y-5 text-[0.94rem] leading-[1.75] text-[#3f4550]">
-            {/* Personal Messages from Gifts */}
             {memoGifts.length > 0 ? (
               memoGifts.map((gift, index) => {
                 const memoText = gift.personalMessage || gift.description || "";
@@ -1187,7 +1273,6 @@ export default function WillPreviewPage() {
       description:
         "Your will can be used as part of a valid estate planning process in Singapore when properly executed.",
     },
-
     {
       id: "pets",
       title: "Caretakers for your pets",
