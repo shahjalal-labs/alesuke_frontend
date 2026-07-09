@@ -197,7 +197,8 @@ function PdfPageFrame({
         <p className="text-[1.45rem] font-semibold uppercase tracking-[0.04em] text-[#23262e] lg:text-[25px]">
           {title}
         </p>
-        <div className="mt-3 h-[2px] bg-[#c35b43]" />
+
+        {pageNumber === 6 ? "" : <div className="mt-3 h-[2px] bg-[#c35b43]" />}
       </div>
 
       <div className="mt-6 space-y-4 text-[0.94rem] leading-[1.75] text-[#3f4550]">
@@ -353,6 +354,45 @@ function formatDateOfBirth(dobString?: string | null): string {
   }
 }
 
+// Helper function to get unique beneficiaries from estate distributions and gifts
+
+// Helper function to calculate total wealth from gifts
+function calculateTotalWealth(gifts: GiftRecord[]): number {
+  let total = 0;
+
+  gifts.forEach((gift) => {
+    switch (gift.giftType) {
+      case "CASH":
+        if (gift.amount) {
+          total += gift.amount;
+        }
+        break;
+      case "PROPERTY":
+        if (gift.property?.estimatedValue) {
+          total += gift.property.estimatedValue;
+        }
+        break;
+      case "FINANCIAL_ACCOUNT":
+        if (gift.asset) {
+          // Use approximateValue or faceValue
+          const value =
+            gift.asset.approximateValue || gift.asset.faceValue || 0;
+          total += value;
+        }
+        break;
+      case "ITEM":
+      case "COLLECTION":
+        // Items and collections don't have monetary values in the current data structure
+        // But we could add a value field later if needed
+        break;
+      default:
+        break;
+    }
+  });
+
+  return total;
+}
+
 export default function WillPreviewPage() {
   const { data: response, isLoading } = useGetWillDetailsQuery(undefined);
   const dashboard = (response?.data ?? {}) as WillDetailsResponse;
@@ -376,6 +416,12 @@ export default function WillPreviewPage() {
   const financialAssets = dashboard.assets?.financialAssets ?? [];
   const properties = dashboard.assets?.properties ?? [];
   const loans = dashboard.assets?.loans ?? [];
+
+  // Calculate total wealth from gifts
+  const totalWealth = calculateTotalWealth(gifts);
+
+  // Replace the beneficiaryCount calculation with this:
+  const beneficiaryCount = estateDistributions.length;
 
   // Separate gifts by type for better display on page 6
   const cashGifts = gifts.filter((g) => g.giftType === "CASH");
@@ -411,7 +457,7 @@ export default function WillPreviewPage() {
     petCaretakers[0]?.caretaker?.fullName ?? backupExecutor;
   const firstPetName =
     petCaretakers[0]?.pet?.fullName ?? familyNames[0] ?? "Companion animal";
-  const totalPages = 9;
+  const totalPages = 8; // Updated from 9 to 8
 
   const handleDownloadPDF = async () => {
     if (!pdfContentRef.current || !isClient) return;
@@ -510,6 +556,16 @@ export default function WillPreviewPage() {
         pageNumber: 1,
         body: (
           <div className="flex min-h-[520px] flex-col items-center justify-center text-center">
+            {/* Company Logo */}
+            <div className="mb-4">
+              <Image
+                src={logo}
+                alt="Will & Way"
+                className="h-auto w-[120px] opacity-80"
+                priority
+              />
+            </div>
+
             <p className="text-[0.82rem] uppercase tracking-[0.28em] text-[#8d918d]">
               OF
             </p>
@@ -519,50 +575,60 @@ export default function WillPreviewPage() {
             <p className="mt-6 text-[0.92rem] uppercase tracking-[0.22em] text-[#b06248]">
               Created on {new Date().toLocaleDateString()}
             </p>
-            <p className="mt-4 max-w-[430px] text-[0.84rem] leading-[1.55] text-[#8b8a85]">
-              Document framework created using Will&amp;Way. This document does
-              not constitute formal legal advice.
-            </p>
-            <div className="mt-10 grid w-full gap-3 sm:grid-cols-2">
-              <SummaryTile label="Family members" value={`${family.length}`} />
-              <SummaryTile label="Executors" value={`${executors.length}`} />
+
+            {/* Step-by-Step Execution Protocol moved to front */}
+            <div className="mt-6 w-full max-w-[550px] border-t border-[#ece8e2] pt-4 text-left">
+              <p className="text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-[#8c8072]">
+                Step-by-Step Execution Protocol
+              </p>
+              <div className="mt-3 space-y-3 text-[0.82rem] leading-[1.6] text-[#4a515d]">
+                <p>
+                  <span className="font-semibold">1.1</span> Document
+                  Verification &amp; Physical Binding: Prior to signature,
+                  thoroughly review all clauses. Any updated highlight should
+                  match the live response from the dashboard.
+                </p>
+                <p>
+                  <span className="font-semibold">1.2</span> The Attestation
+                  Ceremony: You must execute this document in the simultaneous
+                  presence of two independent adult witnesses.
+                </p>
+                <p>
+                  <span className="font-semibold">1.3</span> Affixing
+                  Signatures: The testator <Highlight>{userName}</Highlight>{" "}
+                  <Highlight>{userNRIC || "N/A"}</Highlight> will sign beside
+                  the witness sections when the final PDF is issued.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
               <SummaryTile
-                label="Net worth"
-                value={formatMoney(dashboard.summary?.netWorth)}
+                label="Beneficiaries"
+                value={`${beneficiaryCount}`}
               />
+              <SummaryTile label="Executors" value={`${executors.length}`} />
+              <SummaryTile label="Net worth" value={formatMoney(totalWealth)} />
               <SummaryTile label="Gift entries" value={`${gifts.length}`} />
             </div>
-          </div>
-        ),
-      },
-      {
-        pageTitle: "Step-by-Step Execution Protocol",
-        pageNumber: 2,
-        body: (
-          <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
-            <p>
-              1.1 Document Verification &amp; Physical Binding: Prior to
-              signature, thoroughly review all clauses. Any updated highlight
-              should match the live response from the dashboard.
-            </p>
-            <p>
-              1.2 The Attestation Ceremony: You must execute this document in
-              the simultaneous presence of two independent adult witnesses.
-            </p>
-            <p>
-              1.3 Affixing Signatures: The testator{" "}
-              <Highlight>{userName}</Highlight>{" "}
-              <Highlight>{userNRIC || "N/A"} </Highlight>
-              will sign beside the witness sections when the final PDF is
-              issued.
-            </p>
-          </div>
-        ),
-      },
 
+            {/* Small fine print */}
+            <p className="mt-6 text-[0.6rem] uppercase tracking-[0.12em] text-[#8b8a85] max-w-[500px]">
+              This document was generated using Will&Way, an automated self-help
+              digital platform. Will&Way is not a law firm and does not provide
+              legal advice, legal opinions, or specific recommendations. The
+              tools and materials provided here are not a substitute for
+              professional legal counsel. If you have unique or complex
+              circumstances, you should consult a licensed lawyer. Will&Way
+              assumes no liability for how this document is completed, signed,
+              or enforced in court.
+            </p>
+          </div>
+        ),
+      },
       {
         pageTitle: "Essential Singapore Statutory Principles & ACKNOWLEDGMENTS",
-        pageNumber: 3,
+        pageNumber: 2,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -599,7 +665,7 @@ export default function WillPreviewPage() {
       },
       {
         pageTitle: "Testamentary Declarations & Family Structure",
-        pageNumber: 4,
+        pageNumber: 3,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -676,7 +742,7 @@ export default function WillPreviewPage() {
       },
       {
         pageTitle: "Administrative Appointments & Minority Guardianship",
-        pageNumber: 5,
+        pageNumber: 4,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -702,7 +768,7 @@ export default function WillPreviewPage() {
       },
       {
         pageTitle: "Special Bequests & Asset Distribution",
-        pageNumber: 6,
+        pageNumber: 5,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             {/* Cash Gifts */}
@@ -890,8 +956,8 @@ export default function WillPreviewPage() {
         ),
       },
       {
-        pageTitle: "Appointment of Residuary Estate & Legal Defenses",
-        pageNumber: 7,
+        pageTitle: "",
+        pageNumber: 6,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -963,7 +1029,7 @@ export default function WillPreviewPage() {
       },
       {
         pageTitle: "Final Execution Interface",
-        pageNumber: 8,
+        pageNumber: 7,
         body: (
           <div className="space-y-4 text-[0.92rem] leading-[1.75] text-[#4a515d]">
             <p>
@@ -1003,7 +1069,7 @@ export default function WillPreviewPage() {
       },
       {
         pageTitle: "Personal Memos",
-        pageNumber: 9,
+        pageNumber: 8,
         body: (
           <div className="space-y-5 text-[0.94rem] leading-[1.75] text-[#3f4550]">
             {/* Personal Messages from Gifts */}
@@ -1068,7 +1134,6 @@ export default function WillPreviewPage() {
       backupExecutorIdType,
       cashGifts,
       collectionGifts,
-      dashboard.summary?.netWorth,
       estateDistributions,
       executors.length,
       family,
@@ -1088,6 +1153,8 @@ export default function WillPreviewPage() {
       userName,
       userNRIC,
       userData,
+      beneficiaryCount,
+      totalWealth,
     ],
   );
 
@@ -1265,30 +1332,6 @@ export default function WillPreviewPage() {
               <h1 className="text-[2.2rem] font-semibold leading-[1.02] tracking-[-0.03em] text-[#101010] md:text-[3.25rem]">
                 Next Steps
               </h1>
-              <p className="mt-4 max-w-[560px] text-[1rem] leading-[1.55] text-[#6f7685] md:text-[1.08rem]">
-                The left preview keeps the PDF wording static while the
-                yellow-marked fields are driven by your dashboard response.
-              </p>
-              <p className="mt-4 max-w-[560px] text-[1rem] leading-[1.55] text-[#6f7685] md:text-[1.08rem]">
-                From the date of purchase, you will have 30 days to make any
-                changes and download for free.
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <SummaryTile
-                  label="Family"
-                  value={`${family.length} members`}
-                />
-                <SummaryTile
-                  label="Executors"
-                  value={`${executors.length} selected`}
-                />
-                <SummaryTile
-                  label="Assets"
-                  value={`${financialAssets.length + properties.length + loans.length}`}
-                />
-              </div>
-
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/will"
