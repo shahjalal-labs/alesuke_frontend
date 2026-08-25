@@ -18,7 +18,7 @@ const sections: TermsSection[] = [
           <strong>About the Operator</strong>
         </p>
         <p className="mt-3">
-          The digital platform Willway.sg (hereafter referred to as the "Website") is owned and managed by Luminence Pte. Ltd. ("Luminence", "we", or "us"). The company is officially incorporated within the Republic of Singapore under Unique Entity Number __________.
+          The digital platform Willway.sg (hereafter referred to as the "Website") is owned and managed by Luminence Pte. Ltd. ("Luminence", "we", or "us"). The company is officially incorporated within the Republic of Singapore under Unique Entity Number 202638916E.
         </p>
         <p className="mt-5">
           <strong>Contractual Binding</strong>
@@ -246,7 +246,7 @@ export default function TermsOfUse() {
             </article>
           ))}
 
-          <div className="rounded-[28px] border border-[#eadfce] bg-[#111827] p-6 text-white shadow-[0_18px_45px_rgba(16,24,40,0.08)] sm:p-8">
+          {/* <div className="rounded-[28px] border border-[#eadfce] bg-[#111827] p-6 text-white shadow-[0_18px_45px_rgba(16,24,40,0.08)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60">Contact us</p>
             <div className="mt-4 grid gap-6 md:grid-cols-3">
               <div>
@@ -268,7 +268,7 @@ export default function TermsOfUse() {
                 Back to home <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
     </div>

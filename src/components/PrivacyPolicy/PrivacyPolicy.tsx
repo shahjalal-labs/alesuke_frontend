@@ -175,7 +175,7 @@ const sections: PolicySection[] = [
           We welcome any feedback or questions regarding our data protection methods. Please reach out directly to our team at admin@willway.sg.
         </p>
         <p className="mt-4">
-          Last updated: 22 Oct 2021
+          Last updated: 25 August 2026
         </p>
       </>
     ),
