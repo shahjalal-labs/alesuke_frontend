@@ -278,29 +278,7 @@ export default function PrivacyPolicy() {
             </article>
           ))}
 
-          <div className="rounded-[28px] border border-[#eadfce] bg-[#111827] p-6 text-white shadow-[0_18px_45px_rgba(16,24,40,0.08)] sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60">Contact us</p>
-            <div className="mt-4 grid gap-6 md:grid-cols-3">
-              <div>
-                <p className="text-lg font-semibold">Our will-writing team, every working day</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">Email or WhatsApp our will-writing team. We reply within 24 hours, every working day.</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold">Lifetime document access</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">Your will is securely stored and accessible whenever you need it. Update anytime.</p>
-              </div>
-              {/* <div>
-                <p className="text-lg font-semibold">30-day money-back guarantee</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">If MakeGoodwill is not right for you, we will refund you in full within 30 days. No questions asked.</p>
-              </div> */}
-            </div>
-            <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/65 sm:flex-row sm:items-center sm:justify-between">
-              <span>support@makegoodwill.com</span>
-              <Link href="/" className="inline-flex items-center gap-2 font-semibold text-[#f5c99f] hover:underline">
-                Back to home <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
+         
         </div>
       </section>
     </div>
