@@ -246,29 +246,7 @@ export default function TermsOfUse() {
             </article>
           ))}
 
-          {/* <div className="rounded-[28px] border border-[#eadfce] bg-[#111827] p-6 text-white shadow-[0_18px_45px_rgba(16,24,40,0.08)] sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60">Contact us</p>
-            <div className="mt-4 grid gap-6 md:grid-cols-3">
-              <div>
-                <p className="text-lg font-semibold">Legal clarity</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">The terms explain user eligibility, platform use, and legal boundaries.</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold">Service limitations</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">Warranty, liability, and access termination conditions are stated clearly.</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold">Support access</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">Questions can be directed to admin@willway.sg for follow-up.</p>
-              </div>
-            </div>
-            <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/65 sm:flex-row sm:items-center sm:justify-between">
-              <span>support@makegoodwill.com</span>
-              <Link href="/" className="inline-flex items-center gap-2 font-semibold text-[#f5c99f] hover:underline">
-                Back to home <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div> */}
+          
         </div>
       </section>
     </div>
