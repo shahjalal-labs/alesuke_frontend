@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// import logo from "@/assets/logo.svg"
-// import logo from "@/assets/Logo.png";
+import logo from "@/assets/favicon.svg";
 
 // import ReduxProvider from "@/redux/ReduxProvider";
 import { Toaster } from "sonner";
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
   title: "Will & Way",
   description: "Will & Way is a platform for creating and sharing wills.",
   icons: {
-    // icon: logo.src,
+    icon: logo.src,
   },
 };
 
