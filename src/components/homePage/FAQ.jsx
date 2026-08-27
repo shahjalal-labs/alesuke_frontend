@@ -29,7 +29,7 @@ export default function FAQ() {
     <section className=" py-24">
       <div className="mx-auto container px-4">
         <div className="mb-6 inline-flex rounded-full bg-[#1e1912]/8 px-4 py-1.5">
-          <span className="text-lg tracking-[0.08em] text-[#1e1912]  bg-[#E7E8E9] border-[1px] border-[#B4B7BC] rounded-full px-6 py-3">CaQ</span>
+          <span className="text-lg tracking-[0.08em] text-[#1e1912]  bg-[#E7E8E9] border-[1px] border-[#B4B7BC] rounded-full px-6 py-3">FaQ</span>
         </div>
         <h2 className="mb-12 text-[clamp(2rem,4vw,2.8rem)] font-bold tracking-[-0.02em] text-[#1e1912]">
           Commonly asked questions
