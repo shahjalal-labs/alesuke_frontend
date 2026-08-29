@@ -8,11 +8,13 @@ import { toast } from "sonner";
 
 function ResetPassword() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
   const [forgetPassword, { isLoading }] = useForgetPasswordMutation();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(""); // Clear previous errors
 
     try {
       const response = await forgetPassword({ email }).unwrap();
@@ -21,9 +23,22 @@ function ResetPassword() {
         toast.success("Verification code sent to your email.");
         router.push(`/reset-password/verification?email=${encodeURIComponent(email)}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Forgot password failed:", error);
-      toast.error("Unable to send verification code. Please try again.");
+
+      // Extract error message from response
+      let errorMessage = "Unable to send verification code. Please try again.";
+
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.data?.errorMessages?.[0]?.message) {
+        errorMessage = error.data.errorMessages[0].message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -48,11 +63,13 @@ function ResetPassword() {
             value={email}
             onChange={(value) => {
               setEmail(value);
-              // console.log("reset password email", value);
+              setError("");
             }}
           />
 
-          <PrimaryButton type="submit" disabled={isLoading}>{isLoading ? "SENDING..." : "SEND CODE"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={isLoading}>
+            {isLoading ? "SENDING..." : "SEND CODE"}
+          </PrimaryButton>
         </div>
       </form>
     </AuthShell>
