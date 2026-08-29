@@ -63,7 +63,7 @@ export default function Sidebar({ onNavigate, mobile = false }: SidebarProps) {
       ];
 
       const completedSections = sectionStates.filter(Boolean).length;
-      const progress = Math.round((completedSections / sectionStates.length) * 100);
+      // const progress = Math.round((completedSections / sectionStates.length) * 100);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -84,10 +84,10 @@ export default function Sidebar({ onNavigate, mobile = false }: SidebarProps) {
       <div className="flex min-h-0 flex-1 flex-col rounded-[8px] border border-[#e8ddd0] bg-[#f2e5d8] px-3 py-4">
         <div className="mb-4 border-b border-[#1b2333]/20 px-1 pb-4 pt-2">
           <div className="text-[1.05rem] font-semibold tracking-[-0.02em] text-[#24201c]">Drafting Will</div>
-          <div className="mt-1 text-[0.62rem] uppercase tracking-[0.22em] text-[#8d7f70]">Your will is {progress}% complete</div>
+          {/* <div className="mt-1 text-[0.62rem] uppercase tracking-[0.22em] text-[#8d7f70]">Your will is {progress}% complete</div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e7ddd2]">
             <div className="h-full rounded-full bg-[#192233] transition-all duration-300" style={{ width: `${progress}%` }} />
-          </div>
+          </div> */}
         </div>
 
         <nav className="mt-4 flex flex-col gap-2 px-1">

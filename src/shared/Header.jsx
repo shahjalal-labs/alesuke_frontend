@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import Cookies from "js-cookie";
 import { logOut } from "@/redux/ReduxFunction";
-import { LogOut, FileText, Menu, X } from "lucide-react";
+import { LogOut, FileText, Menu, X, User } from "lucide-react";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -92,6 +92,15 @@ export default function Header() {
 
                     <div className="p-3">
                       <Link
+                        href="/my-profile"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0]"
+                      >
+                        <User className="h-5 w-5 text-[#8b7d73]" />
+                        My Profile
+                      </Link>
+
+                      <Link
                         href="/my-will"
                         onClick={() => setAccountMenuOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0]"
@@ -168,6 +177,15 @@ export default function Header() {
                       </Link>
 
                       <Link
+                        href="/my-profile"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0] hover:border-none border border-black/50"
+                      >
+                        <User className="h-5 w-5 text-[#8b7d73]" />
+                        My Profile
+                      </Link>
+
+                      <Link
                         href="/my-will"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0] hover:border-none border border-black/50"
@@ -205,7 +223,7 @@ export default function Header() {
                       Sign In
                     </Link>
                     <Link
-                      href="/signup"
+                      href="/signUp"
                       onClick={() => setMenuOpen(false)}
                       className="flex w-full items-center justify-center rounded-xl border border-[#192233] px-4 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0]"
                     >
