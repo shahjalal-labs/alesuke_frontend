@@ -1,17 +1,22 @@
 "use client";
-import checkIcon from '@/assets/check.png'
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+import checkIcon from '@/assets/check.png';
 import centerCImage from '@/assets/CloseUPenPaper.png';
 import bookIcon from "@/assets/book.png";
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+
 const essentialFeatures = [
   "Comprehensive last will and final intentions",
   "Time & Value. Get your will in 15 mins that traditional firms provide in 15 days",
   "Final intentions – you last words of love",
   "Zero-access Legacy vault to revise your will. (Strictly confidential including us)",
   "1st 30 days unlimited revisions",
-   "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grabunlimited, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
+  "Digital Asset Memorandum — your digital life doesn't end after you pass on. Netflix, Grabunlimited, iCloud etc. Our will authorizes your executor/administrator to act and close your accounts.",
 ];
 
 const unlimitedFeatures = [
@@ -30,12 +35,31 @@ function CheckIcon({ filled = true }) {
 
 export default function Pricing() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const isPricingPage = pathname === "/pricing";
+
+  // Handle navigation with token check
+  const handleNavigateToWill = (e) => {
+    e.preventDefault(); // Prevent default navigation
+    
+    // Check for access token in cookies
+    const token = Cookies.get('accessToken');
+    
+    if (!token) {
+      // If no token, redirect to login page
+      router.push('/login');
+    } else {
+      // If token exists, navigate to will page
+      router.push('/will');
+    }
+  };
+
   return (
     <section id="pricing" className="py-24">
       <div className="mx-auto container px-4">
         <h2 className="mb-14 text-center text-[clamp(2rem,4vw,2.8rem)] font-bold tracking-[-0.02em] text-[#1e1912]">
-        {isPricingPage ? "" : " Our Pricing For Peace Of Mind"}
+          {isPricingPage ? "" : " Our Pricing For Peace Of Mind"}
         </h2>
 
         <div className="grid items-stretch gap-6 md:[grid-template-columns:minmax(0,1fr)_96px_minmax(0,1fr)]">
@@ -58,13 +82,15 @@ export default function Pricing() {
               ))}
             </ul>
             <div className="mt-2" />
+            
+            {/* Updated Link with onClick handler */}
             <Link
               href="/will"
+              onClick={handleNavigateToWill}
               className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-[#1e1912]/10 px-4 py-4 text-[1rem] font-semibold tracking-[0.04em] text-[#1e1912] transition-colors duration-200 hover:bg-[#1e1912] hover:text-white"
             >
               Secure Essential Will
             </Link>
-            
           </div>
 
           {/* Center image column */}
@@ -99,13 +125,15 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
+            
+            {/* Updated Link with onClick handler */}
             <Link
               href="/will"
+              onClick={handleNavigateToWill}
               className="inline-flex items-center justify-center rounded-lg bgrad bg-gradient-to-l from-[#1D2736] to-[#081220] px-4 py-4 text-[1rem] font-bold tracking-[0.04em] text-white transition-colors duration-200 hover:bg-white"
             >
               Begin Unlimited Journey
             </Link>
-           
           </div>
         </div>
       </div>
