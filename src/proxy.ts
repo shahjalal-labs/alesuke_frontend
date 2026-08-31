@@ -1,125 +1,86 @@
-// middleware.ts (in your root directory)
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { jwtDecode } from "jwt-decode";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-// Define public routes that don't require authentication
-const PUBLIC_ROUTES = [
-  '/',
-  '/login',
-  '/signup',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/pricing',
-];
-
-// Define profile setup routes (protected, but redirect to appropriate step)
-const PROFILE_SETUP_ROUTES = [
-  '/profile-setup',
-  '/profile-setup/name',
-  '/profile-setup/nickname',
-  '/profile-setup/nric',
-  '/profile-setup/age',
-  '/profile-setup/marital-status',
-  '/profile-setup/religion',
-  '/profile-setup/get-started',
-];
-
-// Define protected routes that require full authentication
-const PROTECTED_ROUTES = [
-  '/will',
-  '/will/preview',
-  '/will/checkout',
-  '/dashboard',
-  '/profile',
-  '/settings',
-];
+interface User {
+  role: string;
+  sponsorStatus?: string;
+}
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const token = request.cookies.get('accessToken');
-  const userProfile = request.cookies.get('userProfile'); // Optional: check if profile is complete
+  const loginRoute = `${request.nextUrl.origin}/login`;
+  const homeRoute = `${request.nextUrl.origin}/`;
+  const currentPath = request.nextUrl.pathname;
 
-  // Check if the route is a profile setup route
-  const isProfileSetupRoute = PROFILE_SETUP_ROUTES.some(route => 
-    pathname.startsWith(route)
+  // Private route PREFIXES — anything starting with these is protected.
+  // This automatically covers every nested page under /will (assets,
+  // caretakers-of-pets, checkout, digital-assets, divide-estate, executor,
+  // gifts, preview, you-and-your-family/*, etc.) without listing each one.
+  const privatePrefixes = [
+    "/profile-setup", // covers /profile-setup/name, /nric, /age, ...
+    "/will",          // covers /will/assets/add-financials, /will/preview, /will/checkout, ...
+    "/my-profile",
+  ];
+
+  // Public routes — accessible without authentication (exact match)
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/reset-password",
+    "/verification",
+    "/new-password",
+    "/pricing",
+    "/how-it-works",
+    "/privacy-policy",
+    "/terms-of-use",
+  ];
+
+  const token = request.cookies.get("accessToken")?.value;
+
+  // Authenticated user hitting /login -> send home
+  if (currentPath === "/login" && token) {
+    try {
+      jwtDecode<User>(token);
+      return NextResponse.redirect(new URL(homeRoute, request.url));
+    } catch {
+      const response = NextResponse.next();
+      response.cookies.delete("accessToken");
+      return response;
+    }
+  }
+
+  const isPrivateRoute = privatePrefixes.some(
+    (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
   );
 
-  // Check if the route is a protected route
-  const isProtectedRoute = PROTECTED_ROUTES.some(route => 
-    pathname.startsWith(route)
-  );
+  const isPublicRoute = publicRoutes.includes(currentPath);
 
-  // Check if the route is a public route
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
-  );
-
-  // Allow access to public routes
   if (isPublicRoute) {
     return NextResponse.next();
   }
 
-  // --- AUTHENTICATION CHECK ---
-  
-  // If no token, redirect to login
-  if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  if (isPrivateRoute && !token) {
+    return NextResponse.redirect(new URL(loginRoute, request.url));
   }
 
-  // --- PROFILE SETUP ROUTES ---
-  
-  // If user is on profile setup route
-  if (isProfileSetupRoute) {
-    // Check if profile is already completed
-    const profileComplete = request.cookies.get('profileComplete');
-    
-    // If profile is complete, redirect to will or dashboard
-    if (profileComplete?.value === 'true') {
-      const willUrl = new URL('/will', request.url);
-      return NextResponse.redirect(willUrl);
+  if (isPrivateRoute && token) {
+    try {
+      jwtDecode<User>(token);
+      return NextResponse.next();
+    } catch {
+      return NextResponse.redirect(new URL(loginRoute, request.url));
     }
-    
-    // Allow access to profile setup
-    return NextResponse.next();
   }
 
-  // --- PROTECTED ROUTES (Will pages, etc.) ---
-  
-  if (isProtectedRoute) {
-    // Check if profile is completed
-    const profileComplete = request.cookies.get('profileComplete');
-    
-    // If profile is not complete, redirect to profile setup
-    if (profileComplete?.value !== 'true') {
-      const profileUrl = new URL('/profile-setup/get-started', request.url);
-      return NextResponse.redirect(profileUrl);
-    }
-    
-    // Allow access to protected route
-    return NextResponse.next();
-  }
-
-  // For any other routes, check if they need protection
-  // Redirect to login by default for unknown routes
-  const loginUrl = new URL('/login', request.url);
-  loginUrl.searchParams.set('redirect', pathname);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next();
 }
 
-// Configure which routes the middleware runs on
 export const config = {
+  // Match everything EXCEPT: api routes, Next's static/image optimizer
+  // assets, and common static files. This is what stops the image route
+  // (and other static assets) from ever being routed through auth logic.
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes (if you want to handle API auth separately)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
