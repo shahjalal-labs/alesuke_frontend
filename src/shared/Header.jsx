@@ -101,7 +101,7 @@ export default function Header() {
                       </Link>
 
                       <Link
-                        href="/my-will"
+                        href="/will"
                         onClick={() => setAccountMenuOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0]"
                       >
@@ -186,7 +186,7 @@ export default function Header() {
                       </Link>
 
                       <Link
-                        href="/my-will"
+                        href="/will"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-3 py-3 text-[16px] font-medium text-[#192233] transition-colors hover:bg-[#f5f3f0] hover:border-none border border-black/50"
                       >

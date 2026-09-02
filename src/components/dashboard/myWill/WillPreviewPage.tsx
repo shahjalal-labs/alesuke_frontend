@@ -133,10 +133,16 @@ function formatMoney(value?: number | null) {
 }
 
 function formatPercent(value?: number | null) {
-  if (value == null || Number.isNaN(value)) {
+  if (value == null || Number.isNaN(Number(value))) {
     return "0%";
   }
-  return `${Math.round(Number(value) / 5) * 5}%`;
+
+  const normalized = Number(value);
+  const formatted = Number.isInteger(normalized)
+    ? normalized.toString()
+    : normalized.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+
+  return `${formatted}%`;
 }
 
 function AccordionItem({

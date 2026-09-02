@@ -808,10 +808,14 @@ export default function MyWillPage() {
                           </div>
 
                           <div className="inline-flex items-center self-start rounded-full bg-[#f4e8da] px-3 py-1 text-[0.84rem] font-medium text-[#2b221a] sm:self-center">
-                            {Math.round(
-                              Number(distribution.percentage ?? 0) / 5,
-                            ) * 5}{" "}
-                            %
+                            {(() => {
+                              const value = Number(distribution.percentage ?? 0);
+                              if (!Number.isFinite(value)) return "0%";
+                              const formatted = Number.isInteger(value)
+                                ? value.toString()
+                                : value.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+                              return `${formatted}%`;
+                            })()}
                           </div>
                         </div>
 
