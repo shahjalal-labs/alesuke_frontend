@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, X, Building2, Landmark, Wallet, Banknote } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
+import Image from "next/image";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-SG", {
@@ -131,7 +133,15 @@ export default function Intro() {
     <div className="min-h-screen bg-[#fbf4ed] text-[#161616]">
       <header className="border-b border-[#ece6de] bg-[#fbf4ed]/95 px-4 py-3 backdrop-blur md:px-8">
         <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-4">
-          <div className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#171612] md:text-[1.8rem]">Will &amp; Way</div>
+         <div className="flex items-center gap-4 sm:gap-12">
+          <Link href="/">
+            <Image
+              src={logo}
+              alt="Will & Way Logo"
+              className="h-auto w-[160px]"
+            />
+          </Link>
+        </div>
 
           <Link
             href="/will"

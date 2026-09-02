@@ -2,6 +2,8 @@ import icon1 from "@/assets/why/arrow-reload-horizontal.png";
 import icon2 from "@/assets/why/global.png";         
 import icon3 from "@/assets/why/web-protection.png";         
 import Image from "next/image";
+import logo from "@/assets/logo.png";
+
 const features = [
   {
     icon: (
@@ -30,9 +32,15 @@ export default function WhyWillWay() {
   return (
     <section className="bg-[#F6ECE2] px-8 py-24">
       <div className="mx-auto container px-4">
-        <h2 className="mb-4 text-center text-[28px] md:text-[36px] lg:text-[48px] font-medium tracking-[-0.02em] text-default">
-          Why Will &amp; Way?
-        </h2>
+        <div className="flex items-center justify-center mb-10">
+         
+            <Image
+              src={logo}
+              alt="Will & Way Logo"
+              className="h-auto w-[200px]"
+            />
+
+        </div>
         <p className="mx-auto mb-16 max-w-[738px] text-center text-[1.1rem] leading-[1.7] text-grey  italic">
           Your will is more than just a legal document—it's a final act of love and protection for your family. We believe that securing your legacy shouldn't be complicated or stressful.
         </p>

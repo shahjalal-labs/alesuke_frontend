@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import { House, BriefcaseBusiness, X } from "lucide-react";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
+import logo from "@/assets/logo.png";
 
 import { assetsApi } from "@/redux/api/assetsApi";
 import type { AppDispatch, RootState } from "@/redux/store";
+import Image from "next/image";
 
 type LoanType = "OUTSTANDING" | "GIVEN";
 
@@ -309,11 +311,15 @@ export default function AddOtherAssets() {
     <div className="min-h-screen bg-[#fbf4ed] text-[#171612]">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-[#ece2d7] bg-[#fbf4ed]/95 px-4 py-3 backdrop-blur md:px-8">
         <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-4">
-          <Link href="/will" className="inline-flex items-center">
-            <span className="text-[1.7rem] font-semibold tracking-[-0.04em] text-[#111827] md:text-[2rem]">
-              Will &amp; Way
-            </span>
+          <div className="flex items-center gap-4 sm:gap-12">
+          <Link href="/">
+            <Image
+              src={logo}
+              alt="Will & Way Logo"
+              className="h-auto w-[160px]"
+            />
           </Link>
+        </div>
 
           <Link
             href="/will"

@@ -5,12 +5,14 @@ import Link from "next/link";
 import { PencilLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import logo from "@/assets/logo.png";
 
 import AddAccountModal, { type AccountType } from "@/components/ui/AddAccountModal";
 import { useAddAssetsMutation, useDeleteAssetsMutation, useEditAssetsMutation, useGetAllAssetsQuery } from "@/redux/api/assetsApi";
 import { useGetGiftsTypeQuery } from "@/redux/api/giftApi";
 // import { useGetAllMemberListQuery } from "@/redux/api/profileApi";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type AssetType =
   | "BANK_ACCOUNT"
@@ -448,7 +450,15 @@ export default function AddFinancials() {
     <div className="min-h-screen bg-[#fbf4ed] text-[#161616]">
       <header className="border-b border-[#ece6de] bg-[#fbf4ed]/95 px-4 py-3 backdrop-blur md:px-8">
         <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-4">
-          <div className="text-[1.35rem] font-semibold tracking-[-0.03em] text-[#171612] md:text-[1.8rem]">Will &amp; Way</div>
+          <div className="flex items-center gap-4 sm:gap-12">
+          <Link href="/">
+            <Image
+              src={logo}
+              alt="Will & Way Logo"
+              className="h-auto w-[160px]"
+            />
+          </Link>
+        </div>
           <Link href="/will" className="rounded-[4px] border border-[#d8d1c8] px-4 py-2 text-[0.9rem] text-[#1b1b1b] transition-colors hover:bg-[#f0e8df]">
             Back to Dashboard
           </Link>
