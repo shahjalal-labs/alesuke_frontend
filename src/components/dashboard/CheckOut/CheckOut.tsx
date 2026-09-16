@@ -121,8 +121,8 @@ function CheckOut() {
   const isLoading =
     activeTab === "essential" ? isEssentialLoading : isUnlimitedLoading;
   const checkoutPayload = {
-    successUrl: "https://willway.sg/will/checkout/success",
-    cancelUrl: "https://willway.sg/will/checkout/cancel",
+    successUrl: `${typeof window !== "undefined" ? window.location.origin : "https://willway.sg"}/will/checkout/success`,
+    cancelUrl: `${typeof window !== "undefined" ? window.location.origin : "https://willway.sg"}/will/checkout/cancel`,
   };
 
   const handleCheckout = async () => {
