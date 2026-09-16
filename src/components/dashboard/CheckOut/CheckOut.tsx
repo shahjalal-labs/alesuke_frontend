@@ -121,8 +121,8 @@ function CheckOut() {
   const isLoading =
     activeTab === "essential" ? isEssentialLoading : isUnlimitedLoading;
   const checkoutPayload = {
-    successUrl: "https://will-way.smtsigma.com/will/checkout/success",
-    cancelUrl: "https://will-way.smtsigma.com/will/checkout/cancel",
+    successUrl: "https://willway.sg/will/checkout/success",
+    cancelUrl: "https://willway.sg/will/checkout/cancel",
   };
 
   const handleCheckout = async () => {
@@ -360,8 +360,8 @@ function CheckOut() {
                     </div>
                     <p className="text-[0.95rem] font-semibold text-[#1d1f26]">
                       <span className="text-[64px] font-bold">$88</span> one
-                      time fee + <span className="font-bold">$2</span>/mth
-                      (billed annually)
+                      time payment + <span className="font-bold">$24</span>/
+                      billed annually
                     </p>
                   </div>
 

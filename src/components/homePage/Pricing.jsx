@@ -114,8 +114,8 @@ export default function Pricing() {
               <p className="m-0 text-[0.95rem] leading-[1.5] text-grey">For those whose lives, assets, and families are in beautiful state of growth</p>
             </div>
             <div>
-              <span className="text-[3rem] font-bold text-default">$88 one time fee + $2/mth</span>
-              <span className="ml-2 text-[0.9rem] text-grey">/ mth (billed annually)</span>
+              <span className="text-[2.2rem] font-bold text-default">$88 one time payment + $24</span>
+              <span className="ml-2 text-[0.9rem] text-grey">/ billed annually</span>
             </div>
             <ul className="m-0 flex flex-1 list-none flex-col gap-3 p-0">
               {unlimitedFeatures.map((f, i) => (
