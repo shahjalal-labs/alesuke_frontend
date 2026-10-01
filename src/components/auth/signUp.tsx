@@ -2,7 +2,14 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthField, AuthShell, AuthTabs, Divider, PrimaryButton, SocialRow } from "./AuthUI";
+import {
+  AuthField,
+  AuthShell,
+  AuthTabs,
+  Divider,
+  PrimaryButton,
+  SocialRow,
+} from "./AuthUI";
 import { useUserSignUpMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
 
@@ -25,14 +32,15 @@ function SignUp() {
         keepMeLogin: false,
       }).unwrap();
       if (response?.success) {
-        toast.success("Sign up successful! Please check your email for the OTP.");
+        toast.success(
+          "Sign up successful! Please check your email for the OTP.",
+        );
         router.push(`/verification?email=${encodeURIComponent(email)}`);
       }
-
-    }
-    catch (error) {
+    } catch (error: any) {
       console.error("Sign up failed:", error);
-      toast.error("Sign up failed. Please try again.");
+      toast.error(`${error?.data?.message}`);
+      //Fix generic something went wrong message to  server actual message in signup toast
     }
   };
 
@@ -47,16 +55,14 @@ function SignUp() {
         />
       }
     >
-      <form
-        onSubmit={(e)=>handleSignUp(e)}
-          
-        className="w-full"
-      >
+      <form onSubmit={(e) => handleSignUp(e)} className="w-full">
         <div className="text-start">
           <h1 className="font-serif text-[30px] leading-tight text-[#111827]">
             Create Your Account
           </h1>
-          <p className="mt-3 text-[0.95rem] text-[#7b8596]">Create account and enjoy all services</p>
+          <p className="mt-3 text-[0.95rem] text-[#7b8596]">
+            Create account and enjoy all services
+          </p>
         </div>
 
         <div className="mt-8 space-y-6">
@@ -95,7 +101,9 @@ function SignUp() {
             showToggle
           />
 
-          <PrimaryButton type="submit" disabled={isLoading}>{isLoading ? "SIGNING UP..." : "SIGN UP"}</PrimaryButton>
+          <PrimaryButton type="submit" disabled={isLoading}>
+            {isLoading ? "SIGNING UP..." : "SIGN UP"}
+          </PrimaryButton>
         </div>
 
         <Divider label="OR" />
@@ -106,3 +114,4 @@ function SignUp() {
 }
 
 export default SignUp;
+
