@@ -83,6 +83,9 @@ type PetCaretakerRecord = {
 };
 
 type WillDetailsResponse = {
+  id?: string;
+  isPaid?: boolean;
+  willStatus?: string;
   user?: {
     name?: string | null;
     nid?: string | null;
@@ -476,10 +479,27 @@ export default function WillPreviewPage() {
     petCaretakers[0]?.caretaker?.fullName ?? backupExecutor;
   const firstPetName =
     petCaretakers[0]?.pet?.fullName ?? familyNames[0] ?? "Companion animal";
+  const isPaid = useMemo(() => {
+    if (dashboard.isPaid === true) return true;
+    if (dashboard.willStatus === "COMPLETED") return true;
+    if (userData?.subscriptionTier === "PREMIUM") return true;
+    if (
+      userData?.subscriptionType === "SUBSCRIPTION" ||
+      userData?.subscriptionType === "ONE_TIME"
+    )
+      return true;
+    if (
+      Array.isArray(userData?.payments) &&
+      userData.payments.some((p: any) => p?.status === "SUCCEEDED")
+    )
+      return true;
+    return false;
+  }, [dashboard.isPaid, dashboard.willStatus, userData]);
+
   const totalPages = 9;
 
   const handleDownloadPDF = async () => {
-    if (!pdfContentRef.current || !isClient) return;
+    if (!isPaid || !pdfContentRef.current || !isClient) return;
 
     setIsDownloading(true);
 
@@ -1336,16 +1356,20 @@ export default function WillPreviewPage() {
               <div className="flex items-center justify-between gap-4 px-2 pb-4">
                 <div>
                   <p className="text-[0.76rem] uppercase tracking-[0.22em] text-[#8a8378]">
-                    PDF Preview
+                    {isPaid ? "PDF Preview" : "Document Sample Preview"}
                   </p>
                   <h2 className="mt-2 text-[1.25rem] font-semibold text-[#241f1a]">
-                    Will pages from your live dashboard
+                    {isPaid
+                      ? "Will pages from your live dashboard"
+                      : "Will Preview (Pages 1 & 2)"}
                   </h2>
                   <p className="text-[0.7rem] text-[#8a8378] mt-1">
-                    All {totalPages} pages included
+                    {isPaid
+                      ? `All ${totalPages} pages included`
+                      : `Showing 2 of ${totalPages} pages • Complete payment to view all pages`}
                   </p>
                 </div>
-                {!!userData?.subscriptionType && (
+                {isPaid ? (
                   <button
                     onClick={handleDownloadPDF}
                     disabled={isDownloading}
@@ -1354,6 +1378,14 @@ export default function WillPreviewPage() {
                     <Download className="h-4 w-4" />
                     {isDownloading ? "Generating PDF..." : "Download All Pages"}
                   </button>
+                ) : (
+                  <Link
+                    href="/will/checkout"
+                    className="inline-flex items-center gap-2 rounded-[3px] bg-[#c35b43] px-4 py-2 text-[0.85rem] font-medium text-white shadow-[0_8px_18px_rgba(195,91,67,0.2)] transition-all hover:bg-[#b04f38]"
+                  >
+                    <Lock className="h-4 w-4" />
+                    Unlock All {totalPages} Pages
+                  </Link>
                 )}
               </div>
               <div
@@ -1364,52 +1396,78 @@ export default function WillPreviewPage() {
                   padding: "20px",
                 }}
               >
-                {documentPages.map((page, index) => {
-                  const isFree = userData?.subscriptionType === null;
-                  const shouldBlur = isFree && index >= 2;
-
-                  return (
-                    <div
-                      key={page.pageNumber}
-                      className={shouldBlur ? "relative" : ""}
-                    >
-                      <div
-                        className={
-                          shouldBlur
-                            ? "blur-[10px] select-none pointer-events-none"
-                            : ""
-                        }
+                {(isPaid ? documentPages : documentPages.slice(0, 2)).map(
+                  (page) => (
+                    <div key={page.pageNumber}>
+                      <PdfPageFrame
+                        pageNumber={page.pageNumber}
+                        totalPages={totalPages}
+                        title={page.pageTitle}
                       >
-                        <PdfPageFrame
-                          pageNumber={page.pageNumber}
-                          totalPages={totalPages}
-                          title={page.pageTitle}
-                        >
-                          {page.body}
-                        </PdfPageFrame>
-                      </div>
-                      {shouldBlur && (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/10">
-                          <div className="bg-white/95 px-8 py-6 rounded-2xl shadow-xl border border-gray-100 text-center max-w-sm">
-                            <Lock className="w-10 h-10 text-[#c35b43] mx-auto mb-3" />
-                            <h3 className="text-xl font-bold text-gray-900">
-                              Premium Feature
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                              Upgrade to Premium to view the full document and
-                              download your complete PDF.
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                        {page.body}
+                      </PdfPageFrame>
                     </div>
-                  );
-                })}
+                  ),
+                )}
+
+                {!isPaid && (
+                  <div className="rounded-[20px] border-2 border-dashed border-[#d5c7b7] bg-gradient-to-b from-[#fbf7f2] to-[#f4ebe0] p-8 md:p-10 text-center shadow-[0_10px_30px_rgba(25,34,51,0.05)]">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#fdeee9] text-[#c35b43] shadow-sm">
+                      <Lock className="h-7 w-7" />
+                    </div>
+                    <span className="inline-block rounded-full bg-[#fae5df] px-3.5 py-1 text-[0.75rem] font-semibold uppercase tracking-[0.14em] text-[#c35b43]">
+                      Sample Preview • 2 of {totalPages} Pages Shown
+                    </span>
+                    <h3 className="mt-3 text-xl font-bold tracking-[-0.02em] text-[#241f1a] md:text-2xl">
+                      Unlock Your Full Last Will & Testament
+                    </h3>
+                    <p className="mx-auto mt-2.5 max-w-lg text-[0.92rem] leading-relaxed text-[#685f54]">
+                      Pages 3 to {totalPages} containing your legal declarations, family structure, executor appointments, residuary estate distribution, schedule of assets, and private memorandums are prepared and secure. Complete payment to review all pages and download your official PDF.
+                    </p>
+                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <Link
+                        href="/will/checkout"
+                        className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-6 py-3 text-[0.92rem] font-semibold text-white shadow-[0_8px_18px_rgba(25,34,51,0.2)] transition-all hover:bg-[#2a3750]"
+                      >
+                        <Lock className="h-4 w-4" />
+                        Pay & Unlock Full Document (Pages 3 – {totalPages})
+                      </Link>
+                      <Link
+                        href="/will"
+                        className="inline-flex items-center gap-2 rounded-[3px] border border-[#cfc3b4] bg-white px-5 py-3 text-[0.92rem] font-medium text-[#241f1a] transition-colors hover:bg-[#f6eee5]"
+                      >
+                        Back to Dashboard
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="mt-10">
-              <DigitalAssetPdfPreview />
-            </div>
+            {isPaid ? (
+              <div className="mt-10">
+                <DigitalAssetPdfPreview />
+              </div>
+            ) : (
+              <div className="mt-6 rounded-[20px] border border-[#e4d8cb] bg-[#efe7db]/70 p-6 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#fdeee9] text-[#c35b43]">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <h4 className="text-[1.1rem] font-semibold text-[#241f1a]">
+                  Digital Asset Memorandum Locked
+                </h4>
+                <p className="mt-1 text-[0.88rem] text-[#6b6257] max-w-md mx-auto">
+                  Your digital assets and cloud directives are included and will become accessible alongside your full Last Will & Testament after payment.
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href="/will/checkout"
+                    className="inline-flex items-center gap-2 text-[0.88rem] font-semibold text-[#c35b43] hover:underline"
+                  >
+                    Unlock with Will & Way Checkout →
+                  </Link>
+                </div>
+              </div>
+            )}
           </section>
 
           <aside className="space-y-6">
