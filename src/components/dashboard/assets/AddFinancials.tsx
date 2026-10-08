@@ -437,12 +437,7 @@ export default function AddFinancials() {
   };
   const router = useRouter();
 
-  const handleSaveGift = async () => {
-    if (selectedAssetId == null) {
-      toast.error("Select one account to continue.");
-      return;
-    }
-
+  const handleSaveAndContinue = () => {
     router.push("/will/assets/add-property");
   };
 
@@ -607,11 +602,10 @@ export default function AddFinancials() {
 
               <button
                 type="button"
-                onClick={handleSaveGift}
-                disabled={submittingGift || selectedAssetId == null}
-                className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleSaveAndContinue}
+                className="inline-flex min-w-[160px] items-center justify-center rounded-[4px] bg-[#152035] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_8px_18px_rgba(21,32,53,0.2)] transition-colors hover:bg-[#1f2d48]"
               >
-                {submittingGift ? "Saving..." : "Save & continue"}
+                Save & continue
               </button>
             </div>
           </footer>

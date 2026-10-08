@@ -254,10 +254,6 @@ export default function Intro() {
                   <p className="mt-1 text-[0.95rem] leading-[1.6] text-[#7b8594] md:text-[1rem]">Cataloging assets helps guarantee that your beneficiaries can claim their rightful shares.</p>
                 </div>
                 <div>
-                  <h2 className="text-[1.02rem] font-semibold text-[#161616] md:text-[1.08rem]">Property:</h2>
-                  <p className="mt-1 text-[0.95rem] leading-[1.6] text-[#7b8594] md:text-[1rem]">Residential or commercial real estate holdings.</p>
-                </div>
-                <div>
                   <h2 className="text-[1.02rem] font-semibold text-[#161616] md:text-[1.08rem]">Bank Accounts:</h2>
                   <p className="mt-1 text-[0.95rem] leading-[1.6] text-[#7b8594] md:text-[1rem]">Standard checking, savings, or fixed-deposit accounts.</p>
                 </div>

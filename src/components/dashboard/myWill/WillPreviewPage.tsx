@@ -414,8 +414,30 @@ export default function WillPreviewPage() {
   const properties = dashboard.assets?.properties ?? [];
   const loans = dashboard.assets?.loans ?? [];
 
-  // Calculate total wealth from gifts
-  const totalWealth = calculateTotalWealth(gifts);
+  // Compute full net worth summation: including all financial assets, properties, loans, and gifts
+  const totalWealth = (() => {
+    let sum = 0;
+    financialAssets.forEach((a: any) => {
+      sum += (a.approximateValue || a.faceValue || 0);
+    });
+    properties.forEach((p: any) => {
+      sum += (p.estimatedValue || 0);
+    });
+    loans.forEach((l: any) => {
+      if (l.type === "GIVEN") sum += (l.approximateBalance || 0);
+      else if (l.type === "OUTSTANDING") sum -= (l.approximateBalance || 0);
+    });
+    gifts.forEach((g) => {
+      if (g.amount && !g.asset && !g.property) {
+        sum += g.amount;
+      }
+    });
+
+    if (dashboard.summary?.netWorth !== undefined && dashboard.summary?.netWorth !== null) {
+      return Math.max(dashboard.summary.netWorth, sum);
+    }
+    return sum > 0 ? sum : calculateTotalWealth(gifts);
+  })();
 
   // Beneficiary count is the number of estate distributions (primary beneficiaries only)
   const beneficiaryCount = estateDistributions.length;
@@ -434,8 +456,8 @@ export default function WillPreviewPage() {
     (gift) => gift.personalMessage || gift.description,
   );
 
-  const userName = dashboard.user?.name ?? "Your will";
-  const userNRIC = dashboard.user?.nid ?? "N/A";
+  const userName = dashboard.user?.name ?? userData?.fullName ?? "Your will";
+  const userNRIC = dashboard.user?.nid || userData?.nid || "—";
 
   // Executor details with identifiers
   const primaryExecutor = executors[0]?.person?.fullName ?? "Not selected";
@@ -1184,37 +1206,9 @@ export default function WillPreviewPage() {
                 );
               })
             ) : (
-              <>
-                <div className="space-y-2">
-                  <p>
-                    <strong>
-                      Private Memorandum to{" "}
-                      <Highlight>{familyNames[0] || primaryExecutor}</Highlight>
-                      :
-                    </strong>
-                  </p>
-                  <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
-                    "Dear recipient, please find an appropriate buyer for my
-                    business, should you be able to liquidate. My wish is to
-                    leave 20% of its nett sale proceeds to you and remaining 80%
-                    divided equally between my children. I kindly entrust you to
-                    do this for me."
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <p>
-                    <strong>
-                      Private Memorandum to{" "}
-                      <Highlight>{familyNames[1] || backupExecutor}</Highlight>:
-                    </strong>
-                  </p>
-                  <p className="font-medium text-[#2f2d24] italic pl-4 border-l-2 border-[#c35b43]/30">
-                    "Dear recipient, This plan is able to be transferred. I hope
-                    for this plan to be transferred to you so that you can enjoy
-                    the monthly dividends forward."
-                  </p>
-                </div>
-              </>
+              <div className="py-6 text-[#716c65] italic">
+                No private memorandums added.
+              </div>
             )}
           </div>
         ),

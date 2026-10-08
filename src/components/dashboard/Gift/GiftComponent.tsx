@@ -1,5 +1,5 @@
 "use client"
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -93,6 +93,16 @@ export default function GiftComponent() {
     return gifts
   }, [giftsResponse])
 
+  // If client previously selected NO and has 0 allocated gifts, reflect that
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isCompleted = localStorage.getItem("hasCompletedGifts") === "true";
+      if (isCompleted && allocated.length === 0) {
+        setHasGifts(false);
+      }
+    }
+  }, [allocated.length]);
+
   const createOptions = [
     { id: 'cash', label: 'Leave a cash gift', href: '/will/gifts/add/cash', hint: 'for example, S$10,000 to leave to a person.' },
     { id: 'item', label: 'Leave an item', href: '/will/gifts/add/item' },
@@ -102,7 +112,11 @@ export default function GiftComponent() {
   ]
 
   const handleContinue = () => {
-    router.push('/will')
+    if (typeof window !== "undefined") {
+      localStorage.setItem("hasCompletedGifts", "true");
+    }
+    toast.success(hasGifts && allocated.length > 0 ? "Gifts saved successfully." : "Gifts preference saved.");
+    router.push('/will');
   }
 
   const handleEditGift = (gift: GiftRecord) => {

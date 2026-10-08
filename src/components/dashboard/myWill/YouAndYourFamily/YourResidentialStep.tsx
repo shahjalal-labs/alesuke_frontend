@@ -92,7 +92,7 @@ function InputRow({
     <div>
       <label className="mb-2 block text-[0.68rem] font-medium uppercase tracking-[0.12em] text-[#6a707c]">{label}</label>
       <div className="flex h-[46px] items-center rounded-[6px] bg-[#f4f5f7] px-3 text-[#223048] md:h-[56px] md:px-4">
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-3">
           <span>{icon}</span>
           <input
             value={value}

@@ -30,7 +30,6 @@ export default function RootLayout({
           <AuthSync /> 
           {children}
         </Providers>
-        <Toaster />
 
         {/* <Footer /> */}
       </body>

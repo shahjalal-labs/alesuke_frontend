@@ -156,12 +156,7 @@ export default function AddProperty() {
   }
 
   const handleNextRedirect = () => {
-    if (!selectedPropertyId) {
-      toast.error('Select one property to continue.')
-      return
-    }
-
-    // Direct the user to the next assets page without making an API call
+    // Direct the user to the next assets page without requiring property selection
     router.push('/will/assets/add-other-assets')
   }
 
@@ -193,7 +188,7 @@ export default function AddProperty() {
         messagePlaceholder=""
           nextLabel={submittingGift ? 'Saving...' : 'Save & continue'}
           onNext={handleNextRedirect}
-          nextDisabled={submittingGift || !selectedPropertyId}
+          nextDisabled={submittingGift}
         customMiddle={
           <>
             <h3 className="text-[1.08rem] font-medium text-[#191715] md:text-[1.12rem] mb-4">Your properties</h3>

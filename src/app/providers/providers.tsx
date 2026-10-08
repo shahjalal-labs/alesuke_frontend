@@ -15,7 +15,7 @@ export function Providers({ children }: ProvidersProps) {
     <SessionProvider>
       <ReduxProvider>
         {children}
-        <Toaster />
+        <Toaster richColors position="top-center" />
       </ReduxProvider>
     </SessionProvider>
   );

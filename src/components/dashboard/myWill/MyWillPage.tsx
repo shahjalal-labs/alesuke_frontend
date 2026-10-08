@@ -15,11 +15,12 @@ import {
   BriefcaseBusiness,
   Gift,
   Globe,
+  MapPin,
 } from "lucide-react";
 import DashboardHeader from "./DashboardHeader";
 import { useGetWillDetailsQuery } from "@/redux/api/profileApi";
 import { useGetMeDataQuery } from "@/redux/api/authApi";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGetDigitalAssetsQuery } from "@/redux/api/assetsApi";
 
 type FamilyMember = {
@@ -478,6 +479,7 @@ export default function MyWillPage() {
   const loans = dashboard.assets?.loans ?? [];
 
   // Modified logic for family completion
+  const primaryAddress = ((userData.addresses ?? [])[0] as any) ?? null;
   const hasAddress = (userData.addresses ?? []).length > 0;
   const isSingle =
     dashboard.user?.maritalStatus === "SINGLE" ||
@@ -490,9 +492,21 @@ export default function MyWillPage() {
   // 2. User is not single and has family members
   const hasFamilyData = hasAddress && (isSingle || hasFamilyMembers);
 
+  const [giftsSkippedOrCompleted, setGiftsSkippedOrCompleted] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (localStorage.getItem("hasCompletedGifts") === "true") {
+        setGiftsSkippedOrCompleted(true);
+      }
+    }
+  }, []);
+
   const hasExecutorData = executors.length > 0;
   const hasEstateDistributionData = estateDistributions.length > 0;
-  const hasGiftsData = gifts.length > 0;
+  const hasGiftsData =
+    gifts.length > 0 ||
+    giftsSkippedOrCompleted ||
+    ((dashboard as any)?.completedSteps?.includes("GIFTS"));
 
   // UPDATED: Pet caretaker logic
   // Check if there are any pets in the family
@@ -603,18 +617,30 @@ export default function MyWillPage() {
           completed={hasFamilyData}
           time="3 min"
           footer={
-            <div className="mt-4 flex justify-end border-t border-[#ece8e2] pt-4">
+            <div className="mt-4 flex flex-wrap justify-end gap-3 border-t border-[#ece8e2] pt-4">
               {hasFamilyData ? (
-                <Link
-                  href="/will/you-and-your-family/marital-status"
-                  className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
-                  onClick={() =>
-                    handleNavigation("/will/you-and-your-family/marital-status")
-                  }
-                >
-                  <PencilLine className="h-4 w-4" />
-                  Edit
-                </Link>
+                <>
+                  <Link
+                    href="/will/you-and-your-family/your-residential"
+                    className="inline-flex items-center gap-2 rounded-[3px] border border-[#192233] bg-transparent px-5 py-3 text-[0.95rem] text-[#192233] transition-colors hover:bg-[#192233] hover:text-white"
+                    onClick={() =>
+                      handleNavigation("/will/you-and-your-family/your-residential")
+                    }
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Edit Address
+                  </Link>
+                  <Link
+                    href="/will/you-and-your-family/marital-status"
+                    className="inline-flex items-center gap-2 rounded-[3px] bg-[#192233] px-5 py-3 text-[0.95rem] text-white shadow-[0_8px_18px_rgba(18,28,44,0.16)]"
+                    onClick={() =>
+                      handleNavigation("/will/you-and-your-family/marital-status")
+                    }
+                  >
+                    <PencilLine className="h-4 w-4" />
+                    Edit Family
+                  </Link>
+                </>
               ) : (
                 <Link
                   href="/will/you-and-your-family/marital-status"
@@ -639,6 +665,33 @@ export default function MyWillPage() {
               <p className="text-[0.95rem] leading-[1.45] text-[#2b221a] sm:text-[1rem]">
                 About You and Your Loved Ones
               </p>
+
+              {/* Show residential address card */}
+              {primaryAddress ? (
+                <div className="flex items-center gap-3 rounded-[6px] border border-[#ece8e2] bg-[#fcfaf7] px-3.5 py-3">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#ede3d5] text-[#223048]">
+                    <MapPin className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-[0.92rem] font-medium text-[#2b221a]">
+                        {primaryAddress.streetAddress}
+                        {primaryAddress.unitNumber ? `, ${primaryAddress.unitNumber}` : ""},{" "}
+                        {primaryAddress.postCode}
+                      </p>
+                      <Link
+                        href="/will/you-and-your-family/your-residential"
+                        className="text-[0.82rem] font-medium text-[#c35b43] hover:underline whitespace-nowrap"
+                      >
+                        Change
+                      </Link>
+                    </div>
+                    <p className="text-[0.72rem] uppercase tracking-[0.12em] text-[#8c8072]">
+                      Residential Address • {primaryAddress.country}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Show single user info when applicable */}
               {showSingleUserOnly ? (
