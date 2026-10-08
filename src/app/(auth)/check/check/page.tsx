@@ -3,7 +3,7 @@
 const check = () => {
   return (
     <div>
-      <h2>check page</h2>
+      <h2>check page from sj branch</h2>
     </div>
   );
 };
